@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:3000"]
 
+    # Maps API
+    LOCATIONIQ_API_KEY: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,

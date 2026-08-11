@@ -1,15 +1,16 @@
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import Column, String, DateTime, Float, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 class Job(Base):
     __tablename__ = "jobs"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    consumer_id = Column(String, ForeignKey("users.id"), nullable=False)
-    partner_id = Column(String, ForeignKey("users.id"), nullable=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    consumer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    partner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     
     title = Column(String, nullable=False)
     description = Column(String, nullable=False)

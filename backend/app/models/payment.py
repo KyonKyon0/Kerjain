@@ -1,16 +1,17 @@
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import Column, String, Float, ForeignKey, DateTime
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 class Payment(Base):
     __tablename__ = "payments"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    job_id = Column(String, ForeignKey("jobs.id"), nullable=False)
-    consumer_id = Column(String, ForeignKey("users.id"), nullable=False)
-    partner_id = Column(String, ForeignKey("users.id"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    job_id = Column(UUID(as_uuid=True), ForeignKey("jobs.id"), nullable=False)
+    consumer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    partner_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     
     amount = Column(Float, nullable=False)
     method = Column(String, nullable=False) # "VA", "QRIS", "TRANSFER", "CASH"

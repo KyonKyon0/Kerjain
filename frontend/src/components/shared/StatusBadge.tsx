@@ -14,8 +14,11 @@ const statusConfig: Record<JobStatus, { label: string; className: string }> = {
 
   WORKING: { label: "Dikerjakan", className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-300" },
   WAITING_CONFIRMATION: { label: "Menunggu Konfirmasi", className: "bg-teal-100 text-teal-800 hover:bg-teal-100 dark:bg-teal-900/30 dark:text-teal-300" },
+  WAITING_PAYMENT: { label: "Menunggu Pembayaran", className: "bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300" },
   COMPLETED: { label: "Selesai", className: "bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300" },
   CANCELLED: { label: "Dibatalkan", className: "bg-red-100 text-red-800 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300" },
+  ARRIVED: { label: "Telah Tiba", className: "bg-indigo-100 text-indigo-800 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300" },
+  IN_PROGRESS: { label: "Sedang Dikerjakan", className: "bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300" },
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {

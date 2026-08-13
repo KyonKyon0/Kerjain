@@ -57,7 +57,7 @@ export async function GET(request: Request) {
 
     let firstIncomeDate: Date | null = null;
 
-    payments.forEach(p => {
+    payments.forEach((p: any) => {
       const releaseDate = p.job.updated_at;
       if (!firstIncomeDate || releaseDate < firstIncomeDate) {
         firstIncomeDate = releaseDate;
@@ -73,7 +73,7 @@ export async function GET(request: Request) {
       });
     });
 
-    withdrawals.forEach(w => {
+    withdrawals.forEach((w: any) => {
       ledger.push({
         id: w.id,
         type: 'WITHDRAWAL',
@@ -93,7 +93,7 @@ export async function GET(request: Request) {
     if (firstIncomeDate) {
       const msInDay = 1000 * 60 * 60 * 24;
       const now = new Date();
-      const diffMs = now.getTime() - firstIncomeDate.getTime();
+      const diffMs = now.getTime() - (firstIncomeDate as Date).getTime();
       const diffDays = diffMs / msInDay;
       
       if (diffDays >= 3) {
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ detail: 'Minimal penarikan adalah Rp 10.000' }, { status: 400 });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       const wallet = await tx.wallet.findUnique({
         where: { user_id: user.id }
       });

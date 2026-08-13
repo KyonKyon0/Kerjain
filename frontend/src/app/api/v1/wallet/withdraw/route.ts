@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     }
 
     // Deduct balance and create withdrawal record
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       const updatedWallet = await tx.wallet.update({
         where: { user_id: user.id },
         data: { balance: { decrement: amount } }

@@ -23,7 +23,10 @@ export type JobStatus =
   | "WORKING"
   | "WAITING_CONFIRMATION" 
   | "COMPLETED" 
-  | "CANCELLED";
+  | "CANCELLED"
+  | "ARRIVED"
+  | "IN_PROGRESS"
+  | "WAITING_PAYMENT";
 
 export interface JobProgress {
   id: string;

@@ -15,11 +15,12 @@ export function JobCard({ job, onClick, showDistance }: JobCardProps) {
   const isFixed = job.rewardType === "FIXED";
   
   // formatting date roughly
-  const dateObj = new Date(job.createdAt);
+  const dateObj = new Date(job.createdAt || (job as any).created_at || new Date());
   const timeStr = `${dateObj.getHours()}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
 
   const CardWrapper = onClick ? 'div' : Link;
   const wrapperProps = onClick ? { onClick } : { href: `/dashboard/jobs/${job.id}` };
+  const actualReward = job.rewardAmount ?? (job as any).reward_amount;
 
   return (
     <div className="bg-card border rounded-3xl overflow-hidden shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-300 group cursor-pointer block relative">
@@ -33,7 +34,7 @@ export function JobCard({ job, onClick, showDistance }: JobCardProps) {
             </div>
           </div>
           
-          <h4 className="font-bold text-lg leading-tight mb-2 group-hover:text-primary transition-colors line-clamp-2">
+          <h4 className="font-bold text-lg leading-tight mb-2 group-hover:text-primary transition-colors line-clamp-2 break-words">
             {job.title}
           </h4>
           
@@ -41,15 +42,15 @@ export function JobCard({ job, onClick, showDistance }: JobCardProps) {
             {showDistance && job.distance !== undefined && (
               <DistanceBadge distance={job.distance} className="w-fit mb-1" />
             )}
-            <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-xl">
-              <MapPin className="w-4 h-4 shrink-0 text-primary" />
-              <span className="truncate text-xs font-medium text-foreground">{job.address}</span>
+            <div className="flex items-start gap-2 bg-muted/30 p-2 rounded-xl">
+              <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+              <span className="text-xs font-medium text-foreground line-clamp-2 break-words leading-relaxed">{job.address}</span>
             </div>
             <div className="flex items-center justify-between mt-2">
               <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl">
                 <Wallet className="w-4 h-4 shrink-0" />
                 <span className="font-bold">
-                  {isFixed && job.rewardAmount ? `Rp ${job.rewardAmount.toLocaleString("id-ID")}` : "Seikhlasnya"}
+                  {actualReward ? `Rp ${actualReward.toLocaleString("id-ID")}` : "Rp 0"}
                 </span>
               </div>
               {!onClick && (

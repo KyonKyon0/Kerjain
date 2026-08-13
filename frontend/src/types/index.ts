@@ -38,8 +38,12 @@ export interface Job {
   id: string;
   consumerId: string;
   consumerName: string;
+  consumerPhone?: string;
+  consumer?: { name: string; phone?: string; };
   partnerId?: string;
   partnerName?: string;
+  partnerPhone?: string;
+  partner?: { name: string; phone?: string; };
   title: string;
   description: string;
   address: string;

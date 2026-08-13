@@ -9,7 +9,7 @@ export const usePaymentDetail = (jobId: string) => {
       const res = await paymentService.getPayment(jobId);
       return res.data;
     },
-    enabled: !!jobId,
+    enabled: !!jobId && jobId !== "[object Object]",
   });
 };
 
@@ -42,6 +42,40 @@ export const useProcessPayment = () => {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Gagal memproses pembayaran");
+    },
+  });
+};
+
+export const useProcessQris = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ jobId }: { jobId: string }) => 
+      paymentService.processQris(jobId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Gagal memproses QRIS");
+    },
+  });
+};
+
+export const useCheckPaymentStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ jobId }: { jobId: string }) => 
+      paymentService.checkStatus(jobId),
+    onSuccess: (data) => {
+      if (data.status === 'SUCCESS') {
+        queryClient.invalidateQueries({ queryKey: ["payments"] });
+        queryClient.invalidateQueries({ queryKey: ["jobs"] });
+        toast.success("Pembayaran berhasil dikonfirmasi!");
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Gagal mengecek status pembayaran");
     },
   });
 };

@@ -56,7 +56,17 @@ export function Step5Review() {
             <div>
               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Imbalan</p>
               <p className="font-medium text-sm">
-                {draft.rewardType === "FIXED" ? `Rp ${draft.rewardAmount?.toLocaleString("id-ID")}` : "Seikhlasnya (Dinegosiasikan)"}
+                Rp {draft.rewardAmount?.toLocaleString("id-ID")}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg shrink-0"><Wallet className="w-4 h-4" /></div>
+            <div>
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Metode Pembayaran</p>
+              <p className="font-medium text-sm">
+                {draft.paymentMethod === "QRIS" ? "QRIS (Otomatis)" : draft.paymentMethod === "CASH" ? "Tunai (Cash)" : "Lainnya"}
               </p>
             </div>
           </div>

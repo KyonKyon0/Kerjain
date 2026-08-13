@@ -55,7 +55,7 @@ export function SolutionSection() {
                   {[
                     "Hanya Mitra terdekat yang dinotifikasi",
                     "Fitur In-App Chat untuk privasi",
-                    "Pilihan imbalan tetap atau seikhlasnya",
+                    "Pilihan imbalan yang transparan",
                     "Riwayat pekerjaan yang terorganisir"
                   ].map((item, idx) => (
                     <li key={idx} className="flex items-center gap-3">

@@ -31,6 +31,8 @@ export default function AssignedJobsPage() {
             j.status === "ACCEPTED" || 
             j.status === "WORKING" || 
             j.status === "ON_THE_WAY" ||
+            j.status === "ARRIVED" ||
+            j.status === "IN_PROGRESS" ||
             j.status === "WAITING_CONFIRMATION"
           );
           
@@ -55,7 +57,8 @@ export default function AssignedJobsPage() {
 
   const filteredJobs = jobs.filter(job => {
     if (activeTab === "ALL") return true;
-    if (activeTab === "ON_THE_WAY") return job.status === "ACCEPTED" || job.status === "ON_THE_WAY";
+    if (activeTab === "ON_THE_WAY") return job.status === "ACCEPTED" || job.status === "ON_THE_WAY" || job.status === "ARRIVED";
+    if (activeTab === "WORKING") return job.status === "WORKING" || job.status === "IN_PROGRESS";
     return job.status === activeTab;
   });
 

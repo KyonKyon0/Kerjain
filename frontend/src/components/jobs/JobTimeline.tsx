@@ -9,7 +9,7 @@ export function JobTimeline({ status }: JobTimelineProps) {
   const steps = [
     { key: "PUBLISHED", label: "Dipublikasi", icon: Clock },
     { key: "ACCEPTED", label: "Diterima", icon: CheckCircle2 },
-    { key: "ON_THE_WAY", label: "Menuju Lokasi", icon: Navigation },
+    { key: "ON_THE_WAY", label: "Menuju\nLokasi", icon: Navigation },
     { key: "WORKING", label: "Dikerjakan", icon: Wrench },
     { key: "WAITING_CONFIRMATION", label: "Menunggu", icon: ShieldCheck },
     { key: "COMPLETED", label: "Selesai", icon: Check },
@@ -57,7 +57,7 @@ export function JobTimeline({ status }: JobTimelineProps) {
               <Icon className="w-4 h-4" />
             </div>
             <span className={cn(
-              "text-[10px] sm:text-xs font-semibold mt-2 text-center max-w-[60px]",
+              "text-[10px] sm:text-xs font-semibold mt-2 text-center max-w-[60px] whitespace-pre-line leading-tight",
               isPast ? "text-primary" : "text-muted-foreground"
             )}>
               {step.label}

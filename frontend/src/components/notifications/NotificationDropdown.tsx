@@ -18,8 +18,12 @@ export function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
 
   const fetchNotifs = React.useCallback(async () => {
-    const { data } = await notificationService.getNotifications();
-    setNotifications(data);
+    try {
+      const { data } = await notificationService.getNotifications();
+      setNotifications(data);
+    } catch (error) {
+      // Ignore network errors during polling (e.g. server restart)
+    }
   }, []);
 
   useEffect(() => {

@@ -21,6 +21,7 @@ const initialDraft: Partial<CreateJobData> = {
   lng: null,
   rewardType: "FIXED",
   rewardAmount: null,
+  paymentMethod: "QRIS",
 };
 
 export const useCreateJobStore = create<CreateJobState>((set) => ({

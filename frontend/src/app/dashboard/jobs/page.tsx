@@ -39,8 +39,8 @@ export default function MyJobsPage() {
   ];
 
   const filteredJobs = jobs.filter((job: any) => {
-    if (activeTab === "AKTIF") return ['ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION'].includes(job.status);
-    if (activeTab === "MENUNGGU") return job.status === "PUBLISHED";
+    if (activeTab === "AKTIF") return ['ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION', 'IN_PROGRESS'].includes(job.status);
+    if (activeTab === "MENUNGGU") return ['PUBLISHED', 'WAITING_PAYMENT'].includes(job.status);
     if (activeTab === "SELESAI") return job.status === "COMPLETED";
     if (activeTab === "DRAFT") return job.status === "CANCELLED";
     return true;

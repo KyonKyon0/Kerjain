@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Search, MapPin, Loader2, Navigation, Check, X } from "lucide-react";
+import { toast } from "sonner";
 import { autocompleteAddress, reverseGeocode, detectLocationViaIP, LocationIQFeature } from "./locationiq";
 
 export interface LocationData {
@@ -91,28 +92,53 @@ export function LocationPicker({
     onLocationSelect?.(loc);
   };
 
-  // Detect Current Location using Geoapify IP Info API (Browser safe, no prompts)
+  // Detect Current Location using Geolocation API
   const handleDetectLocation = async () => {
     setDetecting(true);
-    const feature = await detectLocationViaIP();
 
-    if (feature) {
-      handleSelectFeature(feature);
-    } else {
-      // Fallback to Jakarta (Monas) if API fails
-      const fallbackLat = -6.1754;
-      const fallbackLon = 106.8272;
-      
-      const loc: LocationData = {
-        address: "Jakarta Pusat, DKI Jakarta (Fallback Lokasi)",
-        lat: fallbackLat,
-        lon: fallbackLon,
-      };
-      setSelectedLocation(loc);
-      setQuery(loc.address);
-      onLocationSelect?.(loc);
+    if (!navigator.geolocation) {
+      toast.error("Browser Anda tidak mendukung fitur GPS");
+      setDetecting(false);
+      return;
     }
-    setDetecting(false);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const feature = await reverseGeocode(latitude, longitude);
+        let addr = `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)}`;
+        
+        let locData: LocationData = { address: addr, lat: latitude, lon: longitude };
+
+        if (feature) {
+          addr = feature.formatted;
+          locData = {
+            address: addr,
+            lat: latitude,
+            lon: longitude,
+            city: feature.city,
+            state: feature.state,
+            suburb: feature.suburb,
+          };
+        }
+
+        setSelectedLocation(locData);
+        setQuery(addr);
+        onLocationSelect?.(locData);
+        setDetecting(false);
+        setIsOpen(false);
+      },
+      (error) => {
+        console.warn("GPS error", error);
+        if (error.message && error.message.includes("secure origins")) {
+           toast.error("Izin GPS diblokir karena tidak menggunakan HTTPS");
+        } else {
+           toast.error("Gagal mendeteksi lokasi GPS");
+        }
+        setDetecting(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
   const handleClear = () => {
@@ -180,7 +206,7 @@ export function LocationPicker({
 
           {!loading && suggestions.length === 0 && (
             <div className="p-3 text-center text-xs text-muted-foreground">
-              {apiKey ? "Lokasi tidak ditemukan." : "Silakan masukkan NEXT_PUBLIC_LOCATIONIQ_API_KEY pada file .env.local"}
+              Lokasi tidak ditemukan.
             </div>
           )}
 

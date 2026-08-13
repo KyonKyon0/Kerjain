@@ -34,7 +34,7 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
   };
 
   return (
-    <div className="p-4 bg-background border-t pb-safe">
+    <div className="p-2 sm:p-3 bg-background">
       <div className="max-w-4xl mx-auto flex items-end gap-2 bg-muted/30 p-2 rounded-2xl border focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
         <textarea
           ref={textareaRef}
@@ -42,7 +42,7 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          placeholder="Ketik pesan... (Shift+Enter untuk baris baru)"
+          placeholder="Ketik pesan..."
           className="flex-1 max-h-[120px] bg-transparent resize-none outline-none text-sm p-2 scrollbar-thin"
           rows={1}
         />

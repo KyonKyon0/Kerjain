@@ -20,6 +20,7 @@ export const step4RewardSchema = z.object({
     errorMap: () => ({ message: "Pilih tipe imbalan" })
   }),
   rewardAmount: z.number().optional().nullable(),
+  paymentMethod: z.enum(["QRIS", "CASH", "BANK"]).optional(),
 }).refine(
   (data) => {
     if (data.rewardType === "FIXED" && (!data.rewardAmount || data.rewardAmount <= 0)) {
@@ -43,6 +44,7 @@ export const createJobSchema = z.object({
   lng: z.number().nullable(),
   rewardType: z.enum(["FIXED", "FLEXIBLE"]),
   rewardAmount: z.number().nullable().optional(),
+  paymentMethod: z.enum(["QRIS", "CASH", "BANK"]).optional(),
 });
 
 export type Step1FormData = z.infer<typeof step1InfoSchema>;

@@ -11,7 +11,22 @@ interface HistoryCardProps {
 
 export function HistoryCard({ job, role }: HistoryCardProps) {
   const isCompleted = job.status === "COMPLETED";
-  const partnerName = role === "consumer" ? job.partnerName : job.consumerName;
+  const partnerName = role === "consumer" 
+    ? (job.partnerName || (job as any).partner?.name) 
+    : (job.consumerName || (job as any).consumer?.name);
+    
+  const createdAt = job.createdAt || (job as any).created_at;
+  const actualReward = Number(job.rewardAmount ?? (job as any).reward_amount ?? 0);
+  const rewardType = job.rewardType || (job as any).reward_type;
+  
+  // Safe date parsing
+  let formattedDate = "-";
+  if (createdAt) {
+    const dateObj = new Date(createdAt);
+    if (!isNaN(dateObj.getTime())) {
+      formattedDate = dateObj.toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+  }
   
   return (
     <Link href={`/dashboard/history/${job.id}`} className="block group">
@@ -28,7 +43,7 @@ export function HistoryCard({ job, role }: HistoryCardProps) {
             </span>
           </div>
           <span className="text-xs text-muted-foreground">
-            {new Date(job.createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' })}
+            {formattedDate}
           </span>
         </div>
         
@@ -41,12 +56,12 @@ export function HistoryCard({ job, role }: HistoryCardProps) {
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">
               {role === "consumer" ? "Mitra" : "Konsumen"}
             </p>
-            <p className="text-sm font-medium">{partnerName || "-"}</p>
+            <p className="text-sm font-medium">{partnerName || "Menunggu"}</p>
           </div>
           
-          {job.rewardType === "FIXED" && (
+          {rewardType === "FIXED" && (
             <div className="text-right">
-              <p className="text-sm font-bold text-foreground">Rp {job.rewardAmount?.toLocaleString("id-ID")}</p>
+              <p className="text-sm font-bold text-foreground">Rp {actualReward.toLocaleString("id-ID")}</p>
             </div>
           )}
         </div>

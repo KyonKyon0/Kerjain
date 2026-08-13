@@ -1,0 +1,39 @@
+import { NextResponse } from 'next/server'
+import prisma from '@/lib/prisma'
+import { getCurrentUser } from '@/lib/current-user'
+
+export async function POST(request: Request) {
+  try {
+    const user = await getCurrentUser(request)
+    if (!user || user.role !== 'consumer') return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 })
+
+    const body = await request.json()
+    const { job_id, amount, method } = body
+
+    const job = await prisma.job.findUnique({ where: { id: job_id } })
+    if (!job || !job.partner_id) return NextResponse.json({ detail: 'Job not found or no partner' }, { status: 404 })
+
+    let payment = await prisma.payment.findFirst({
+      where: { job_id, status: 'UNPAID' }
+    });
+
+    if (payment) {
+      payment = await prisma.payment.update({
+        where: { id: payment.id },
+        data: { amount, method }
+      });
+    } else {
+      const paymentId = crypto.randomUUID()
+      const partnerIdSql = job.partner_id ? job.partner_id : null
+      await prisma.$executeRaw`
+        INSERT INTO "payments" ("id", "job_id", "consumer_id", "partner_id", "amount", "method", "status", "created_at", "updated_at")
+        VALUES (${paymentId}::uuid, ${job_id}::uuid, ${user.id}::uuid, ${partnerIdSql}::uuid, ${amount}, ${method}::payment_method, 'UNPAID'::payment_status, NOW(), NOW())
+      `
+      payment = await prisma.payment.findUnique({ where: { id: paymentId } })
+    }
+
+    return NextResponse.json({ success: true, message: 'Tagihan berhasil dibuat', data: payment })
+  } catch (error: any) {
+    return NextResponse.json({ detail: error.message }, { status: 500 })
+  }
+}

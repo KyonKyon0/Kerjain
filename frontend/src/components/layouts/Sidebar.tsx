@@ -12,6 +12,7 @@ import {
   User,
   Briefcase,
   Zap,
+  Wallet
 } from "lucide-react";
 
 export function Sidebar() {
@@ -31,6 +32,7 @@ export function Sidebar() {
     { name: "Cari Job", href: "/dashboard/jobs/search", icon: Search },
     { name: "Pekerjaan Saya", href: "/dashboard/jobs/assigned", icon: Briefcase },
     { name: "Riwayat", href: "/dashboard/history", icon: History },
+    { name: "Keuangan", href: "/dashboard/payments", icon: Wallet },
     { name: "Akun", href: "/dashboard/account", icon: User },
   ];
 

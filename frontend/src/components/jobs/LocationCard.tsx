@@ -23,12 +23,23 @@ export function LocationCard({ address, latitude, longitude, className }: Locati
       </div>
 
       {latitude && longitude ? (
-        <MapViewer
-          lat={latitude}
-          lon={longitude}
-          address={address}
-          height="h-44"
-        />
+        <a 
+          href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block hover:opacity-90 transition-opacity"
+        >
+          <MapViewer
+            lat={latitude}
+            lon={longitude}
+            address={address}
+            height="h-44"
+          />
+          <div className="w-full flex items-center justify-center gap-2 mt-2 text-xs font-bold text-primary">
+            <Navigation className="w-3 h-3" />
+            Buka di Google Maps
+          </div>
+        </a>
       ) : (
         <div className="w-full h-28 bg-muted/30 border border-dashed border-border rounded-xl flex items-center justify-center text-xs text-muted-foreground">
           Koordinat peta tidak tersedia

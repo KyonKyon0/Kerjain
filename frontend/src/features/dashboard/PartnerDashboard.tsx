@@ -18,7 +18,7 @@ export function PartnerDashboard() {
   
   const earnings = myJobs
     .filter((j: any) => j.status === 'COMPLETED')
-    .reduce((acc: any, job: any) => acc + (job.rewardAmount || 0), 0);
+    .reduce((acc: any, job: any) => acc + (job.rewardAmount ?? job.reward_amount ?? 0), 0);
 
   return (
     <PageContainer>
@@ -132,7 +132,7 @@ export function PartnerDashboard() {
                 >
                   <div className="flex justify-between items-start mb-3">
                     <h4 className="font-bold text-base md:text-lg group-hover:text-primary transition-colors">{job.title}</h4>
-                    <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400">Rp {job.rewardAmount?.toLocaleString('id-ID') || 0}</span>
+                    <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400">Rp {(job.rewardAmount ?? job.reward_amount ?? 0).toLocaleString('id-ID')}</span>
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{job.description}</p>
                   <div className="flex items-center justify-between">

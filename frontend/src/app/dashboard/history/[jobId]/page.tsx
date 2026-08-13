@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageContainer } from "@/components/dashboard/PageContainer";
@@ -17,9 +17,15 @@ import { Loader2, ArrowLeft, Star, MapPin, Receipt, MessageSquare, AlertCircle }
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-export default function HistoryDetailPage() {
-  const { jobId } = useParams();
+export default function HistoryDetailPage({ params }: { params: Promise<{ jobId: string }> }) {
+  const { jobId } = React.use(params);
   const router = useRouter();
+  
+  // Failsafe for stuck browser URLs
+  if (jobId === "[object Object]") {
+    if (typeof window !== "undefined") window.location.href = "/dashboard";
+  }
+  
   const { role, user } = useAuthStore();
   
   const [job, setJob] = useState<Job | null>(null);
@@ -28,6 +34,7 @@ export default function HistoryDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (jobId === "[object Object]") return;
     const fetchData = async () => {
       try {
         const [jobRes, payRes, revRes] = await Promise.all([
@@ -61,9 +68,16 @@ export default function HistoryDetailPage() {
 
   if (!job) return null;
 
-  const partnerName = role === "consumer" ? job.partnerName : job.consumerName;
+  const partnerName = role === "consumer" 
+    ? (job.partnerName || (job as any).partner?.name) 
+    : (job.consumerName || (job as any).consumer?.name);
+    
   const isCompleted = job.status === "COMPLETED";
-  const myReview = reviews.find(r => r.reviewerId === user?.id);
+  const myReview = reviews.find(r => r.reviewerId === user?.id || (r as any).reviewer_id === user?.id);
+  
+  const displayAmount = payment?.amount && payment.amount > 0 
+    ? payment.amount 
+    : (job.rewardAmount ?? (job as any).reward_amount ?? 0);
 
   return (
     <DashboardLayout>
@@ -141,7 +155,7 @@ export default function HistoryDetailPage() {
                   </div>
                   <div className="flex justify-between pt-3 border-t border-dashed mt-3">
                     <span className="font-bold">Total Nilai</span>
-                    <span className="font-bold text-primary">Rp {payment.amount.toLocaleString("id-ID")}</span>
+                    <span className="font-bold text-primary">Rp {displayAmount.toLocaleString("id-ID")}</span>
                   </div>
                 </div>
               </DashboardCard>

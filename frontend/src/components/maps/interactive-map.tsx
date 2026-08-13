@@ -136,29 +136,17 @@ export default function InteractiveMap({
             setLoading(false);
           });
 
-          // Handle built-in geolocation error with IP Fallback
+          // Handle built-in geolocation error
           leafletMapRef.current.on("locationerror", async (e: any) => {
-            console.warn("Browser GPS failed or blocked, falling back to IP Location", e);
-            const feature = await detectLocationViaIP();
-            if (feature) {
-               const { lat, lon } = feature;
-               markerRef.current.setLatLng([lat, lon]);
-               leafletMapRef.current.setView([lat, lon], 15);
-               
-               let addr = feature.formatted;
-               let locData: LocationData = {
-                  address: addr,
-                  lat,
-                  lon: lon,
-                  city: feature.city,
-                  state: feature.state,
-                  suburb: feature.suburb,
-               };
-               setAddressPreview(addr);
-               onLocationSelected(locData);
+            console.warn("Browser GPS failed or blocked", e);
+            
+            if (e.message && e.message.includes("secure origins")) {
+               alert("Browser menolak fitur GPS karena Anda mengakses web ini lewat HTTP LAN (192.168.x.x) bukan HTTPS. Untuk mendapatkan pop-up izin GPS di HP, Anda harus menggunakan HTTPS atau localhost.");
             } else {
-               alert("Browser memblokir akses lokasi, dan API Fallback juga gagal. Silakan gunakan kolom pencarian alamat.");
+               alert("Gagal melacak GPS. Pastikan izin lokasi (GPS) diaktifkan di browser Anda.");
             }
+            
+            setAddressPreview("Lokasi tidak ditemukan (Akses GPS ditolak)");
             setLoading(false);
           });
         }
@@ -216,25 +204,28 @@ export default function InteractiveMap({
   };
 
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden border border-border">
+    <div className="relative w-full rounded-2xl overflow-hidden border border-border flex flex-col">
       {/* Map Container */}
-      <div ref={mapRef} className={`z-0 ${className}`}></div>
+      <div className="relative w-full">
+        <div ref={mapRef} className={`z-0 ${className}`}></div>
 
-      {/* Overlays */}
-      <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
-        {!targetLat && (
-          <button
-            type="button"
-            onClick={requestBrowserLocation}
-            className="p-3 bg-background border border-border shadow-lg rounded-full text-primary hover:bg-muted transition-colors flex items-center justify-center"
-            title="Deteksi Lokasi Saya via GPS Browser"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Navigation className="w-5 h-5" />}
-          </button>
-        )}
+        {/* Floating Overlays */}
+        <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2">
+          {!targetLat && (
+            <button
+              type="button"
+              onClick={requestBrowserLocation}
+              className="p-3 bg-background border border-border shadow-lg rounded-full text-primary hover:bg-muted transition-colors flex items-center justify-center"
+              title="Deteksi Lokasi Saya via GPS Browser"
+            >
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Navigation className="w-5 h-5" />}
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 z-[400] bg-background/90 backdrop-blur-md p-4 border-t border-border shadow-xl">
+      {/* Bottom Info Banner (Static, not floating) */}
+      <div className="w-full bg-background p-4 border-t border-border">
         <div className="flex flex-col">
           <span className="text-xs font-bold text-primary uppercase tracking-wider mb-1">Lokasi Titik Peta</span>
           <p className="text-sm font-medium text-foreground pr-8 leading-snug">

@@ -43,7 +43,11 @@ export default function HistoryPage() {
         // Only COMPLETED or CANCELLED
         const historyJobs = fetched.filter(j => j.status === "COMPLETED" || j.status === "CANCELLED");
         // Sort descending
-        historyJobs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        historyJobs.sort((a, b) => {
+          const dateA = new Date(a.createdAt || (a as any).created_at).getTime();
+          const dateB = new Date(b.createdAt || (b as any).created_at).getTime();
+          return dateB - dateA;
+        });
         
         setJobs(historyJobs);
       } catch {

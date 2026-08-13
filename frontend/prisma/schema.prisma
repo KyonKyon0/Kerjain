@@ -1,0 +1,227 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                   String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                 String          @db.VarChar(255)
+  email                String          @unique @db.VarChar(255)
+  hashed_password      String          @db.VarChar(255)
+  phone                String?         @db.VarChar(50)
+  address              String?
+  role                 UserRole
+  created_at           DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
+  jobs_created         Job[]           @relation("JobConsumer")
+  jobs_taken           Job[]           @relation("JobPartner")
+  messages_sent        Message[]
+  notifications        notifications[]
+  payments_as_consumer Payment[]       @relation("PaymentConsumer")
+  payments_as_partner  Payment[]       @relation("PaymentPartner")
+  reviews_given        Review[]        @relation("Reviewer")
+  reviews_received     Review[]        @relation("Reviewee")
+
+  wallet               Wallet?
+  withdrawals          Withdrawal[]
+
+  @@index([email], map: "idx_users_email")
+  @@index([role], map: "idx_users_role")
+  @@map("users")
+}
+
+model Job {
+  id            String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  consumer_id   String        @db.Uuid
+  partner_id    String?       @db.Uuid
+  title         String        @db.VarChar(255)
+  description   String
+  category      String?       @db.VarChar(100)
+  address       String
+  lat           Float?
+  lng           Float?
+  reward_type   reward_type   @default(FIXED)
+  reward_amount Decimal?      @default(0.00) @db.Decimal(15, 2)
+  status        job_status    @default(PUBLISHED)
+  created_at    DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  progress_logs JobProgress[]
+  consumer      User          @relation("JobConsumer", fields: [consumer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  partner       User?         @relation("JobPartner", fields: [partner_id], references: [id], onUpdate: NoAction)
+  messages      Message[]
+  payments      Payment[]
+  reviews       Review[]
+
+  @@index([category], map: "idx_jobs_category")
+  @@index([consumer_id], map: "idx_jobs_consumer_id")
+  @@index([partner_id], map: "idx_jobs_partner_id")
+  @@index([status], map: "idx_jobs_status")
+  @@map("jobs")
+}
+
+model JobProgress {
+  id              String    @id @default(uuid()) @db.VarChar
+  job_id          String    @db.Uuid
+  status_snapshot String    @db.VarChar
+  note            String?   @db.VarChar
+  photo_url       String?   @db.VarChar
+  created_at      DateTime? @db.Timestamptz(6)
+  job             Job       @relation(fields: [job_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("job_progress_logs")
+}
+
+model Payment {
+  id          String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  job_id      String         @db.Uuid
+  consumer_id String         @db.Uuid
+  partner_id  String?        @db.Uuid
+  amount      Decimal        @default(0.00) @db.Decimal(15, 2)
+  method      payment_method
+  status      payment_status @default(UNPAID)
+  paid_at     DateTime?      @db.Timestamptz(6)
+  created_at  DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime       @default(now()) @updatedAt @db.Timestamptz(6)
+  consumer    User           @relation("PaymentConsumer", fields: [consumer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  job         Job            @relation(fields: [job_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  partner     User?          @relation("PaymentPartner", fields: [partner_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([consumer_id], map: "idx_payments_consumer_id")
+  @@index([job_id], map: "idx_payments_job_id")
+  @@index([partner_id], map: "idx_payments_partner_id")
+  @@index([status], map: "idx_payments_status")
+  @@map("payments")
+}
+
+model Message {
+  id        String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  jobId     String       @map("job_id") @db.Uuid
+  senderId  String       @map("sender_id") @db.Uuid
+  content   String
+  type      message_type @default(TEXT)
+  read      Boolean      @default(false)
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  job       Job          @relation(fields: [jobId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  sender    User         @relation(fields: [senderId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([createdAt], map: "idx_messages_created_at")
+  @@index([jobId], map: "idx_messages_job_id")
+  @@map("messages")
+}
+
+model Review {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  job_id      String   @db.Uuid
+  reviewer_id String   @db.Uuid
+  reviewee_id String   @map("target_id") @db.Uuid
+  rating      Int
+  comment     String?
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  job         Job      @relation(fields: [job_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reviewer    User     @relation("Reviewer", fields: [reviewer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reviewee    User     @relation("Reviewee", fields: [reviewee_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([job_id, reviewer_id], map: "unique_job_reviewer")
+  @@index([job_id], map: "idx_reviews_job_id")
+  @@index([reviewee_id], map: "idx_reviews_target_id")
+  @@map("reviews")
+}
+
+model notifications {
+  id          String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id     String            @db.Uuid
+  title       String            @db.VarChar(255)
+  description String
+  type        notification_type @default(SYSTEM)
+  link        String?           @db.VarChar(255)
+  read        Boolean           @default(false)
+  created_at  DateTime          @default(now()) @db.Timestamptz(6)
+  users       User              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([read], map: "idx_notifications_read")
+  @@index([user_id], map: "idx_notifications_user_id")
+}
+
+model Wallet {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @unique @db.Uuid
+  balance    Float    @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("wallets")
+}
+
+model Withdrawal {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  amount     Float
+  status     String   @default("PENDING") // PENDING, COMPLETED, REJECTED
+  bank_name  String?
+  bank_account String?
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("withdrawals")
+}
+
+enum UserRole {
+  consumer
+  partner
+  @@map("user_role")
+}
+
+enum job_status {
+  PUBLISHED
+  ACCEPTED
+  ON_THE_WAY
+  ARRIVED
+  WORKING
+  WAITING_CONFIRMATION
+  COMPLETED
+  CANCELLED
+  IN_PROGRESS
+  WAITING_PAYMENT
+}
+
+enum message_type {
+  TEXT
+  SYSTEM
+}
+
+enum notification_type {
+  NEW_JOB
+  JOB_ACCEPTED
+  STATUS_CHANGED
+  NEW_MESSAGE
+  PAYMENT
+  JOB_COMPLETED
+  SYSTEM
+}
+
+enum payment_method {
+  VA
+  QRIS
+  TRANSFER
+  CASH
+}
+
+enum payment_status {
+  UNPAID
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum reward_type {
+  FIXED
+  FLEXIBLE
+}

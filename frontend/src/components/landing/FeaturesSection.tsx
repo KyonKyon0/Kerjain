@@ -25,7 +25,7 @@ export function FeaturesSection() {
     {
       icon: <Wallet className="h-5 w-5 text-primary" />,
       title: "Pembayaran Transparan",
-      description: "Pilih imbalan nominal tetap di awal atau seikhlasnya setelah selesai."
+      description: "Pilih imbalan nominal tetap di awal untuk transparansi yang maksimal."
     },
     {
       icon: <Star className="h-5 w-5 text-primary" />,

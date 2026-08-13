@@ -7,7 +7,7 @@ export const jobService = {
     return res.data;
   },
 
-  async createJob(data: Record<string, unknown>): Promise<{ success: boolean; data: Job }> {
+  async createJob(data: Record<string, unknown>): Promise<{ success: boolean; data: { job: Job; payment?: any } }> {
     const res = await axiosInstance.post("/jobs", data);
     return res.data;
   },
@@ -74,6 +74,16 @@ export const jobService = {
 
   async getConsumerJobs(): Promise<{ success: boolean; data: Job[] }> {
     const res = await axiosInstance.get("/jobs/my");
+    return res.data;
+  },
+
+  async getMessages(id: string): Promise<{ success: boolean; data: any[] }> {
+    const res = await axiosInstance.get(`/jobs/${id}/chat`);
+    return res.data;
+  },
+
+  async sendMessage(id: string, content: string): Promise<{ success: boolean; data: any }> {
+    const res = await axiosInstance.post(`/jobs/${id}/chat`, { content });
     return res.data;
   }
 };

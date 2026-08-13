@@ -10,7 +10,8 @@ import {
   PlusCircle,
   History,
   User,
-  Briefcase
+  Briefcase,
+  Wallet
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -37,7 +38,7 @@ export function MobileNav() {
     { name: "Beranda", href: "/dashboard", icon: LayoutDashboard },
     { name: "Cari Job", href: "/dashboard/jobs/search", icon: Search },
     { name: "Pekerjaan", href: "/dashboard/jobs/assigned", icon: Briefcase },
-    { name: "Riwayat", href: "/dashboard/history", icon: History },
+    { name: "Keuangan", href: "/dashboard/payments", icon: Wallet },
     { name: "Akun", href: "/dashboard/account", icon: User },
   ];
 

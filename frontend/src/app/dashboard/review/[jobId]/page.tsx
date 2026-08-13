@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageContainer } from "@/components/dashboard/PageContainer";
@@ -15,8 +15,13 @@ import { Loader2, ArrowLeft, MessageSquareHeart } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
-export default function ReviewPage() {
-  const { jobId } = useParams();
+export default function ReviewPage({ params }: { params: Promise<{ jobId: string }> }) {
+  const { jobId } = React.use(params);
+  
+  if (jobId === "[object Object]") {
+    if (typeof window !== "undefined") window.location.href = "/dashboard";
+  }
+  
   const router = useRouter();
   const { role } = useAuthStore();
   
@@ -27,6 +32,7 @@ export default function ReviewPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    if (jobId === "[object Object]") return;
     const fetchJob = async () => {
       try {
         const { data } = await jobService.getJob(jobId as string);
@@ -52,7 +58,12 @@ export default function ReviewPage() {
     
     setSubmitting(true);
     try {
-      const targetId = role === "consumer" ? job?.partnerId : job?.consumerId;
+      const targetId = role === "consumer" 
+        ? (job?.partnerId || (job as any)?.partner_id || (job as any)?.partner?.id) 
+        : (job?.consumerId || (job as any)?.consumer_id || (job as any)?.consumer?.id);
+        
+      if (!targetId) throw new Error("Target pengguna tidak ditemukan");
+      
       await reviewService.submitReview(jobId as string, targetId as string, rating, comment);
       toast.success("Berhasil mengirimkan ulasan!");
       router.push(`/dashboard/history/${jobId}`);
@@ -76,7 +87,9 @@ export default function ReviewPage() {
 
   if (!job) return null;
 
-  const partnerName = role === "consumer" ? job.partnerName : job.consumerName;
+  const partnerName = role === "consumer" 
+    ? (job.partnerName || (job as any).partner?.name) 
+    : (job.consumerName || (job as any).consumer?.name);
 
   return (
     <DashboardLayout>

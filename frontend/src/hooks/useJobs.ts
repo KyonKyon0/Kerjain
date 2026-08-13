@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { jobService } from "@/services/job.service";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { paymentService } from "@/services/payment.service";
 
 export const useMyJobs = () => {
   return useQuery({
@@ -50,7 +51,7 @@ export const useJobDetail = (id: string) => {
       const res = await jobService.getJob(id);
       return res.data as any;
     },
-    enabled: !!id,
+    enabled: !!id && id !== "[object Object]" && id !== "%5Bobject%20Object%5D" && decodeURIComponent(id) !== "[object Object]",
   });
 };
 
@@ -61,7 +62,7 @@ export const useJobTimeline = (id: string) => {
       const res = await jobService.getTimeline(id);
       return res.data as any;
     },
-    enabled: !!id,
+    enabled: !!id && id !== "[object Object]" && id !== "%5Bobject%20Object%5D" && decodeURIComponent(id) !== "[object Object]",
   });
 };
 
@@ -71,10 +72,31 @@ export const useCreateJob = () => {
 
   return useMutation({
     mutationFn: (data: Record<string, unknown>) => jobService.createJob(data),
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      toast.success("Pekerjaan berhasil dipublikasikan!");
-      router.push(`/dashboard/jobs/${res.data.id}`);
+      
+      let jobId: string | null = null;
+      
+      // Extract from the exact structure we know the backend returns
+      if (res?.data?.job?.id && typeof res.data.job.id === "string") {
+        jobId = res.data.job.id;
+      }
+      
+      const payment = res?.data?.payment;
+      
+      if (!jobId || jobId === "[object Object]") {
+        console.error("Failed to parse valid jobId from response:", res);
+        toast.error("Gagal mendapatkan ID pekerjaan. Format respons tidak sesuai.");
+        return;
+      }
+      
+      if (payment && payment.method === 'QRIS') {
+        toast.success("Pekerjaan berhasil dipublikasikan! Silakan lakukan pembayaran.");
+        router.push(`/dashboard/payment/${jobId}`);
+      } else {
+        toast.success("Pekerjaan berhasil dipublikasikan!");
+        router.push(`/dashboard/jobs/${jobId}`);
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message || "Gagal membuat pekerjaan");
@@ -179,5 +201,28 @@ export const useUpdateJobStatus = () => {
       toast.success("Status berhasil diperbarui");
     },
     onError: (error: Error) => toast.error(error.message || "Gagal memperbarui status"),
+  });
+};
+
+export const useGetMessages = (id: string) => {
+  return useQuery({
+    queryKey: ["jobs", id, "chat"],
+    queryFn: async () => {
+      const res = await jobService.getMessages(id);
+      return res.data;
+    },
+    enabled: !!id && id !== "[object Object]" && id !== "%5Bobject%20Object%5D" && decodeURIComponent(id) !== "[object Object]",
+    refetchInterval: 3000,
+  });
+};
+
+export const useSendMessage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, content }: { id: string; content: string }) => jobService.sendMessage(id, content),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["jobs", variables.id, "chat"] });
+    },
+    onError: (error: Error) => toast.error(error.message || "Gagal mengirim pesan"),
   });
 };

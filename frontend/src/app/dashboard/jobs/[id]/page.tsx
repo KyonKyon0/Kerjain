@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageContainer } from "@/components/dashboard/PageContainer";
@@ -15,14 +15,21 @@ import { AcceptDialog } from "@/components/jobs/AcceptDialog";
 import { CompletionDialog } from "@/components/jobs/CompletionDialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
 
 import { ArrowLeft, Tag, Wallet, Clock, UserCircle2, CheckCircle2, MessageSquare, Phone, Camera, AlertCircle, Upload, Navigation, Wrench, ShieldCheck, Zap, Search, Briefcase, Star } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export default function JobDetailPage() {
-  const { id } = useParams();
+export default function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
+  
+  if (id === "[object Object]" || id === "%5Bobject%20Object%5D" || decodeURIComponent(id) === "[object Object]") {
+    if (typeof window !== "undefined") window.location.href = "/dashboard";
+    return null;
+  }
+  
   const router = useRouter();
   const [isAcceptOpen, setIsAcceptOpen] = useState(false);
   const [isCompletionOpen, setIsCompletionOpen] = useState(false);
@@ -39,6 +46,7 @@ export default function JobDetailPage() {
   const createPayment = useCreatePayment();
 
   const [note, setNote] = useState("");
+  const [sliderValue, setSliderValue] = useState(0);
 
   const handleAccept = async () => {
     await acceptJob.mutateAsync(id as string);
@@ -57,14 +65,14 @@ export default function JobDetailPage() {
   };
 
   const handleComplete = async () => {
-    if (job?.rewardAmount && job.rewardType === "FIXED") {
-      await createPayment.mutateAsync({ jobId: id as string, amount: job.rewardAmount });
-    } else {
-      await createPayment.mutateAsync({ jobId: id as string, amount: 0 });
-    }
+    // For CASH, we don't create a system payment, just mark the job as completed.
+    // For QRIS, the payment was already handled in advance.
+    
     await confirmJob.mutateAsync(id as string);
     setIsCompletionOpen(false);
-    router.push(`/dashboard/payment/${id}`);
+    
+    // Both QRIS and CASH go directly to review after completion
+    router.push(`/dashboard/review/${id}`);
   };
 
   if (loading) {
@@ -85,6 +93,9 @@ export default function JobDetailPage() {
   if (!job) return null;
 
   const logs: JobProgress[] = (timelineData as unknown as JobProgress[]) || [];
+  const recentLogs = logs.slice(-3);
+  
+  const paymentMethod = job.payments?.[0]?.method || "CASH";
 
   return (
     <DashboardLayout>
@@ -104,7 +115,7 @@ export default function JobDetailPage() {
               <StatusBadge status={job.status} />
               <span className="text-xs font-semibold text-muted-foreground bg-muted/50 px-2 py-1 rounded-md flex items-center">
                 <Clock className="w-3 h-3 mr-1" />
-                {new Date(job.createdAt).toLocaleString("id-ID")}
+                {new Date(job.createdAt || (job as any).created_at).toLocaleString("id-ID")}
               </span>
             </div>
             <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight">{job.title}</h1>
@@ -129,15 +140,43 @@ export default function JobDetailPage() {
                 {/* Riwayat Progres */}
                 {logs.length > 0 && (
                   <div className="mt-8 border-t border-border pt-6">
-                    <h4 className="font-bold text-sm text-foreground mb-4">Riwayat Progres Terbaru</h4>
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="font-bold text-sm text-foreground">Riwayat Progres Terbaru</h4>
+                      {logs.length > 3 && (
+                        <Dialog>
+                          <DialogTrigger render={<Button variant="ghost" size="sm" className="text-xs h-7 text-primary hover:text-primary" />}>
+                            Lihat Semua ({logs.length})
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>Semua Riwayat Progres</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 mt-4">
+                              {logs.map((log) => (
+                                <div key={log.id} className="flex gap-4 items-start">
+                                  <div className="w-3 h-3 mt-1.5 rounded-full bg-primary shrink-0 shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+                                  <div className="flex-1 bg-muted/20 border border-border/50 rounded-2xl p-4">
+                                    <div className="flex justify-between items-center mb-2">
+                                      <span className="text-sm font-bold text-primary">{log.statusSnapshot || (log as any).status_snapshot}</span>
+                                      <span className="text-xs font-medium text-muted-foreground">{new Date(log.createdAt || (log as any).created_at).toLocaleString("id-ID")}</span>
+                                    </div>
+                                    {log.note && <p className="text-sm text-foreground/80">{log.note}</p>}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                    </div>
                     <div className="space-y-4">
-                      {logs.map((log) => (
+                      {recentLogs.map((log) => (
                         <div key={log.id} className="flex gap-4 items-start">
                           <div className="w-3 h-3 mt-1.5 rounded-full bg-primary shrink-0 shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
                           <div className="flex-1 bg-muted/20 border border-border/50 rounded-2xl p-4">
                             <div className="flex justify-between items-center mb-2">
-                              <span className="text-sm font-bold text-primary">{log.statusSnapshot}</span>
-                              <span className="text-xs font-medium text-muted-foreground">{new Date(log.createdAt).toLocaleString("id-ID")}</span>
+                              <span className="text-sm font-bold text-primary">{log.statusSnapshot || (log as any).status_snapshot}</span>
+                              <span className="text-xs font-medium text-muted-foreground">{new Date(log.createdAt || (log as any).created_at).toLocaleString("id-ID")}</span>
                             </div>
                             {log.note && <p className="text-sm text-foreground/80">{log.note}</p>}
                           </div>
@@ -154,20 +193,23 @@ export default function JobDetailPage() {
                 <h3 className="font-bold text-lg mb-4">Detail Pekerjaan</h3>
                 <p className="text-foreground/80 whitespace-pre-wrap leading-relaxed">{job.description}</p>
                 
-                <div className="mt-6 pt-6 border-t border-border flex flex-wrap gap-4">
-                  <div className="bg-muted/30 border rounded-2xl p-4 flex-1 min-w-[140px]">
+                <div className="mt-6 pt-6 border-t border-border grid grid-cols-2 gap-3">
+                  <div className="bg-muted/30 border rounded-2xl p-3 sm:p-4">
                     <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-2">Kategori</p>
                     <div className="flex items-center gap-2">
-                      <div className="p-2 bg-primary/10 text-primary rounded-xl"><Tag className="w-5 h-5" /></div>
-                      <span className="font-bold text-sm">{job.category}</span>
+                      <div className="p-1.5 sm:p-2 bg-primary/10 text-primary rounded-xl shrink-0"><Tag className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                      <span className="font-bold text-xs sm:text-sm truncate">{job.category}</span>
                     </div>
                   </div>
-                  <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 flex-1 min-w-[140px]">
+                  <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-3 sm:p-4">
                     <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70 font-bold uppercase tracking-wider mb-2">Imbalan</p>
                     <div className="flex items-center gap-2">
-                      <div className="p-2 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl"><Wallet className="w-5 h-5" /></div>
-                      <span className="font-bold text-lg text-emerald-700 dark:text-emerald-400">
-                        {job.rewardType === "FIXED" ? `Rp ${job.rewardAmount?.toLocaleString("id-ID")}` : "Seikhlasnya"}
+                      <div className="p-1.5 sm:p-2 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl shrink-0"><Wallet className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                      <span className="font-bold text-sm sm:text-lg text-emerald-700 dark:text-emerald-400 truncate">
+                        {(() => {
+                          const actualReward = job.rewardAmount ?? (job as any).reward_amount;
+                          return actualReward ? `Rp ${actualReward.toLocaleString("id-ID")}` : "Rp 0";
+                        })()}
                       </span>
                     </div>
                   </div>
@@ -200,24 +242,41 @@ export default function JobDetailPage() {
                   <div className="flex flex-col gap-5">
                     <div className="flex items-center gap-4 bg-white/10 p-4 rounded-2xl backdrop-blur-sm">
                       <Avatar className="w-14 h-14 border-2 border-white/50">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/notionists/svg?seed=${role === "consumer" ? job.partnerName : job.consumerName}`} />
-                        <AvatarFallback>{(role === "consumer" ? job.partnerName : job.consumerName)?.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={`https://api.dicebear.com/7.x/notionists/svg?seed=${role === "consumer" ? (job.partnerName || job.partner?.name) : (job.consumerName || job.consumer?.name)}`} />
+                        <AvatarFallback>{(role === "consumer" ? (job.partnerName || job.partner?.name) : (job.consumerName || job.consumer?.name))?.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="text-left">
                         <p className="text-[10px] uppercase font-bold tracking-wider opacity-80 mb-1">
                           {role === "consumer" ? "Mitra yang menangani" : "Pemilik Pekerjaan"}
                         </p>
-                        <p className="font-bold text-lg">{role === "consumer" ? job.partnerName : job.consumerName}</p>
+                        <p className="font-bold text-lg">{role === "consumer" ? (job.partnerName || job.partner?.name || "Menunggu...") : (job.consumerName || job.consumer?.name || "Pemilik")}</p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button variant="secondary" className="w-full bg-white text-primary hover:bg-white/90 rounded-xl font-bold h-12">
-                        <MessageSquare className="w-5 h-5 mr-2" /> Chat
-                      </Button>
-                      <Button variant="secondary" className="w-full bg-white/20 hover:bg-white/30 text-white border-0 rounded-xl font-bold h-12">
-                        <Phone className="w-5 h-5 mr-2" /> Telepon
-                      </Button>
-                    </div>
+                    {(() => {
+                      const targetPhone = role === "consumer" ? (job.partnerPhone || job.partner?.phone) : (job.consumerPhone || job.consumer?.phone);
+                      return (
+                        <div className="grid grid-cols-2 gap-3">
+                          <Button 
+                            variant="secondary" 
+                            className="w-full bg-white text-primary hover:bg-white/90 rounded-xl font-bold h-12"
+                            onClick={() => router.push(`/dashboard/chat/${id}`)}
+                          >
+                            <MessageSquare className="w-5 h-5 mr-2" /> Chat
+                          </Button>
+                          <Button 
+                            variant="secondary" 
+                            className="w-full bg-white/20 hover:bg-white/30 text-white border-0 rounded-xl font-bold h-12"
+                            onClick={() => {
+                              if (targetPhone) {
+                                window.location.href = `tel:${targetPhone}`;
+                              }
+                            }}
+                          >
+                            <Phone className="w-5 h-5 mr-2" /> Telepon
+                          </Button>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </DashboardCard>
@@ -296,9 +355,36 @@ export default function JobDetailPage() {
                   </h3>
                   <p className="text-sm text-emerald-800/80 dark:text-emerald-400/80 mb-6 font-medium">Mitra menyatakan pekerjaan telah selesai. Silakan periksa hasil kerja mitra.</p>
                   <div className="flex flex-col gap-3">
-                    <Button className="w-full rounded-2xl shadow-lg shadow-emerald-600/20 bg-emerald-600 hover:bg-emerald-700 text-white h-14 text-base font-bold" onClick={() => setIsCompletionOpen(true)}>
-                      Konfirmasi & Bayar
-                    </Button>
+                    <div className="relative w-full h-14 bg-emerald-100 dark:bg-emerald-900/50 rounded-2xl overflow-hidden shadow-inner border border-emerald-200 dark:border-emerald-800">
+                      <div className="absolute inset-0 flex items-center justify-center font-bold text-emerald-700 dark:text-emerald-300 pointer-events-none z-10 text-sm">
+                        {sliderValue > 0 ? "Lepaskan untuk konfirmasi..." : (paymentMethod === "QRIS" ? "Geser Kanan Untuk Melepas Dana ➔" : "Geser Kanan Jika Sudah Dibayar ➔")}
+                      </div>
+                      <div 
+                        className="absolute top-0 left-0 h-full bg-emerald-500 transition-all duration-75 flex items-center justify-end pr-4"
+                        style={{ width: `${Math.max(sliderValue, 15)}%` }}
+                      >
+                         <div className="w-10 h-10 bg-white rounded-xl shadow-md flex items-center justify-center -mr-2">
+                           <ArrowLeft className="w-5 h-5 text-emerald-600 rotate-180" />
+                         </div>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="0" max="100" 
+                        value={sliderValue}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          setSliderValue(val);
+                          if (val >= 98 && !createPayment.isPending) {
+                            setSliderValue(100);
+                            handleComplete();
+                          }
+                        }}
+                        onMouseUp={() => { if (sliderValue < 98) setSliderValue(0); }}
+                        onTouchEnd={() => { if (sliderValue < 98) setSliderValue(0); }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                        disabled={createPayment.isPending || confirmJob.isPending}
+                      />
+                    </div>
                     <Button variant="outline" className="w-full rounded-2xl h-14 text-base font-bold" onClick={() => updateStatus.mutate({ id: id as string, status: "WORKING" })} disabled={updateStatus.isPending}>
                       Minta Revisi
                     </Button>

@@ -20,7 +20,7 @@ export async function searchAddress(text: string): Promise<LocationIQFeature[]> 
 
   try {
     const res = await fetch(url, { method: "GET", redirect: "follow" });
-    if (!res.ok) throw new Error(`LocationIQ error: ${res.statusText}`);
+    if (!res.ok) return [];
     const data = await res.json();
     return data.map((item: any) => ({
       lat: parseFloat(item.lat),
@@ -46,7 +46,7 @@ export async function reverseGeocode(lat: number, lon: number): Promise<Location
 
   try {
     const res = await fetch(url, { method: "GET", redirect: "follow" });
-    if (!res.ok) throw new Error(`LocationIQ error: ${res.statusText}`);
+    if (!res.ok) return null;
     const item = await res.json();
     return {
       lat: parseFloat(item.lat),
@@ -73,7 +73,7 @@ export async function autocompleteAddress(query: string, limit = 5): Promise<Loc
 
   try {
     const res = await fetch(url, { method: "GET", redirect: "follow" });
-    if (!res.ok) throw new Error(`LocationIQ error: ${res.statusText}`);
+    if (!res.ok) return [];
     const data = await res.json();
     return data.map((item: any) => ({
       lat: parseFloat(item.lat),
@@ -140,7 +140,7 @@ export async function getDirections(lat1: number, lon1: number, lat2: number, lo
   
   try {
     const res = await fetch(url, { method: "GET", redirect: "follow" });
-    if (!res.ok) throw new Error(`LocationIQ Directions error: ${res.statusText}`);
+    if (!res.ok) return null;
     const data = await res.json();
     
     if (data.routes && data.routes.length > 0) {

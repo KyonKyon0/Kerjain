@@ -90,14 +90,16 @@ export default function PaymentsPage() {
                   
                   <div className="flex flex-col gap-2">
                     <Dialog open={isWithdrawOpen} onOpenChange={setIsWithdrawOpen}>
-                      <DialogTrigger asChild>
-                        <Button 
-                          className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold rounded-2xl h-14 px-8 text-base shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-                          disabled={!data.canWithdraw}
-                        >
-                          <ArrowUpCircle className="w-5 h-5 mr-2" />
-                          Tarik Dana
-                        </Button>
+                      <DialogTrigger 
+                        render={
+                          <Button 
+                            className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold rounded-2xl h-14 px-8 text-base shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                            disabled={!data.canWithdraw}
+                          />
+                        }
+                      >
+                        <ArrowUpCircle className="w-5 h-5 mr-2" />
+                        Tarik Dana
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-md">
                         <DialogHeader>

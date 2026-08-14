@@ -2,9 +2,12 @@
   "name": "kerjain-monorepo",
   "version": "1.0.0",
   "description": "Unified runner for Kerjain Frontend & Backend",
+  "workspaces": [
+    "frontend"
+  ],
   "scripts": {
-    "dev": "cd frontend && npm run dev",
-    "build": "cd frontend && npm run build"
+    "dev": "npm --workspace=frontend run dev",
+    "build": "npm --workspace=frontend run build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

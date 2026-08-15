@@ -280,9 +280,10 @@ export default function AccountPage() {
               <LogOut className="w-5 h-5 mr-2" />
               Keluar dari Akun
             </Button>
-            <p className="text-center text-xs text-muted-foreground mt-4">
-              Kerjain App v1.0.0 • Supabase Connected
+            <p className="text-center text-xs text-muted-foreground mt-4 font-medium">
+              Kerjain App vv2.2026.08.15.19.35 • Supabase Connected
             </p>
+
           </div>
         </div>
       </PageContainer>

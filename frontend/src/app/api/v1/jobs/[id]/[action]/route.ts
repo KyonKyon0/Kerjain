@@ -36,6 +36,18 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
           data: { partner_id: user.id }
         });
 
+        // Add progress log for accepted
+        try {
+          await prisma.jobProgress.create({
+            data: {
+              job_id: id,
+              status_snapshot: 'ACCEPTED',
+              note: `Pekerjaan diambil oleh mitra ${user.name}`,
+              created_at: new Date()
+            }
+          });
+        } catch {}
+
         // Notify Consumer
         try {
           await prisma.notifications.create({
@@ -57,6 +69,17 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
           where: { id },
           data: { status: 'WORKING' }
         });
+
+        try {
+          await prisma.jobProgress.create({
+            data: {
+              job_id: id,
+              status_snapshot: 'WORKING',
+              note: `Mitra telah mulai mengerjakan tugas`,
+              created_at: new Date()
+            }
+          });
+        } catch {}
 
         // Notify Consumer
         try {
@@ -80,6 +103,17 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
           data: { status: 'WAITING_CONFIRMATION' }
         });
 
+        try {
+          await prisma.jobProgress.create({
+            data: {
+              job_id: id,
+              status_snapshot: 'WAITING_CONFIRMATION',
+              note: `Mitra telah menyelesaikan pekerjaan dan menunggu konfirmasi`,
+              created_at: new Date()
+            }
+          });
+        } catch {}
+
         // Notify Consumer
         try {
           await prisma.notifications.create({
@@ -101,6 +135,17 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
           where: { id },
           data: { status: 'COMPLETED' }
         });
+
+        try {
+          await prisma.jobProgress.create({
+            data: {
+              job_id: id,
+              status_snapshot: 'COMPLETED',
+              note: `Pekerjaan telah dikonfirmasi selesai oleh konsumen`,
+              created_at: new Date()
+            }
+          });
+        } catch {}
         
         // Release funds if QRIS and SUCCESS
         const confirmPayment = await prisma.payment.findFirst({ where: { job_id: id } });
@@ -135,6 +180,17 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
           where: { id },
           data: { status: 'WORKING' }
         });
+
+        try {
+          await prisma.jobProgress.create({
+            data: {
+              job_id: id,
+              status_snapshot: 'REVISION_REQUESTED',
+              note: `Konsumen meminta penyesuaian/revisi pekerjaan`,
+              created_at: new Date()
+            }
+          });
+        } catch {}
 
         if (job.partner_id) {
           try {
@@ -212,7 +268,6 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
           }
         }
 
-
         // Notify Consumer on progress update
         try {
           await prisma.notifications.create({
@@ -233,7 +288,27 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
         return NextResponse.json({ detail: 'Action not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, message: `Action ${action} successful`, data: updatedJob });
+    const freshJob: any = await prisma.job.findUnique({
+      where: { id },
+      include: {
+        consumer: { select: { id: true, name: true, phone: true } },
+        partner: { select: { id: true, name: true, phone: true } },
+        progress_logs: { orderBy: { created_at: 'asc' } },
+        payments: { orderBy: { created_at: 'desc' }, take: 1 }
+      }
+    });
+
+    const mappedJob = freshJob ? {
+      ...freshJob,
+      photoUrl: freshJob.photo_url || null,
+      rewardAmount: freshJob.reward_amount ? Number(freshJob.reward_amount) : 0,
+      consumerName: freshJob.consumer?.name || '',
+      consumerPhone: freshJob.consumer?.phone || '',
+      partnerName: freshJob.partner?.name || '',
+      partnerPhone: freshJob.partner?.phone || ''
+    } : updatedJob;
+
+    return NextResponse.json({ success: true, message: `Action ${action} successful`, data: mappedJob });
   } catch (error: any) {
     return NextResponse.json({ message: error.message, detail: error.message }, { status: 500 });
   }

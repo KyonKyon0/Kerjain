@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
 interface JobTimelineProps {
-  status: "PUBLISHED" | "ACCEPTED" | "ON_THE_WAY" | "WORKING" | "WAITING_CONFIRMATION" | "COMPLETED" | "CANCELLED";
+  status: "WAITING_PAYMENT" | "PUBLISHED" | "ACCEPTED" | "ON_THE_WAY" | "WORKING" | "WAITING_CONFIRMATION" | "COMPLETED" | "CANCELLED" | string;
 }
 
 export function JobTimeline({ status }: JobTimelineProps) {
@@ -18,6 +18,20 @@ export function JobTimeline({ status }: JobTimelineProps) {
     { key: "WAITING_CONFIRMATION", label: "Pengecekan", icon: ShieldCheck },
     { key: "COMPLETED", label: "Selesai", icon: Check },
   ];
+
+  if (status === "WAITING_PAYMENT") {
+    return (
+      <div className="flex items-center gap-3.5 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-900 dark:text-amber-300 shadow-sm">
+        <Clock className="w-6 h-6 shrink-0 text-amber-600 dark:text-amber-400 animate-pulse" />
+        <div>
+          <p className="font-extrabold text-sm">Menunggu Pembayaran QRIS</p>
+          <p className="text-xs mt-0.5 opacity-90 leading-relaxed">
+            Pekerjaan belum dipublikasikan. Selesaikan pembayaran QRIS agar pekerjaan otomatis aktif dan dapat diambil oleh mitra di sekitar.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   let currentIndex = 0;
   if (status === "ACCEPTED") currentIndex = 1;
@@ -37,6 +51,7 @@ export function JobTimeline({ status }: JobTimelineProps) {
       </div>
     );
   }
+
 
   const progressPercent = (currentIndex / (steps.length - 1)) * 100;
 

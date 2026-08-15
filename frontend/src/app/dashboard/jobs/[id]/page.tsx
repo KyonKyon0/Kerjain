@@ -48,8 +48,11 @@ import {
   Star, 
   MapPin,
   X,
-  ImageIcon
+  ImageIcon,
+  QrCode
 } from "lucide-react";
+
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuthStore } from "@/store/auth.store";
 import { toast } from "sonner";
@@ -313,7 +316,15 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
               <DashboardCard className="bg-primary text-primary-foreground relative overflow-hidden text-center p-6 shadow-md">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
                 
-                {job.status === "PUBLISHED" ? (
+                {job.status === "WAITING_PAYMENT" ? (
+                  <div>
+                    <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4 border border-white/30">
+                      <QrCode className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="font-extrabold text-lg mb-1">Menunggu Pembayaran</h3>
+                    <p className="text-xs text-white/80">Selesaikan pembayaran QRIS agar pekerjaan ini diterbitkan ke mitra.</p>
+                  </div>
+                ) : job.status === "PUBLISHED" ? (
                   <div>
                     <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4 border border-white/30">
                       <UserCircle2 className="w-8 h-8 text-white" />
@@ -368,6 +379,44 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                 )}
               </DashboardCard>
             </motion.div>
+
+            {/* ACTION PANEL CONSUMER (WAITING_PAYMENT -> Selesaikan Pembayaran) */}
+            {role === "consumer" && job.status === "WAITING_PAYMENT" && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                <DashboardCard className="border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 shadow-md space-y-3">
+                  <div className="bg-amber-500/20 w-12 h-12 rounded-2xl flex items-center justify-center mb-1 text-amber-600 dark:text-amber-400">
+                    <Clock className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <h3 className="font-extrabold text-lg text-amber-900 dark:text-amber-300">
+                    Menunggu Pembayaran QRIS
+                  </h3>
+                  <p className="text-xs text-amber-800/80 dark:text-amber-400/80 leading-relaxed font-medium">
+                    Selesaikan pembayaran QRIS Anda agar pekerjaan otomatis aktif dan diterbitkan ke mitra di sekitar.
+                  </p>
+                  
+                  <div className="flex flex-col gap-2.5 pt-2">
+                    <Button 
+                      className="w-full rounded-2xl h-14 text-sm font-extrabold shadow-md bg-primary hover:bg-emerald-600 text-white"
+                      onClick={() => router.push(`/dashboard/payment/${id}`)}
+                    >
+                      <QrCode className="w-5 h-5 mr-2" /> Bayar Sekarang
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full rounded-2xl h-11 text-xs font-bold text-destructive hover:bg-destructive/10 border-destructive/30"
+                      onClick={() => {
+                        cancelJob.mutate(id as string);
+                        router.push("/dashboard");
+                      }}
+                      disabled={cancelJob.isPending}
+                    >
+                      Batalkan Pekerjaan
+                    </Button>
+                  </div>
+                </DashboardCard>
+              </motion.div>
+            )}
+
 
             {/* ACTION PANEL PARTNER (PUBLISHED -> SlideToConfirm Terima Pekerjaan) */}
             {role === "partner" && job.status === "PUBLISHED" && (

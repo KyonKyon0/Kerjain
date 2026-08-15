@@ -7,10 +7,6 @@ export async function GET(request: Request) {
     const user = await getCurrentUser(request);
     if (!user) return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
 
-    try {
-      await prisma.$executeRawUnsafe(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS photo_url TEXT;`);
-    } catch {}
-
     const { searchParams } = new URL(request.url);
     const keyword = searchParams.get('keyword');
     const category = searchParams.get('category');
@@ -65,10 +61,6 @@ export async function POST(request: Request) {
   try {
     const user = await getCurrentUser(request);
     if (!user || user.role !== 'consumer') return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
-
-    try {
-      await prisma.$executeRawUnsafe(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS photo_url TEXT;`);
-    } catch {}
 
     const body = await request.json();
     const paymentMethod = body.paymentMethod || 'CASH';

@@ -7,11 +7,6 @@ export async function GET(request: Request) {
     const user = await getCurrentUser(request);
     if (!user) return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
 
-    try {
-      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`);
-      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(20);`);
-    } catch {}
-
     // Fetch user details safely with raw query fallback if Prisma Client DMMF is caching old fields
     let fullUser: any = null;
     try {
@@ -145,11 +140,6 @@ export async function PUT(request: Request) {
 
     const body = await request.json();
     const { name, phone, address, avatar_url, gender } = body;
-
-    try {
-      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`);
-      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(20);`);
-    } catch {}
 
     // Execute update with raw query fallback
     try {

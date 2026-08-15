@@ -8,10 +8,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const user = await getCurrentUser(request);
     if (!user) return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
 
-    try {
-      await prisma.$executeRawUnsafe(`ALTER TABLE jobs ADD COLUMN IF NOT EXISTS photo_url TEXT;`);
-    } catch {}
-
     const job: any = await prisma.job.findUnique({
       where: { id: resolvedParams.id },
       include: {

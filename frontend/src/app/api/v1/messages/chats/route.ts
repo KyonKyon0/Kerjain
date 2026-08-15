@@ -28,41 +28,49 @@ export async function GET(request: Request) {
 
     // Filter jobs: include jobs that either have messages OR have an assigned partner
     const activeChatJobs = jobs.filter(j => j.messages.length > 0 || j.partner_id !== null)
+    const activeJobIds = activeChatJobs.map(j => j.id)
 
-    // Calculate unread messages and format chat items
-    const chatItems = await Promise.all(
-      activeChatJobs.map(async (job) => {
-        const isConsumer = user.id === job.consumer_id
-        const partnerInfo = isConsumer ? job.partner : job.consumer
-        const partnerName = partnerInfo?.name || (isConsumer ? 'Menunggu Mitra...' : 'Konsumen')
-        const partnerPhone = partnerInfo?.phone || null
-
-        // Count unread messages sent by the other party
-        const unreadCount = await prisma.message.count({
-          where: {
-            jobId: job.id,
-            senderId: { not: user.id },
-            read: false
-          }
-        })
-
-        const lastMessage = job.messages[0]
-        const lastMessageText = lastMessage?.content || (job.partner_id ? 'Pekerjaan telah disepakati. Mulai koordinasi!' : 'Menunggu mitra mengambil pekerjaan...')
-        const lastMessageTime = lastMessage?.createdAt ? lastMessage.createdAt.toISOString() : job.updated_at.toISOString()
-
-        return {
-          jobId: job.id,
-          jobTitle: job.title,
-          jobStatus: job.status,
-          partnerName,
-          partnerPhone,
-          partnerId: partnerInfo?.id || null,
-          lastMessage: lastMessageText,
-          lastMessageTime,
-          unreadCount
+    // Batch count unread messages in a single query to eliminate N+1 DB connections
+    let unreadMap = new Map<string, number>()
+    if (activeJobIds.length > 0) {
+      const unreadGroups = await prisma.message.groupBy({
+        by: ['jobId'],
+        where: {
+          jobId: { in: activeJobIds },
+          senderId: { not: user.id },
+          read: false
+        },
+        _count: {
+          _all: true
         }
       })
-    )
+      unreadMap = new Map(unreadGroups.map(g => [g.jobId, g._count._all]))
+    }
+
+    // Format chat items synchronously
+    const chatItems = activeChatJobs.map((job) => {
+      const isConsumer = user.id === job.consumer_id
+      const partnerInfo = isConsumer ? job.partner : job.consumer
+      const partnerName = partnerInfo?.name || (isConsumer ? 'Menunggu Mitra...' : 'Konsumen')
+      const partnerPhone = partnerInfo?.phone || null
+      const unreadCount = unreadMap.get(job.id) || 0
+
+      const lastMessage = job.messages[0]
+      const lastMessageText = lastMessage?.content || (job.partner_id ? 'Pekerjaan telah disepakati. Mulai koordinasi!' : 'Menunggu mitra mengambil pekerjaan...')
+      const lastMessageTime = lastMessage?.createdAt ? lastMessage.createdAt.toISOString() : job.updated_at.toISOString()
+
+      return {
+        jobId: job.id,
+        jobTitle: job.title,
+        jobStatus: job.status,
+        partnerName,
+        partnerPhone,
+        partnerId: partnerInfo?.id || null,
+        lastMessage: lastMessageText,
+        lastMessageTime,
+        unreadCount
+      }
+    })
 
     // Sort chats by latest message time
     chatItems.sort((a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime())

@@ -179,11 +179,6 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
           });
         }
 
-        try {
-          await prisma.$executeRawUnsafe(`ALTER TABLE job_progress_logs ADD COLUMN IF NOT EXISTS photo_url TEXT;`);
-          await prisma.$executeRawUnsafe(`UPDATE job_progress_logs SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL;`);
-        } catch {}
-
         let progress: any;
         const progressPhoto = body.photoUrl || body.photo_url || null;
         try {

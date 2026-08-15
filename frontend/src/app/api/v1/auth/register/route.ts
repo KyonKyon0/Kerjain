@@ -15,11 +15,6 @@ export async function POST(request: Request) {
 
     phone = phone.trim();
 
-    try {
-      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(20);`);
-      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`);
-    } catch {}
-
     const hashedPassword = await hashPassword(password);
     let user: any;
 

@@ -80,7 +80,7 @@ export function JobCard({ job, onClick, showDistance }: JobCardProps) {
           </div>
         </div>
         
-        {job.status !== "PUBLISHED" && job.status !== "CANCELLED" && (
+        {job.status !== "PUBLISHED" && job.status !== "CANCELLED" && job.status !== "WAITING_PAYMENT" && (
           <div className="px-5 py-3.5 bg-primary/5 border-t border-primary/10">
             <div className="flex justify-between items-center mb-1.5">
               <span className="text-xs font-semibold text-primary">Progress Pekerjaan</span>
@@ -107,8 +107,9 @@ function getProgressPercentage(status: string) {
     case "WORKING":
     case "IN_PROGRESS": return 70;
     case "WAITING_CONFIRMATION": return 85;
-    case "WAITING_PAYMENT": return 95;
+    case "WAITING_PAYMENT": return 0;
     case "COMPLETED": return 100;
     default: return 0;
   }
 }
+

@@ -158,14 +158,23 @@ export default function ChatRoomPage({ params }: { params: Promise<{ jobId: stri
     : (job.consumer?.phone || job.consumerPhone || (job as any).consumer_phone);
   const isJobActive = !["COMPLETED", "CANCELLED"].includes(job.status);
 
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/dashboard/chat");
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-muted/10 min-h-[calc(100vh-4rem)] relative">
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10 shadow-sm">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.push(`/dashboard/jobs/${job.id}`)} className="shrink-0 -ml-2 rounded-full hover:bg-muted">
+          <Button variant="ghost" size="icon" onClick={handleBack} className="shrink-0 -ml-2 rounded-full hover:bg-muted">
             <ArrowLeft className="w-6 h-6" />
           </Button>
+
           <Avatar className="w-10 h-10 border">
             <AvatarImage src={`https://api.dicebear.com/7.x/notionists/svg?seed=${targetName}`} />
             <AvatarFallback>{targetName?.charAt(0) || "U"}</AvatarFallback>

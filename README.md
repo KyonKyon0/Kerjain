@@ -1,107 +1,198 @@
-# 🚀 Kerjain - Fullstack Local Service Marketplace
+# ⚡ Kerjain - Modern Hyperlocal Service Marketplace Platform
 
-**Kerjain** adalah platform marketplace jasa lokal yang menghubungkan konsumen (Penerbit) dengan pekerja (Mitra) di sekitarnya. Proyek ini dibangun sebagai aplikasi full-stack monolitik menggunakan Next.js (App Router) dan Prisma ORM dengan database PostgreSQL.
+<div align="center">
+
+![Next.js](https://img.shields.io/badge/Next.js%2016-Turbopack-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React%2019-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript%205-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS%204-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma%207-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL%20/%20Supabase-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white)
+
+**Platform marketplace jasa dan bantuan mikro lokal terpercaya yang menghubungkan Konsumen dengan Mitra kerja terdekat secara instan, aman, dan transparan.**
+
+</div>
 
 ---
 
-## 🛠️ Tech Stack
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS, Framer Motion
-- **State Management**: Zustand, React Query
-- **Database & ORM**: PostgreSQL, Prisma ORM
-- **UI Components**: Radix UI / Base UI / Lucide React
+## 📖 Ringkasan Proyek
+
+**Kerjain** adalah platform ekonomi sirkular dan pasar jasa on-demand yang dirancang untuk membantu masyarakat menyelesaikan berbagai kebutuhan sehari-hari (seperti pertukangan, kebersihan, angkat barang, kurir mikro, hingga reparasi) melalui tenaga mitra kerja lokal terverifikasi.
+
+Aplikasi ini dibangun menggunakan arsitektur monorepo modern berbasis **Next.js 16 (App Router & Serverless API)**, **Prisma ORM**, dan **Supabase / PostgreSQL**, dengan estetika antarmuka *Liquid Glassmorphism* yang responsif dan performa animasi 60fps (*Framer Motion*).
 
 ---
 
-## 📁 Folder Structure
+## ✨ Fitur Utama
+
+### 🛍️ Sisi Konsumen (Pencari Bantuan)
+- **Posting Pekerjaan Cepat**: Formulir bertahap (5 langkah) dengan kompresi foto otomatis di sisi klien (HTML5 Canvas JPEG) sebelum diunggah ke database.
+- **Deteksi Lokasi GPS & Jarak**: Integrasi geocoding & reverse geocoding via Geoapify API untuk menghitung jarak presisi antara pemosting dan mitra.
+- **Sistem Pembayaran Escrow (Rekber)**: Dana tersimpan aman dan baru dicairkan ke saldo mitra setelah pekerjaan dikonfirmasi selesai.
+- **Pemantauan Progres Real-Time**: Galeri progres foto langsung dari lapangan dan slider konfirmasi penyelesaian (*Swipe to Confirm*).
+- **Penilaian & Review**: Sistem ulasan transparan untuk menjaga kualitas komunitas.
+
+### 🛵 Sisi Mitra Kerja (Pemberi Bantuan)
+- **Tombol Radar Zap Energy**: Toggle status online/offline dengan animasi pengumpulan energi partikel saat mengaktifkan radar order.
+- **Filter & Radar Job Terdekat**: Menampilkan pekerjaan publik di sekitar dengan estimasi waktu, imbalan, dan jarak aktual.
+- **Update Progres & Upload Foto**: Mitra dapat mengirimkan foto bukti tahapan kerja langsung ke galeri timeline pekerjaan.
+- **Dompet & Pencairan Otomatis**: Akumulasi saldo imbalan dari pekerjaan selesai dengan mekanisme penahanan keamanan 7 hari (*hold period*) sebelum ditarik ke rekening bank.
+
+### 💬 Komunikasi & Notifikasi
+- **Live In-App Chat**: Pertukaran pesan real-time antar pengguna dengan penanda status terbaca (*read status*).
+- **Sinkronisasi Lonceng Notifikasi**: Polling otomatis dan *instant query invalidation* saat terjadi penerimaan job, pembaruan status, pesan baru, atau pencairan dana.
+
+### 👤 Profil & Autentikasi
+- **Selektor Peran & Gender**: Tombol peran berdampingan (Konsumen / Mitra) dan selektor jenis kelamin (Wanita / Pria) yang terintegrasi langsung saat registrasi dan profil.
+- **Koleksi Avatar Karakter**: Generator avatar ilustrasi dinamis yang menyesuaikan preferensi gender pengguna.
+- **Pemulihan Kata Sandi (OTP)**: Pengiriman kode OTP 6-digit instan via integrasi Resend Email API dengan template HTML gelap premium.
+
+### 📱 Navigasi Dock Mobile Modern
+- **Bilah Navigasi Kaca Mengambang (*Floating Liquid Glass Dock*)**: 5 kolom simetris dengan indikator kaca aktif *spring physics* yang presisi di tengah.
+- **Aksen Kurung Lengkung Kontras `( )`**: Tombol aksi utama **Buat** diapit kurung lengkung bercahaya hijau emerald yang membentang dari atas hingga bawah kartu.
+
+---
+
+## 🏗️ Struktur Direktori
+
 ```text
 Kerjain/
-├── frontend/          # Aplikasi Full-stack Next.js
-│   ├── prisma/        # Skema database & migrasi (Prisma)
-│   ├── public/        # Aset statis (gambar, dll)
+├── frontend/                     # Full-stack Next.js Application
+│   ├── prisma/
+│   │   └── schema.prisma         # Skema Database PostgreSQL (User, Job, Payment, dll)
+│   ├── public/
+│   │   ├── Logo_Here/            # Aset Logo Vektor & Typography
+│   │   └── ...
 │   ├── src/
-│   │   ├── app/       # Frontend pages & API Routes (app/api/v1)
-│   │   ├── components/# Komponen UI dan layout
-│   │   ├── hooks/     # Custom React Hooks
-│   │   ├── lib/       # Konfigurasi utility (Prisma client, cn, dll)
-│   │   ├── store/     # State management (Zustand)
-│   │   └── types/     # Definisi tipe TypeScript
-│   ├── .env           # Environment variables
-│   └── package.json   # Dependencies
+│   │   ├── app/                  # Next.js App Router (Halaman & API Routes)
+│   │   │   ├── api/v1/           # REST API Endpoints
+│   │   │   │   ├── auth/         # Login, Register, Forgot & Reset Password
+│   │   │   │   ├── jobs/         # CRUD Jobs, Actions (accept, start, finish, progress)
+│   │   │   │   ├── messages/     # Chat Messaging & Read Status
+│   │   │   │   ├── notifications/# Realtime Notifications API
+│   │   │   │   ├── payments/     # Payment Processing & QRIS
+│   │   │   │   ├── reviews/      # Rating & Review Submissions
+│   │   │   │   ├── users/        # User Profile & Realtime Stats
+│   │   │   │   └── wallet/       # Partner Wallet Balance & Withdrawals
+│   │   │   ├── dashboard/        # Halaman Dashboard Konsumen & Mitra
+│   │   │   ├── profile/          # Halaman Manajemen Profil & Foto
+│   │   │   ├── register/         # Halaman Registrasi Interaktif
+│   │   │   ├── login/            # Halaman Masuk
+│   │   │   ├── help/             # Pusat Bantuan 24/7
+│   │   │   └── layout.tsx        # Root Layout dengan Theme Provider
+│   │   ├── components/           # Komponen UI Reusable
+│   │   │   ├── dashboard/        # Komponen Dashboard & Metrik
+│   │   │   ├── jobs/             # JobCard, JobTimeline, ProgressGallery, SlideToConfirm
+│   │   │   ├── layouts/          # TopNav, MobileNav, Sidebar, DashboardLayout
+│   │   │   ├── maps/             # LocationPicker & MapViewer
+│   │   │   ├── notifications/    # NotificationDropdown & Badge
+│   │   │   └── ui/               # Base UI Buttons, Modals, Dialogs, Toasts
+│   │   ├── features/             # Modul Fitur (Auth, Jobs, Dashboard)
+│   │   ├── hooks/                # Custom React Hooks (useJobs, useNotifications, useUserLocation)
+│   │   ├── lib/                  # Utilities (Prisma Client, Axios Instance, Distance, Resend)
+│   │   ├── store/                # Global State (Zustand Auth Store)
+│   │   └── types/                # Definisi Tipe TypeScript
+│   ├── package.json
+│   └── vercel.json               # Konfigurasi Deployment Frontend
+├── vercel.json                   # Konfigurasi Monorepo Deployment Vercel
+├── package.json                  # Root Monorepo Runner
+└── README.md
 ```
 
 ---
 
-## ⚙️ Environment Variables
+## 📋 Skema Database (Prisma ORM)
 
-Buat file `.env` di dalam folder `frontend/` berdasarkan template yang dibutuhkan:
+Platform Kerjain menggunakan model relasional yang ketat:
+- **`User`**: Data pengguna, email terverifikasi, kata sandi ter-hash (Bcrypt), peran (`consumer`/`partner`), jenis kelamin (`MALE`/`FEMALE`), dan avatar URL.
+- **`Job`**: Entitas pekerjaan, judul, deskripsi, alamat, koordinat latitude/longitude, foto pekerjaan, imbalan, dan status siklus (`PUBLISHED`, `ACCEPTED`, `WORKING`, `WAITING_CONFIRMATION`, `COMPLETED`, dll).
+- **`JobProgress`**: Log rekam jejak tahapan kerja yang dilengkapi catatan teks dan lampiran foto langsung dari mitra.
+- **`Payment`**: Transaksi pembayaran dengan metode `CASH` atau `QRIS` beserta status pembayaran.
+- **`Review`**: Ulasan dan rating bintang (1-5) antara konsumen dan mitra kerja.
+- **`Notification`**: Notifikasi terdistribusi untuk berbagai aksi sistem.
+- **`Wallet` & `Withdrawal`**: Saldo mitra dan riwayat penarikan dana ke rekening bank.
+
+---
+
+## ⚙️ Variabel Lingkungan (.env)
+
+Buat file `.env.local` atau `.env` di dalam direktori `frontend/`:
+
 ```env
-# Koneksi ke Database PostgreSQL
-DATABASE_URL="postgresql://user:password@host:port/dbname?schema=public"
+# Koneksi Database PostgreSQL / Supabase
+DATABASE_URL="postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres?sslmode=require"
 
-# URL Utama Aplikasi
-NEXT_PUBLIC_API_URL="http://localhost:3000/api/v1"
+# JWT Secret untuk Autentikasi
+JWT_SECRET="rahasia_jwt_super_aman_kerjain_2026"
+
+# URL Endpoint API
+NEXT_PUBLIC_API_URL="/api/v1"
+
+# Geoapify API Key untuk Pencarian Lokasi & Peta
+NEXT_PUBLIC_GEOAPIFY_API_KEY="your_geoapify_api_key"
+
+# Resend API Key untuk Pengiriman OTP Reset Password
+RESEND_API_KEY="re_your_resend_api_key"
+RESEND_FROM_EMAIL="Kerjain <onboarding@resend.dev>"
 ```
 
 ---
 
-## 🚀 Installation & Run (Local Development)
+## 🚀 Panduan Menjalankan (Local Development)
 
-1. **Masuk ke folder frontend:**
-   ```bash
-   cd frontend
-   ```
+### 1. Kloning Repositori
+```bash
+git clone https://github.com/KyonKyon0/Kerjain.git
+cd Kerjain
+```
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+### 2. Instalasi Dependensi
+```bash
+npm install
+```
 
-3. **Setup Database (Prisma):**
-   Pastikan Anda sudah mengatur `DATABASE_URL` di dalam `.env`.
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
+### 3. Sinkronisasi Database
+```bash
+cd frontend
+npx prisma generate
+npx prisma db push
+cd ..
+```
 
-4. **Jalankan Aplikasi:**
-   ```bash
-   npm run dev
-   ```
-   Aplikasi akan berjalan di: `http://localhost:3000`
+### 4. Menjalankan Server Pengembangan
+```bash
+npm run dev
+```
+Aplikasi akan aktif di `http://localhost:3000`.
 
 ---
 
-## 🌐 Deployment Instructions
+## ☁️ Panduan Deployment Produksi
 
-Karena proyek ini menggunakan arsitektur full-stack Next.js (dimana backend menggunakan API Routes), maka seluruh kode berada pada folder `frontend/`.
+### Opsi 1: Vercel (Rekomendasi)
+Repositori ini telah dikonfigurasi secara optimal untuk Vercel:
+1. Hubungkan repositori GitHub ke [Vercel Dashboard](https://vercel.com).
+2. Konfigurasi `DATABASE_URL`, `JWT_SECRET`, dan variabel lingkungan lainnya pada tab **Settings > Environment Variables**.
+3. Vercel akan otomatis mengeksekusi `prisma generate && next build` melalui skrip `postinstall` dan `build`.
 
-### Opsi 1: Deploy ke Vercel (Paling Direkomendasikan)
-1. Hubungkan repository GitHub ke [Vercel](https://vercel.com/).
-2. Atur **Framework Preset** ke `Next.js`.
-3. Atur **Root Directory** ke `frontend`.
-4. Tambahkan Environment Variable `DATABASE_URL` di pengaturan Vercel.
-5. Pada bagian **Build Command**, pastikan menjalankan: `npx prisma generate && next build`.
-6. Klik Deploy!
-
-### Opsi 2: Deploy ke VPS / aaPanel (Node.js)
-1. Clone repository ke dalam VPS / aaPanel Anda.
-2. Atur website menggunakan **Node.js Manager** (PM2) di aaPanel.
-3. Arahkan *Document Root* ke folder `frontend`.
-4. Tambahkan `.env` pada folder root `frontend`.
-5. Jalankan perintah instalasi dan build:
+### Opsi 2: aaPanel / VPS / Server Node.js
+1. Pasang Node.js (v20+) dan PM2 pada server.
+2. Jalankan perintah instalasi dan build:
    ```bash
-   cd frontend
-   npm install
+   cd Kerjain/frontend
+   npm install --production=false
    npx prisma generate
    npm run build
    ```
-6. Jalankan server production (menggunakan PM2):
+3. Jalankan service menggunakan PM2:
    ```bash
-   npm run start
+   pm2 start npm --name "kerjain" -- run start
    ```
-7. Atur Reverse Proxy pada domain Anda (misal: Nginx) untuk mengarahkan port 80/443 ke port Next.js (default: 3000).
+4. Arahkan reverse proxy Nginx ke port `3000`.
 
 ---
-*© 2026 Kerjain. All rights reserved.*
+
+## 📄 Lisensi & Hak Cipta
+
+© 2026 **Kerjain Platform**. Seluruh hak cipta dilindungi undang-undang.

@@ -237,10 +237,11 @@ export function ConsumerDashboard() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid lg:grid-cols-3 gap-6 w-full max-w-full min-w-0">
+        <div className="lg:col-span-2 space-y-6 w-full max-w-full min-w-0">
           {/* Active Job Tracker */}
-          <section>
+          <section className="w-full max-w-full min-w-0">
+
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-extrabold text-lg text-foreground flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

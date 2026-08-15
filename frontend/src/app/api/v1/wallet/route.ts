@@ -15,12 +15,17 @@ export async function GET(request: Request) {
           ledger: [],
           canWithdraw: false,
           daysRemaining: 0,
-          firstIncomeDate: null
+          firstIncomeDate: null,
+          stats: {
+            total_earnings: 0,
+            qris_earnings: 0,
+            cash_earnings: 0,
+            completed_count: 0
+          },
+          chart_data: []
         }
       });
     }
-
-
 
     // 1. Get Wallet Balance
     let wallet = await prisma.wallet.findUnique({
@@ -33,7 +38,19 @@ export async function GET(request: Request) {
       });
     }
 
-    // 2. Fetch Income (QRIS Payments with SUCCESS status for COMPLETED jobs)
+    // 2. Fetch All Completed Jobs (both QRIS and CASH)
+    const completedJobs = await prisma.job.findMany({
+      where: {
+        partner_id: user.id,
+        status: 'COMPLETED'
+      },
+      include: {
+        payments: true
+      },
+      orderBy: { updated_at: 'desc' }
+    });
+
+    // 3. Fetch QRIS Payments
     const payments = await prisma.payment.findMany({
       where: {
         partner_id: user.id,
@@ -51,16 +68,75 @@ export async function GET(request: Request) {
       orderBy: { created_at: 'desc' }
     });
 
-    // 3. Fetch Withdrawals
+    // 4. Fetch Withdrawals
     const withdrawals = await prisma.withdrawal.findMany({
       where: { user_id: user.id },
       orderBy: { created_at: 'desc' }
     });
 
-    // 4. Transform and Combine to Ledger
+    // 5. Calculate QRIS vs CASH breakdown
+    let totalEarnings = 0;
+    let qrisEarnings = 0;
+    let cashEarnings = 0;
+
+    const earningsPoints: Array<{
+      date: string;
+      rawDate: Date;
+      amount: number;
+      method: 'QRIS' | 'CASH';
+      title: string;
+    }> = [];
+
+    completedJobs.forEach((job: any) => {
+      const amount = Number(job.reward_amount ?? job.rewardAmount ?? 0);
+      const isQris = job.payment_method === 'QRIS' || job.payments?.some((p: any) => p.method === 'QRIS' && p.status === 'SUCCESS');
+      const method: 'QRIS' | 'CASH' = isQris ? 'QRIS' : 'CASH';
+
+      totalEarnings += amount;
+      if (isQris) {
+        qrisEarnings += amount;
+      } else {
+        cashEarnings += amount;
+      }
+
+      earningsPoints.push({
+        date: new Date(job.updated_at).toISOString(),
+        rawDate: new Date(job.updated_at),
+        amount,
+        method,
+        title: job.title
+      });
+    });
+
+    // Sort earningsPoints chronologically
+    earningsPoints.sort((a, b) => a.rawDate.getTime() - b.rawDate.getTime());
+
+    // Build timeline chart points
+    let runningTotal = 0;
+    let runningQris = 0;
+    let runningCash = 0;
+
+    const chart_data = earningsPoints.map((pt) => {
+      runningTotal += pt.amount;
+      if (pt.method === 'QRIS') runningQris += pt.amount;
+      else runningCash += pt.amount;
+
+      return {
+        date: pt.date,
+        total: runningTotal,
+        qris: runningQris,
+        cash: runningCash,
+        amount: pt.amount,
+        method: pt.method,
+        title: pt.title
+      };
+    });
+
+    // 6. Build Ledger
     type Transaction = {
       id: string;
       type: 'INCOME' | 'WITHDRAWAL';
+      method?: 'QRIS' | 'CASH';
       amount: number;
       date: Date;
       description: string;
@@ -68,21 +144,23 @@ export async function GET(request: Request) {
     };
 
     const ledger: Transaction[] = [];
-
     let firstIncomeDate: Date | null = null;
 
-    payments.forEach((p: any) => {
-      const releaseDate = p.job.updated_at;
+    completedJobs.forEach((job: any) => {
+      const releaseDate = job.updated_at;
       if (!firstIncomeDate || releaseDate < firstIncomeDate) {
         firstIncomeDate = releaseDate;
       }
+      const isQris = job.payment_method === 'QRIS' || job.payments?.some((p: any) => p.method === 'QRIS' && p.status === 'SUCCESS');
+      const method: 'QRIS' | 'CASH' = isQris ? 'QRIS' : 'CASH';
 
       ledger.push({
-        id: p.id,
+        id: `job-${job.id}`,
         type: 'INCOME',
-        amount: Number(p.amount),
+        method,
+        amount: Number(job.reward_amount ?? job.rewardAmount ?? 0),
         date: releaseDate,
-        description: `Pembayaran Pekerjaan: ${p.job.title}`,
+        description: `Pekerjaan Selesai (${method}): ${job.title}`,
         status: 'COMPLETED'
       });
     });
@@ -100,7 +178,7 @@ export async function GET(request: Request) {
 
     ledger.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-    // 5. Calculate T+3 rules
+    // 7. Calculate T+3 rules
     let canWithdraw = false;
     let daysRemaining = 0;
 
@@ -128,7 +206,14 @@ export async function GET(request: Request) {
         ledger,
         canWithdraw,
         daysRemaining,
-        firstIncomeDate
+        firstIncomeDate,
+        stats: {
+          total_earnings: totalEarnings,
+          qris_earnings: qrisEarnings,
+          cash_earnings: cashEarnings,
+          completed_count: completedJobs.length
+        },
+        chart_data
       }
     });
   } catch (error: any) {

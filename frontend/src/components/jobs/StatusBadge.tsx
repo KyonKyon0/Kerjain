@@ -36,8 +36,9 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   const getLabel = () => {
     switch (status) {
       case "WAITING_PAYMENT": return "Menunggu Pembayaran";
-      case "PUBLISHED": return "Mencari Mitra";
+      case "PUBLISHED": return "Mencari";
       case "ACCEPTED": return "Diterima Mitra";
+
       case "ON_THE_WAY": return "Menuju Lokasi";
       case "ARRIVED": return "Telah Tiba";
       case "IN_PROGRESS":

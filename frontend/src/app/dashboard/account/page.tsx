@@ -30,10 +30,10 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authService } from "@/services/auth.service";
 import { motion } from "framer-motion";
-import { Footer } from "@/components/landing/Footer";
 import { axiosInstance } from "@/lib/axios";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+
 
 
 export default function AccountPage() {
@@ -157,11 +157,15 @@ export default function AccountPage() {
                   {(user as any)?.gender === "FEMALE" ? "👩 Wanita" : "👨 Pria"}
                 </span>
               )}
-              <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1">
-
-                <CheckCircle2 className="w-3 h-3" /> Terverifikasi
+              <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full text-xs font-black tracking-wide flex items-center gap-1.5 shadow-2xs">
+                <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500 shrink-0" />
+                <span>★ {Number(stats.rating || 5.0).toFixed(2)}</span>
+                {stats.total_reviews > 0 && (
+                  <span className="text-[10px] opacity-80 font-bold">({stats.total_reviews})</span>
+                )}
               </span>
             </div>
+
 
             
             {/* Actual Real Stats for Partner from Supabase */}
@@ -281,8 +285,16 @@ export default function AccountPage() {
               Keluar dari Akun
             </Button>
             <p className="text-center text-xs text-muted-foreground mt-4 font-medium">
-              Kerjain App v2.2026.08.15.22.20
+              Kerjain App v2.2026.08.16.00.17
             </p>
+
+
+
+
+
+
+
+
 
 
 
@@ -295,11 +307,7 @@ export default function AccountPage() {
           </div>
         </div>
       </PageContainer>
-      
-      {/* Luxury Footer with Logo & GitHub specifically on Account Page */}
-      <div className="mt-8 border-t border-border/40">
-        <Footer />
-      </div>
     </DashboardLayout>
   );
 }
+

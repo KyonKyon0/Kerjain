@@ -3,13 +3,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageContainer } from "@/components/dashboard/PageContainer";
-import { SectionHeader } from "@/components/dashboard/SectionHeader";
 import { useAuthStore } from "@/store/auth.store";
 import { axiosInstance } from "@/lib/axios";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   User, 
   Mail, 
@@ -19,18 +17,19 @@ import {
   Loader2, 
   Save, 
   ArrowLeft, 
-  PhoneCall, 
   Camera, 
   Trash2, 
   Sparkles,
   RefreshCw,
-  Upload
+  Upload,
+  ShieldCheck
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { DynamicLoader } from "@/components/ui/DynamicLoader";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { ImageCropModal } from "@/components/profile/ImageCropModal";
 
 export default function ProfilePage() {
   const { user, role, setUser } = useAuthStore();
@@ -44,10 +43,10 @@ export default function ProfilePage() {
   const [gender, setGender] = useState<string>((user as any)?.gender || "");
   const [avatarUrl, setAvatarUrl] = useState<string>(user?.avatar_url || user?.avatarUrl || "");
 
-  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [rawCropImage, setRawCropImage] = useState<string | null>(null);
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
 
   // Avatar presets according to gender
   const femaleSeeds = ["Luna", "Maya", "Zara", "Aria", "Sophie", "Chloe", "Emma", "Elena"];
@@ -69,7 +68,6 @@ export default function ProfilePage() {
           setUser({ ...u });
         }
       } catch (error) {
-
         console.error("Error fetching profile:", error);
       } finally {
         setLoading(false);
@@ -79,82 +77,68 @@ export default function ProfilePage() {
     fetchProfile();
   }, [setUser]);
 
-  // Handle Photo File Upload & Compression
+  // Handle Photo File Upload & Open Crop Modal
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      return toast.error("Format file harus berupa gambar (JPG, PNG, WebP)");
+      toast.dismiss();
+      return toast.error("Format file harus berupa gambar (JPG, PNG, WebP)", { duration: 2500 });
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      return toast.error("Ukuran gambar maksimal 5MB");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.dismiss();
+      return toast.error("Ukuran gambar maksimal 10MB", { duration: 2500 });
     }
 
-    setUploadingPhoto(true);
     const reader = new FileReader();
     reader.onload = (event) => {
-      const img = new window.Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 400;
-        const MAX_HEIGHT = 400;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx?.drawImage(img, 0, 0, width, height);
-
-        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.85);
-        setAvatarUrl(compressedDataUrl);
-        setUploadingPhoto(false);
-        toast.success("Foto profil dipilih! Klik 'Simpan Perubahan' untuk menerapkan.");
-      };
+      if (event.target?.result) {
+        setRawCropImage(event.target.result as string);
+        setIsCropModalOpen(true);
+      }
     };
     reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleCropComplete = (croppedDataUrl: string) => {
+    setAvatarUrl(croppedDataUrl);
+    toast.dismiss();
+    toast.success("Foto profil berhasil dipotong! Klik 'Simpan Perubahan' untuk menerapkan.", { duration: 2500 });
   };
 
   const handleSelectPresetAvatar = (seed: string) => {
     const url = `https://api.dicebear.com/7.x/notionists/svg?seed=${seed}`;
     setAvatarUrl(url);
-    toast.success("Avatar karakter dipilih!");
+    toast.dismiss();
+    toast.success("Avatar karakter dipilih!", { duration: 2000 });
   };
 
   const handleRandomizeAvatar = () => {
     const randomSeed = (gender === "FEMALE" ? "Girl_" : "Boy_") + Math.random().toString(36).substring(2, 8);
     const url = `https://api.dicebear.com/7.x/notionists/svg?seed=${randomSeed}`;
     setAvatarUrl(url);
-    toast.success("Avatar acak baru dihasilkan!");
+    toast.dismiss();
+    toast.success("Avatar acak baru dihasilkan!", { duration: 2000 });
   };
 
   const handleRemovePhoto = () => {
     setAvatarUrl("");
-    toast.info("Foto profil direset ke inisial nama.");
+    toast.dismiss();
+    toast.info("Foto profil direset ke inisial nama.", { duration: 2000 });
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      return toast.error("Nama lengkap tidak boleh kosong");
+      toast.dismiss();
+      return toast.error("Nama lengkap tidak boleh kosong", { duration: 2500 });
     }
     if (!phone.trim()) {
-      return toast.error("Nomor telepon tidak boleh kosong");
+      toast.dismiss();
+      return toast.error("Nomor telepon tidak boleh kosong", { duration: 2500 });
     }
 
     setSaving(true);
@@ -170,72 +154,74 @@ export default function ProfilePage() {
       if (res.data?.data) {
         const updated = res.data.data;
         setUser({ ...user, ...updated });
-        toast.success("Profil, jenis kelamin & foto berhasil disimpan!");
+        toast.dismiss();
+        toast.success("Profil berhasil diperbarui!", { duration: 2500 });
       }
     } catch (error: any) {
-      toast.error(error.message || "Gagal memperbarui profil");
+      toast.dismiss();
+      toast.error(error.message || "Gagal memperbarui profil", { duration: 2500 });
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleTestCall = () => {
-    if (!phone || phone.trim() === "") {
-      return toast.error("Masukkan nomor telepon terlebih dahulu");
-    }
-    const cleanPhone = phone.replace(/[^0-9+]/g, "");
-    window.location.href = `tel:${cleanPhone}`;
   };
 
   const currentDisplayAvatar = avatarUrl || `https://api.dicebear.com/7.x/notionists/svg?seed=${name || "User"}`;
 
   return (
     <DashboardLayout>
-      <PageContainer className="max-w-3xl">
-        <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/dashboard/account")} className="rounded-full">
+      <PageContainer className="max-w-3xl space-y-6 pb-20">
+        
+        {/* Header Bar */}
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => router.push("/dashboard/account")} 
+            className="rounded-full hover:bg-muted/80 transition-colors"
+          >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <SectionHeader 
-            title="Profil Saya" 
-            description="Kelola foto profil, jenis kelamin, kontak, dan alamat Anda."
-          />
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-foreground">Profil Saya</h1>
+            <p className="text-xs text-muted-foreground">Kelola informasi pribadi, kontak, dan foto profil Anda</p>
+          </div>
         </div>
 
         {loading ? (
-          <div className="py-12 bg-card/60 backdrop-blur-sm border rounded-3xl">
-            <DynamicLoader text="Memuat profil Anda" subtext="Menyiapkan informasi akun..." size="md" />
+          <div className="py-16 bg-card/60 backdrop-blur-md border rounded-3xl">
+            <DynamicLoader text="Memuat profil Anda" subtext="Menyiapkan data akun..." size="md" />
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Profile Avatar Card with Interactive Photo Uploader */}
-            <Card className="border shadow-sm overflow-hidden bg-card rounded-3xl">
-              <div className="h-28 bg-gradient-to-r from-primary/25 via-emerald-500/15 to-teal-500/10" />
+            
+            {/* 1. Avatar & Photo Card */}
+            <motion.div 
+              initial={{ opacity: 0, y: 15 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              className="bg-card border border-border/80 rounded-3xl shadow-sm overflow-hidden"
+            >
+              <div className="h-28 bg-gradient-to-r from-primary/30 via-emerald-500/20 to-teal-500/15" />
               
-              <CardContent className="relative pt-0 pb-6 px-6 sm:px-8">
+              <div className="relative pt-0 pb-6 px-6 sm:px-8">
                 <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 -mt-14 mb-4">
                   
-                  {/* Avatar with Camera Overlay Button */}
-                  <div className="relative group">
-                    <Avatar className="w-28 h-28 border-4 border-background shadow-xl ring-2 ring-primary/20">
+                  {/* Circular Avatar */}
+                  <div className="relative group shrink-0">
+                    <Avatar className="w-28 h-28 border-4 border-background shadow-xl ring-2 ring-primary/20 bg-background">
                       <AvatarImage src={currentDisplayAvatar} className="object-cover" />
-                      <AvatarFallback className="text-3xl font-extrabold bg-primary text-primary-foreground">
+                      <AvatarFallback className="text-3xl font-black bg-primary text-primary-foreground">
                         {name?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
 
-                    {/* Camera Change Button */}
+                    {/* Camera Overlay Trigger */}
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       className="absolute bottom-0 right-0 p-2.5 bg-primary text-primary-foreground rounded-full shadow-lg hover:scale-110 hover:bg-emerald-600 transition-all border-2 border-background cursor-pointer"
-                      title="Unggah Foto Baru"
+                      title="Ganti Foto Profil"
                     >
-                      {uploadingPhoto ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Camera className="w-4 h-4" />
-                      )}
+                      <Camera className="w-4 h-4" />
                     </button>
 
                     <input
@@ -247,27 +233,27 @@ export default function ProfilePage() {
                     />
                   </div>
 
-                  {/* Name & Badges Header */}
+                  {/* Name & Role Badges */}
                   <div className="flex-1 text-center sm:text-left">
-                    <h2 className="text-2xl font-extrabold text-foreground">{name || "Pengguna"}</h2>
+                    <h2 className="text-2xl font-black text-foreground">{name || "Pengguna"}</h2>
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1.5">
-                      <span className="bg-primary/10 text-primary px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                      <span className="bg-primary/10 text-primary border border-primary/20 px-3 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider">
                         {role === "consumer" ? "Konsumen" : "Mitra"}
                       </span>
                       
-                      {/* Gender Badge */}
                       {gender && (
                         <span className={cn(
-                          "px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1",
-                          gender === "FEMALE" ? "bg-pink-500/10 text-pink-600 dark:text-pink-400" : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                          "px-3 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider border flex items-center gap-1",
+                          gender === "FEMALE" 
+                            ? "bg-pink-500/10 border-pink-500/30 text-pink-600 dark:text-pink-400" 
+                            : "bg-blue-500/10 border-blue-500/30 text-blue-600 dark:text-blue-400"
                         )}>
                           <span>{gender === "FEMALE" ? "👩 Wanita" : "👨 Pria"}</span>
                         </span>
                       )}
 
-                      <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1">
-
-                        <CheckCircle2 className="w-3 h-3" /> Terverifikasi
+                      <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-3 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5" /> Terverifikasi
                       </span>
                     </div>
                   </div>
@@ -279,7 +265,7 @@ export default function ProfilePage() {
                       variant="outline"
                       size="sm"
                       onClick={() => fileInputRef.current?.click()}
-                      className="rounded-xl font-bold text-xs h-9"
+                      className="rounded-2xl font-extrabold text-xs h-10 px-4 border-border/80 hover:bg-muted"
                     >
                       <Upload className="w-3.5 h-3.5 mr-1.5" /> Ganti Foto
                     </Button>
@@ -289,9 +275,10 @@ export default function ProfilePage() {
                         variant="ghost"
                         size="sm"
                         onClick={handleRemovePhoto}
-                        className="rounded-xl font-bold text-xs h-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        className="rounded-2xl font-bold text-xs h-10 px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        title="Hapus Foto"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     )}
                   </div>
@@ -308,7 +295,7 @@ export default function ProfilePage() {
                       onClick={handleRandomizeAvatar}
                       className="text-xs text-primary font-bold hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                      <RefreshCw className="w-3 h-3" /> Acak Baru
+                      <RefreshCw className="w-3.5 h-3.5" /> Acak Karakter
                     </button>
                   </div>
 
@@ -322,11 +309,12 @@ export default function ProfilePage() {
                           key={seed}
                           type="button"
                           onClick={() => handleSelectPresetAvatar(seed)}
-                          className={`relative p-1 rounded-2xl border-2 transition-all shrink-0 hover:scale-105 ${
+                          className={cn(
+                            "relative p-1 rounded-2xl border-2 transition-all shrink-0 hover:scale-105",
                             isSelected 
                               ? "border-primary bg-primary/10 shadow-md shadow-primary/20 scale-105" 
                               : "border-border/80 hover:border-primary/40 bg-muted/40"
-                          }`}
+                          )}
                         >
                           <Avatar className="w-11 h-11">
                             <AvatarImage src={presetUrl} />
@@ -337,168 +325,179 @@ export default function ProfilePage() {
                     })}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </motion.div>
 
-            {/* Profile Form */}
-            <Card className="border shadow-sm bg-card rounded-3xl">
-              <CardHeader>
-                <CardTitle className="text-lg font-bold">Informasi Kontak & Akun</CardTitle>
-                <CardDescription>
-                  Sesuaikan data diri dan jenis kelamin akun Anda.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSave} className="space-y-5">
-                  
-                  {/* SELEKTOR GENDER (Cewek Kiri, Cowok Kanan) */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      Jenis Kelamin (Wajib Pilih Satu)
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setGender("FEMALE")}
-                        className={cn(
-                          "py-3 px-4 rounded-2xl border flex items-center justify-center gap-2.5 transition-all font-extrabold text-sm cursor-pointer",
-                          gender === "FEMALE"
-                            ? "bg-pink-500/10 border-pink-500 text-pink-600 dark:text-pink-400 shadow-sm ring-2 ring-pink-500/20"
-                            : "bg-muted/30 border-border/70 text-muted-foreground hover:bg-muted/60"
-                        )}
-                      >
-                        <span className="text-xl">👩</span>
-                        <span>Wanita</span>
-                      </button>
+            {/* 2. Form Informasi Kontak & Akun (Modern, Animatif & Dinamis) */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ delay: 0.1 }}
+              className="bg-card border border-border/80 rounded-3xl shadow-sm p-6 sm:p-8 space-y-6"
+            >
+              <div>
+                <h3 className="text-lg font-black text-foreground">Informasi Akun & Kontak</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Perbarui data diri untuk mempermudah koordinasi layanan</p>
+              </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setGender("MALE")}
-                        className={cn(
-                          "py-3 px-4 rounded-2xl border flex items-center justify-center gap-2.5 transition-all font-extrabold text-sm cursor-pointer",
-                          gender === "MALE"
-                            ? "bg-blue-500/10 border-blue-500 text-blue-600 dark:text-blue-400 shadow-sm ring-2 ring-blue-500/20"
-                            : "bg-muted/30 border-border/70 text-muted-foreground hover:bg-muted/60"
-                        )}
-                      >
-                        <span className="text-xl">👨</span>
-                        <span>Pria</span>
-                      </button>
-
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold" htmlFor="profile-name">
-                      Nama Lengkap
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="profile-name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Nama Lengkap Anda"
-                        className="pl-10 h-12 rounded-2xl"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold" htmlFor="profile-email">
-                      Email (Akun)
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="profile-email"
-                        value={email}
-                        disabled
-                        className="pl-10 h-12 rounded-2xl bg-muted/50 cursor-not-allowed opacity-80"
-                      />
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">Email terikat secara permanen pada akun.</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-sm font-semibold" htmlFor="profile-phone">
-                        Nomor Telepon (WhatsApp / Seluler)
-                      </label>
-                      {phone && (
-                        <button
-                          type="button"
-                          onClick={handleTestCall}
-                          className="text-xs text-primary font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                        >
-                          <PhoneCall className="w-3.5 h-3.5" /> Uji Buka Telepon
-                        </button>
-                      )}
-                    </div>
-                    <div className="relative">
-                      <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="profile-phone"
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="081234567890"
-                        className="pl-10 h-12 rounded-2xl font-mono text-base"
-                        required
-                      />
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      Nomor ini digunakan mitra/konsumen untuk menghubungi Anda via telepon atau WhatsApp.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold" htmlFor="profile-address">
-                      Alamat / Domisili
-                    </label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="profile-address"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        placeholder="Contoh: Jl. Sudirman No. 123, Jakarta Selatan"
-                        className="pl-10 h-12 rounded-2xl"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-border flex justify-end gap-3">
-                    <Button
+              <form onSubmit={handleSave} className="space-y-5">
+                
+                {/* Selektor Gender */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Jenis Kelamin
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <motion.button
                       type="button"
-                      variant="outline"
-                      className="rounded-2xl h-12 px-6 font-bold"
-                      onClick={() => router.push("/dashboard/account")}
-                    >
-                      Batal
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="rounded-2xl h-12 px-8 font-bold shadow-md shadow-primary/20 bg-primary hover:bg-emerald-600"
-                      disabled={saving}
-                    >
-                      {saving ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="w-4 h-4 mr-2" /> Simpan Perubahan
-                        </>
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setGender("FEMALE")}
+                      className={cn(
+                        "py-3.5 px-4 rounded-2xl border flex items-center justify-center gap-2.5 transition-all font-extrabold text-sm cursor-pointer shadow-xs",
+                        gender === "FEMALE"
+                          ? "bg-pink-500/15 border-pink-500 text-pink-600 dark:text-pink-400 shadow-sm ring-2 ring-pink-500/20"
+                          : "bg-muted/30 border-border/70 text-muted-foreground hover:bg-muted/60"
                       )}
-                    </Button>
+                    >
+                      <span className="text-xl">👩</span>
+                      <span>Wanita</span>
+                    </motion.button>
+
+                    <motion.button
+                      type="button"
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setGender("MALE")}
+                      className={cn(
+                        "py-3.5 px-4 rounded-2xl border flex items-center justify-center gap-2.5 transition-all font-extrabold text-sm cursor-pointer shadow-xs",
+                        gender === "MALE"
+                          ? "bg-blue-500/15 border-blue-500 text-blue-600 dark:text-blue-400 shadow-sm ring-2 ring-blue-500/20"
+                          : "bg-muted/30 border-border/70 text-muted-foreground hover:bg-muted/60"
+                      )}
+                    >
+                      <span className="text-xl">👨</span>
+                      <span>Pria</span>
+                    </motion.button>
                   </div>
-                </form>
-              </CardContent>
-            </Card>
+                </div>
+
+                {/* Nama Lengkap */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground" htmlFor="profile-name">
+                    Nama Lengkap
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-3.5 top-3.5 p-1 rounded-xl bg-primary/10 text-primary transition-colors group-focus-within:bg-primary group-focus-within:text-white">
+                      <User className="h-4 w-4" />
+                    </div>
+                    <Input
+                      id="profile-name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Masukkan nama lengkap Anda"
+                      className="pl-12 h-14 rounded-2xl bg-muted/20 border-border/80 focus:bg-background focus:ring-2 focus:ring-primary/20 text-sm font-semibold transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground" htmlFor="profile-email">
+                    Email
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-3.5 top-3.5 p-1 rounded-xl bg-muted text-muted-foreground">
+                      <Mail className="h-4 w-4" />
+                    </div>
+                    <Input
+                      id="profile-email"
+                      value={email}
+                      disabled
+                      className="pl-12 h-14 rounded-2xl bg-muted/40 border-border/60 cursor-not-allowed opacity-80 text-sm font-medium"
+                    />
+                  </div>
+                </div>
+
+                {/* Nomor Telepon */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground" htmlFor="profile-phone">
+                    Nomor Telepon
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-3.5 top-3.5 p-1 rounded-xl bg-emerald-500/10 text-emerald-600 transition-colors group-focus-within:bg-emerald-500 group-focus-within:text-white">
+                      <Phone className="h-4 w-4" />
+                    </div>
+                    <Input
+                      id="profile-phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="081234567890"
+                      className="pl-12 h-14 rounded-2xl bg-muted/20 border-border/80 focus:bg-background focus:ring-2 focus:ring-primary/20 font-mono text-base font-bold transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Alamat */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground" htmlFor="profile-address">
+                    Alamat
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-3.5 top-3.5 p-1 rounded-xl bg-amber-500/10 text-amber-600 transition-colors group-focus-within:bg-amber-500 group-focus-within:text-white">
+                      <MapPin className="h-4 w-4" />
+                    </div>
+                    <Input
+                      id="profile-address"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="Contoh: Jl. Sudirman No. 123, Jakarta Selatan"
+                      className="pl-12 h-14 rounded-2xl bg-muted/20 border-border/80 focus:bg-background focus:ring-2 focus:ring-primary/20 text-sm font-semibold transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Form Action Buttons */}
+                <div className="pt-4 border-t border-border/80 flex flex-col sm:flex-row justify-end gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-2xl h-14 px-6 font-bold text-sm"
+                    onClick={() => router.push("/dashboard/account")}
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="rounded-2xl h-14 px-8 font-extrabold text-sm shadow-md bg-primary hover:bg-emerald-600 text-white transition-all hover:scale-[1.01]"
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-5 h-5 mr-2" /> Simpan Perubahan
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
           </div>
         )}
+
+        {/* Interactive Circular Image Crop Modal */}
+        <ImageCropModal
+          isOpen={isCropModalOpen}
+          onClose={() => setIsCropModalOpen(false)}
+          imageSrc={rawCropImage}
+          onCropComplete={handleCropComplete}
+        />
       </PageContainer>
     </DashboardLayout>
   );

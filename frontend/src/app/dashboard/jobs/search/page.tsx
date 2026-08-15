@@ -7,18 +7,12 @@ import { JobCard } from "@/components/jobs/JobCard";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useSearchJobs } from "@/hooks/useJobs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Filter, Briefcase, MapPin, ArrowUpDown, Navigation, RefreshCw } from "lucide-react";
+import { Search, Filter, Briefcase, ArrowUpDown, Navigation, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SmoothDropdown, DropdownOption } from "@/components/ui/SmoothDropdown";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { calculateHaversineDistance } from "@/lib/distance";
 
@@ -78,98 +72,88 @@ export default function SearchJobPage() {
     return list;
   }, [jobsWithDistance, searchTerm, sortBy]);
 
+  const categoryOptions: DropdownOption[] = [
+    { value: "ALL", label: "Semua Kategori" },
+    { value: "Angkat Barang", label: "Angkat Barang" },
+    { value: "Bersih-bersih", label: "Bersih-bersih" },
+    { value: "Perbaikan", label: "Perbaikan Rumah" },
+    { value: "Penjagaan", label: "Penjagaan & Khusus" },
+  ];
+
+  const sortOptions: DropdownOption[] = [
+    { value: "DEFAULT", label: "Paling Baru" },
+    { value: "NEAREST", label: "📍 Terdekat" },
+    { value: "REWARD_HIGH", label: "💰 Imbalan" },
+  ];
+
   if (role !== "partner") return null;
 
   return (
     <DashboardLayout>
-      <PageContainer>
-        {/* Header Hero */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          className="mb-8 bg-gradient-to-r from-primary/15 via-emerald-500/10 to-teal-500/5 rounded-3xl p-6 border border-primary/20"
-        >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="bg-primary p-2.5 rounded-2xl text-primary-foreground shadow-md shadow-primary/20">
-                  <Search className="w-6 h-6" />
-                </div>
-                <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
-                  Radar Peluang Kerja
-                </h2>
-              </div>
-              <p className="text-muted-foreground font-medium text-sm">
-                Temukan pekerjaan di sekitar Anda dan lihat jarak langsung dari lokasi Anda saat ini.
-              </p>
-            </div>
-
-            {/* GPS Status Badge */}
-            <div className="flex items-center gap-2 self-start md:self-auto">
-              <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-card/80 backdrop-blur-md border border-border/80 text-xs font-semibold text-foreground shadow-sm">
-                <Navigation className={`w-3.5 h-3.5 ${userLat ? "text-emerald-500 animate-pulse" : "text-amber-500"}`} />
-                <span>
-                  {userLat ? "GPS Lokasi Aktif" : "Menentukan GPS..."}
-                </span>
-                <button
-                  type="button"
-                  onClick={requestLocation}
-                  className="p-1 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors ml-1"
-                  title="Perbarui Lokasi GPS"
-                >
-                  <RefreshCw className={`w-3 h-3 ${locLoading ? "animate-spin" : ""}`} />
-                </button>
-              </div>
-            </div>
+      <PageContainer className="max-w-6xl space-y-4 sm:space-y-5 pb-24 overflow-x-hidden w-full max-w-full">
+        
+        {/* Top Left GPS Status Badge */}
+        <div className="flex items-center justify-between">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-card border border-border/80 text-xs font-bold text-foreground shadow-2xs">
+            <Navigation className={`w-3.5 h-3.5 ${userLat ? "text-emerald-500 animate-pulse" : "text-amber-500"}`} />
+            <span>{userLat ? "GPS Lokasi Aktif" : "Menentukan GPS..."}</span>
+            <button
+              type="button"
+              onClick={requestLocation}
+              className="p-1 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors ml-0.5 cursor-pointer"
+              title="Perbarui Lokasi GPS"
+            >
+              <RefreshCw className={`w-3 h-3 ${locLoading ? "animate-spin" : ""}`} />
+            </button>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Search, Category, and Sorting Filters */}
-        <div className="flex flex-col md:flex-row gap-3 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+        {/* Search Bar & Side-by-Side Filters (Kategori Lebar + Urutkan Bersebelahan) */}
+        <div className="space-y-2.5 sm:space-y-3 relative z-30 w-full max-w-full min-w-0">
+          
+          {/* 1. Search Box Full Width */}
+          <div className="relative w-full min-w-0">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder="Cari pekerjaan atau lokasi..." 
+              placeholder="Cari pekerjaan, keahlian, atau lokasi..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-11 h-14 bg-card border rounded-2xl shadow-sm focus-visible:ring-primary/20 text-base"
+              className="pl-10 h-13 bg-card border border-border/80 rounded-2xl shadow-2xs focus-visible:ring-primary/20 text-xs sm:text-sm font-semibold w-full min-w-0"
             />
           </div>
 
-          <Select value={category} onValueChange={(val) => setCategory(val || "ALL")}>
-            <SelectTrigger className="w-full md:w-[190px] h-14 rounded-2xl border bg-card shadow-sm font-semibold">
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-primary" />
-                <SelectValue placeholder="Kategori" />
-              </div>
-            </SelectTrigger>
-            <SelectContent className="rounded-2xl border">
-              <SelectItem value="ALL">Semua Kategori</SelectItem>
-              <SelectItem value="Angkat Barang">Angkat Barang</SelectItem>
-              <SelectItem value="Bersih-bersih">Bersih-bersih</SelectItem>
-              <SelectItem value="Perbaikan">Perbaikan</SelectItem>
-              <SelectItem value="Penjagaan">Penjagaan</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* 2. Side-by-Side Dropdowns: Semua Kategori (Wider 62%) + Urutkan (38%) */}
+          <div className="flex items-center gap-2 sm:gap-3 w-full max-w-full min-w-0">
+            
+            {/* Wide Category Dropdown (Area lebih besar) */}
+            <div className="flex-[1.6] sm:flex-[1.8] min-w-0">
+              <SmoothDropdown
+                value={category}
+                onChange={(val) => setCategory(val)}
+                options={categoryOptions}
+                placeholder="Semua Kategori"
+                icon={<Filter className="w-4 h-4 text-primary shrink-0" />}
+              />
+            </div>
 
-          <Select value={sortBy} onValueChange={(val) => setSortBy(val || "DEFAULT")}>
-            <SelectTrigger className="w-full md:w-[190px] h-14 rounded-2xl border bg-card shadow-sm font-semibold">
-              <div className="flex items-center gap-2">
-                <ArrowUpDown className="w-4 h-4 text-emerald-500" />
-                <SelectValue placeholder="Urutkan" />
-              </div>
-            </SelectTrigger>
-            <SelectContent className="rounded-2xl border">
-              <SelectItem value="DEFAULT">Paling Baru</SelectItem>
-              <SelectItem value="NEAREST">📍 Terdekat dari Saya</SelectItem>
-              <SelectItem value="REWARD_HIGH">💰 Imbalan Tertinggi</SelectItem>
-            </SelectContent>
-          </Select>
+            {/* Sort Dropdown (Paling Baru / Tertinggi / Terdekat) */}
+            <div className="flex-1 min-w-0">
+              <SmoothDropdown
+                value={sortBy}
+                onChange={(val) => setSortBy(val)}
+                options={sortOptions}
+                placeholder="Urutan"
+                icon={<ArrowUpDown className="w-4 h-4 text-emerald-500 shrink-0" />}
+              />
+            </div>
+          </div>
         </div>
 
+
+        {/* 2-Column Grid Job List (1 Baris 2 Kolom Sempurna, Symmetrical, Zero Scroll Overflow) */}
         {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-56 rounded-3xl" />)}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 items-stretch w-full max-w-full">
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-44 rounded-2xl sm:rounded-3xl" />)}
           </div>
         ) : filteredJobs.length === 0 ? (
           <EmptyState 
@@ -181,14 +165,15 @@ export default function SearchJobPage() {
           <motion.div 
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 items-stretch relative z-10 w-full max-w-full overflow-hidden"
           >
             {filteredJobs.map((job: any, index: number) => (
               <motion.div
                 key={job.id}
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+                transition={{ delay: index * 0.03 }}
+                className="h-full flex min-w-0"
               >
                 <JobCard 
                   job={job} 
@@ -199,6 +184,7 @@ export default function SearchJobPage() {
             ))}
           </motion.div>
         )}
+
       </PageContainer>
     </DashboardLayout>
   );

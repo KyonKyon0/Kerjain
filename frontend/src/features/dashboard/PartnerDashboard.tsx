@@ -24,17 +24,19 @@ import { motion } from "framer-motion";
 import { JobCard } from "@/components/jobs/JobCard";
 import { axiosInstance } from "@/lib/axios";
 import { ZapEnergyToggle } from "@/components/dashboard/partner/ZapEnergyToggle";
-
-
-
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { calculateHaversineDistance, formatDistanceString } from "@/lib/distance";
+import { formatRelativeDuration } from "@/lib/utils";
 
 export function PartnerDashboard() {
   const { user } = useAuthStore();
   const { data: myJobs = [] } = usePartnerJobs();
   const { data: availableJobs = [] } = useSearchJobs();
+  const { lat: userLat, lng: userLng } = useUserLocation();
 
   const [isOnline, setIsOnline] = useState(true);
   const [loadingStats, setLoadingStats] = useState(true);
+
   const [stats, setStats] = useState({
     completed_jobs: 0,
     active_jobs: 0,
@@ -254,11 +256,11 @@ export function PartnerDashboard() {
       </div>
 
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-8">
+      <div className="grid lg:grid-cols-3 gap-6 w-full max-w-full min-w-0">
+        <div className="lg:col-span-2 space-y-6 sm:space-y-8 w-full max-w-full min-w-0">
           {/* Active Job Tracker */}
           {activeJobsList.length > 0 && (
-            <section>
+            <section className="w-full max-w-full min-w-0">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-base md:text-lg flex items-center gap-2 text-foreground">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -268,7 +270,7 @@ export function PartnerDashboard() {
                   Kelola Semua <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                 </Link>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-4 w-full max-w-full min-w-0">
                 {activeJobsList.slice(0, 2).map((job: any) => (
                   <JobCard key={job.id} job={job} />
                 ))}
@@ -277,41 +279,57 @@ export function PartnerDashboard() {
           )}
 
           {/* Job Request Queue */}
-          <section>
+          <section className="w-full max-w-full min-w-0">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-base md:text-lg text-foreground">Peluang di Sekitar Anda</h3>
               <Link href="/dashboard/jobs/search" className="text-xs font-bold text-primary hover:underline flex items-center">
                 Buka Radar Peta <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
               </Link>
             </div>
-            <div className="space-y-3">
-              {availableJobs.slice(0, 3).map((job: any, index: number) => (
-                <Link key={job.id} href={`/dashboard/jobs/${job.id}`}>
-                  <motion.div 
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                    whileHover={{ y: -3, scale: 1.005 }}
-                    whileTap={{ scale: 0.985 }}
-                    className="bg-card border rounded-2xl sm:rounded-3xl p-4 sm:p-5 hover:border-primary/50 hover:shadow-md transition-all shadow-sm cursor-pointer group mb-3"
-                  >
-                    <div className="flex justify-between items-start mb-2.5 gap-2">
-                      <h4 className="font-bold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors line-clamp-1">{job.title}</h4>
-                      <span className="font-extrabold text-sm sm:text-base text-emerald-600 dark:text-emerald-400 shrink-0">Rp {(job.rewardAmount ?? job.reward_amount ?? 0).toLocaleString('id-ID')}</span>
-                    </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-3 leading-relaxed">{job.description}</p>
-                    <div className="flex items-center justify-between pt-2.5 border-t border-border/60">
-                      <div className="flex items-center text-[11px] sm:text-xs font-medium text-muted-foreground gap-2">
-                        <span className="flex items-center gap-1 bg-muted/60 px-2 py-0.5 rounded-lg"><MapPin className="w-3 h-3 text-primary"/> Lokasi tersedia</span>
-                        <span className="flex items-center gap-1 bg-muted/60 px-2 py-0.5 rounded-lg"><History className="w-3 h-3 text-primary"/> Baru diposting</span>
+            <div className="space-y-3 w-full max-w-full min-w-0">
+
+              {availableJobs.slice(0, 3).map((job: any, index: number) => {
+                let distStr: string | null = null;
+                if (userLat && userLng && job.lat && job.lng) {
+                  const dMeters = calculateHaversineDistance(userLat, userLng, job.lat, job.lng);
+                  distStr = formatDistanceString(dMeters);
+                }
+                const postedDuration = formatRelativeDuration(job.createdAt || job.created_at);
+
+                return (
+                  <Link key={job.id} href={`/dashboard/jobs/${job.id}`}>
+                    <motion.div 
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.35, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                      whileHover={{ y: -3, scale: 1.005 }}
+                      whileTap={{ scale: 0.985 }}
+                      className="bg-card border rounded-2xl sm:rounded-3xl p-4 sm:p-5 hover:border-primary/50 hover:shadow-md transition-all shadow-xs cursor-pointer group mb-3 w-full max-w-full min-w-0 overflow-hidden"
+                    >
+                      <div className="flex justify-between items-start mb-2.5 gap-2 min-w-0">
+                        <h4 className="font-bold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors line-clamp-1 min-w-0 flex-1">{job.title}</h4>
+                        <span className="font-extrabold text-sm sm:text-base text-emerald-600 dark:text-emerald-400 shrink-0">Rp {(job.rewardAmount ?? job.reward_amount ?? 0).toLocaleString('id-ID')}</span>
                       </div>
-                      <Button size="sm" className="rounded-xl shadow-sm bg-primary hover:bg-emerald-600 transition-all font-bold text-xs h-8 px-3">
-                        Ambil Job
-                      </Button>
-                    </div>
-                  </motion.div>
-                </Link>
-              ))}
+                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-3 leading-relaxed">{job.description}</p>
+                      <div className="flex items-center justify-between pt-2.5 border-t border-border/60 gap-2 flex-wrap min-w-0">
+                        <div className="flex items-center text-[11px] sm:text-xs font-medium text-muted-foreground gap-2 flex-wrap min-w-0">
+                          <span className="flex items-center gap-1 bg-muted/60 px-2.5 py-0.5 rounded-lg shrink-0">
+                            <MapPin className="w-3 h-3 text-primary"/> {distStr ? `± ${distStr} dari Anda` : (job.address ? job.address : "Lokasi tersedia")}
+                          </span>
+                          <span className="flex items-center gap-1 bg-muted/60 px-2.5 py-0.5 rounded-lg shrink-0 text-foreground font-semibold">
+                            <History className="w-3 h-3 text-primary"/> {postedDuration}
+                          </span>
+                        </div>
+                        <Button size="sm" className="rounded-xl shadow-xs bg-primary hover:bg-emerald-600 transition-all font-bold text-xs h-8 px-3.5 shrink-0">
+                          Ambil Job
+                        </Button>
+                      </div>
+                    </motion.div>
+                  </Link>
+                );
+              })}
+
+
 
               
               {availableJobs.length === 0 && (

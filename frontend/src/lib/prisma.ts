@@ -7,9 +7,9 @@ const prismaClientSingleton = () => {
   const pool = new Pool({
     connectionString,
     ssl: { rejectUnauthorized: false },
-    max: 1, // Crucial for Vercel / serverless to prevent exceeding DB connection pool limits
-    idleTimeoutMillis: 10000,
-    connectionTimeoutMillis: 5000,
+    max: 10, // Allows parallel queries without queuing bottlenecks
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 8000,
   })
   const adapter = new PrismaPg(pool)
   return new PrismaClient({ adapter })
@@ -22,6 +22,10 @@ declare global {
 const prisma = globalThis.prisma ?? prismaClientSingleton()
 
 // Always persist on globalThis across warm serverless invocations
-globalThis.prisma = prisma
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.prisma = prisma
+} else {
+  globalThis.prisma = prisma
+}
 
 export default prisma

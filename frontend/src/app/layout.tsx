@@ -67,11 +67,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ProtectedRoute>
               {children}
             </ProtectedRoute>
-            <Toaster position="top-center" richColors />
+            <Toaster position="top-center" richColors duration={2500} closeButton />
           </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
+
 

@@ -7,6 +7,7 @@ export function calculateHaversineDistance(
   lat2: number,
   lon2: number
 ): number {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
   const R = 6371000; // Radius of Earth in meters
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -21,28 +22,40 @@ export function calculateHaversineDistance(
 }
 
 /**
- * Format distance in user-friendly Indonesian format (e.g. "850 m" or "2.4 km")
+ * Format distance in user-friendly Indonesian format (e.g. "850 m" or "2,4 km")
  */
-export function formatDistanceString(distanceInMeters: number | null | undefined): string {
-  if (distanceInMeters === null || distanceInMeters === undefined || isNaN(distanceInMeters)) {
-    return "-";
+export function formatDistanceString(distanceInMeters: number | null | undefined): string | null {
+  if (distanceInMeters === null || distanceInMeters === undefined || isNaN(distanceInMeters) || distanceInMeters <= 0) {
+    return null;
   }
 
+  // Under 1 km -> in meters
   if (distanceInMeters < 1000) {
     return `${Math.round(distanceInMeters)} m`;
   }
 
-  const km = distanceInMeters / 1000;
-  return `${km.toFixed(1).replace(".", ",")} km`;
+  // Under 50 km -> in km with 1 decimal
+  if (distanceInMeters <= 50000) {
+    const km = distanceInMeters / 1000;
+    return `${km.toFixed(1)} km`;
+  }
+
+  // Far away (e.g. other cities / mock data)
+  if (distanceInMeters <= 100000) {
+    const km = Math.round(distanceInMeters / 1000);
+    return `${km} km`;
+  }
+
+  return "> 99 km";
 }
 
 /**
  * Estimates motorcycle travel time in minutes based on distance
  */
 export function estimateTravelTime(distanceInMeters: number | null | undefined): string {
-  if (!distanceInMeters || isNaN(distanceInMeters)) return "";
+  if (!distanceInMeters || isNaN(distanceInMeters) || distanceInMeters <= 0) return "";
   
-  // Average urban speed ~ 25 km/h = ~ 416 meters per minute + 2 min buffer
+  // Average urban speed ~ 25 km/h = ~ 400 meters per minute + 2 min buffer
   const minutes = Math.max(1, Math.round(distanceInMeters / 400 + 2));
   if (minutes < 60) {
     return `± ${minutes} menit perjalanan`;

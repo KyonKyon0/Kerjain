@@ -30,31 +30,36 @@ export function Footer() {
           
           {/* Brand & About Column */}
           <div className="lg:col-span-2 space-y-6">
-            <Link href="/" className="inline-block group">
+            <Link href="/" className="inline-flex items-center gap-3 group">
               <motion.div 
-                whileHover={{ scale: 1.04 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="relative h-12 w-52"
+                whileHover={{ scale: 1.06 }}
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                className="relative w-10 h-10 rounded-2xl bg-primary/10 p-2 flex items-center justify-center border border-primary/20 shrink-0 group-hover:bg-primary/15 transition-colors"
               >
                 <Image
-                  src="/logo-text-footer.png"
+                  src="/logo-notext.png"
                   alt="Kerjain Logo"
-                  fill
-                  className="object-contain object-left"
+                  width={26}
+                  height={26}
                   priority
+                  className="object-contain w-auto h-auto max-w-full max-h-full aspect-square"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     if (!target.src.includes("Logo_Here")) {
-                      target.src = "/Logo_Here/Kerjain_Text Footer.png";
+                      target.src = "/Logo_Here/Kerjain_Logo_NO Text.png";
                     }
                   }}
                 />
               </motion.div>
+              <span className="font-extrabold text-foreground text-2xl tracking-tight">
+                Kerjain
+              </span>
             </Link>
 
             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm">
               Platform jasa lokal terpercaya yang menghubungkan Anda dengan tetangga dan mitra ahli di sekitar untuk menyelesaikan berbagai kebutuhan rumah tangga dengan aman, cepat, dan transparan.
             </p>
+
 
             {/* Liquid Glass Status & Location Badges */}
             <div className="flex flex-wrap items-center gap-3 pt-1">

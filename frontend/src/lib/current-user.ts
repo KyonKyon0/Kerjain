@@ -15,13 +15,18 @@ export async function getCurrentUser(request: Request) {
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: payload.sub as string }
+    where: { id: payload.sub as string },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      phone: true,
+      address: true,
+      avatar_url: true,
+      gender: true,
+    }
   })
 
-  if (!user) {
-    return null
-  }
-
-  const { hashed_password, ...userWithoutPassword } = user
-  return userWithoutPassword
+  return user || null
 }

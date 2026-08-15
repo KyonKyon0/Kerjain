@@ -1,4 +1,4 @@
-import { MapPin } from "lucide-react";
+import { Navigation } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceString } from "@/lib/distance";
 
@@ -8,18 +8,18 @@ interface DistanceBadgeProps {
 }
 
 export function DistanceBadge({ distance, className }: DistanceBadgeProps) {
-  if (distance === undefined || distance === null || isNaN(distance)) {
+  if (distance === undefined || distance === null || isNaN(distance) || distance <= 0) {
     return null;
   }
 
-  // If distance is less than 100, it's in km (e.g. 1.5), convert to meters if needed, or if already in meters
-  const distanceInMeters = distance < 100 && !Number.isInteger(distance) ? distance * 1000 : (distance > 100 ? distance : distance * 1000);
-  const formatted = formatDistanceString(distanceInMeters);
+  // If distance is passed in meters from calculateHaversineDistance
+  const formatted = formatDistanceString(distance);
+  if (!formatted) return null;
 
   return (
-    <div className={cn("inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold border border-emerald-500/20 shadow-sm", className)}>
-      <MapPin className="w-3.5 h-3.5 shrink-0" />
-      <span>± {formatted} dari Anda</span>
+    <div className={cn("inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-[10px] sm:text-[11px] font-extrabold border border-emerald-500/20 shadow-2xs shrink-0", className)}>
+      <Navigation className="w-3 h-3 shrink-0" />
+      <span>± {formatted}</span>
     </div>
   );
 }

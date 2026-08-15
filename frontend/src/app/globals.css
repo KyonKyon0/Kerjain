@@ -136,12 +136,18 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
   }
   html {
     @apply font-sans;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
   
   /* Utilities for modern mobile UI hiding scrollbars */
@@ -152,4 +158,4 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-}
+}

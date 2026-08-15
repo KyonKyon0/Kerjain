@@ -5,7 +5,14 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
+  address?: string;
+  avatar_url?: string;
+  avatarUrl?: string;
+  role?: "consumer" | "partner";
 }
+
+
 
 interface AuthState {
   user: User | null;

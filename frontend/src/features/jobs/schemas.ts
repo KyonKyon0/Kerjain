@@ -3,6 +3,7 @@ import { z } from "zod";
 export const step1InfoSchema = z.object({
   title: z.string().min(5, "Judul minimal 5 karakter").max(100, "Judul maksimal 100 karakter"),
   description: z.string().min(10, "Deskripsi minimal 10 karakter"),
+  photoUrl: z.string().optional().nullable(),
 });
 
 export const step2CategorySchema = z.object({
@@ -42,10 +43,12 @@ export const createJobSchema = z.object({
   address: z.string(),
   lat: z.number().nullable(),
   lng: z.number().nullable(),
+  photoUrl: z.string().optional().nullable(),
   rewardType: z.enum(["FIXED", "FLEXIBLE"]),
   rewardAmount: z.number().nullable().optional(),
   paymentMethod: z.enum(["QRIS", "CASH", "BANK"]).optional(),
 });
+
 
 export type Step1FormData = z.infer<typeof step1InfoSchema>;
 export type Step2FormData = z.infer<typeof step2CategorySchema>;

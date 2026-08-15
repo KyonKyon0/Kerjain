@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageContainer } from "@/components/dashboard/PageContainer";
@@ -12,29 +12,46 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wallet, ArrowDownCircle, ArrowUpCircle, AlertCircle, Clock, CheckCircle2, History, CreditCard } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Wallet, ArrowDownCircle, ArrowUpCircle, AlertCircle, Clock, CheckCircle2, History, CreditCard, QrCode, Banknote, ShieldCheck } from "lucide-react";
+import { cn, formatWIBDate, formatWIBDateTime } from "@/lib/utils";
+import { axiosInstance } from "@/lib/axios";
+import { DynamicLoader } from "@/components/ui/DynamicLoader";
+import Link from "next/link";
+
 
 export default function PaymentsPage() {
-  const { role } = useAuthStore();
+
+  const { role, user } = useAuthStore();
   const router = useRouter();
 
-  // Redirect if not a partner
-  React.useEffect(() => {
-    if (role && role !== "partner") {
-      router.replace("/dashboard");
-    }
-  }, [role, router]);
-
-  const { data, isLoading } = useWallet();
+  // Partner hooks
+  const { data: partnerData, isLoading: partnerLoading } = useWallet();
   const withdraw = useWithdraw();
+
+  // Consumer state
+  const [consumerPayments, setConsumerPayments] = useState<any[]>([]);
+  const [consumerLoading, setConsumerLoading] = useState(true);
 
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [bankName, setBankName] = useState("");
   const [bankAccount, setBankAccount] = useState("");
 
-  if (role !== "partner") return null;
+  useEffect(() => {
+    if (role === "consumer") {
+      const fetchConsumerPayments = async () => {
+        try {
+          const res = await axiosInstance.get("/payments");
+          setConsumerPayments(res.data?.data || []);
+        } catch (e) {
+          console.error("Error fetching payments:", e);
+        } finally {
+          setConsumerLoading(false);
+        }
+      };
+      fetchConsumerPayments();
+    }
+  }, [role]);
 
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +69,142 @@ export default function PaymentsPage() {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(num);
   };
 
+  if (!role) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Skeleton className="h-48 w-full max-w-2xl rounded-3xl" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // CONSUMER VIEW
+  if (role === "consumer") {
+    const totalSpent = consumerPayments
+      .filter(p => p.status === "SUCCESS")
+      .reduce((acc, p) => acc + Number(p.amount || 0), 0);
+
+    return (
+      <DashboardLayout>
+        <PageContainer className="max-w-4xl">
+          <div className="mb-8">
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">Riwayat & Pembayaran</h1>
+            <p className="text-muted-foreground font-medium">Pantau seluruh pengeluaran dan status pembayaran pesanan Anda.</p>
+          </div>
+
+          <div className="space-y-6">
+            {/* Consumer Spending Card */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="relative overflow-hidden bg-gradient-to-br from-primary to-emerald-700 rounded-3xl p-8 text-white shadow-xl shadow-primary/20">
+                <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                  <div>
+                    <div className="flex items-center gap-2 mb-3 text-emerald-100">
+                      <CreditCard className="w-5 h-5" />
+                      <span className="font-semibold uppercase tracking-wider text-sm">Total Pengeluaran Selesai</span>
+                    </div>
+                    <h2 className="text-4xl md:text-5xl font-extrabold tracking-tighter">
+                      {formatRupiah(totalSpent)}
+                    </h2>
+                  </div>
+                  <Link href="/dashboard/jobs/create">
+                    <Button className="bg-white text-primary hover:bg-white/90 font-bold rounded-2xl h-12 px-6 shadow-md">
+                      + Buat Pekerjaan Baru
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Payment Methods Info */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <DashboardCard className="flex items-center gap-4 p-5">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                  <QrCode className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm">QRIS Otomatis</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">Gopay, OVO, Dana, ShopeePay, BCA, dll.</p>
+                </div>
+              </DashboardCard>
+              <DashboardCard className="flex items-center gap-4 p-5">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+                  <Banknote className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm">Uang Tunai (Cash)</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">Bayar langsung di tempat setelah selesai.</p>
+                </div>
+              </DashboardCard>
+            </div>
+
+            {/* Consumer Transactions List */}
+            <DashboardCard className="shadow-sm">
+
+              <div className="flex items-center gap-2 mb-6">
+                <History className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-lg">Daftar Transaksi Pembayaran</h3>
+              </div>
+
+              {consumerLoading ? (
+                <div className="py-6">
+                  <DynamicLoader text="Memuat riwayat transaksi" subtext="Mengambil data pengeluaran Anda..." size="sm" />
+                </div>
+              ) : consumerPayments.length === 0 ? (
+
+                <div className="text-center py-12 text-muted-foreground">
+                  <CreditCard className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  <p className="font-semibold text-foreground">Belum Ada Transaksi</p>
+                  <p className="text-xs text-muted-foreground mt-1">Transaksi pembayaran pekerjaan Anda akan tercatat di sini.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {consumerPayments.map((p) => (
+                    <div 
+                      key={p.id}
+                      className="flex items-center justify-between p-4 rounded-2xl border bg-card hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "w-12 h-12 rounded-full flex items-center justify-center shrink-0",
+                          p.status === "SUCCESS" ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"
+                        )}>
+                          <CreditCard className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm md:text-base line-clamp-1">{p.job?.title || "Pembayaran Pekerjaan"}</p>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                            <span>Metode: <strong>{p.method}</strong></span>
+                            <span>•</span>
+                            <span>{formatWIBDate(p.created_at || p.createdAt)}</span>
+                          </div>
+                        </div>
+
+                      </div>
+
+                      <div className="text-right shrink-0 ml-4">
+                        <p className="font-extrabold text-base md:text-lg text-primary">
+                          {formatRupiah(Number(p.amount || 0))}
+                        </p>
+                        <span className={cn(
+                          "inline-block px-2 py-0.5 rounded-full text-[10px] font-bold mt-1",
+                          p.status === "SUCCESS" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                        )}>
+                          {p.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </DashboardCard>
+          </div>
+        </PageContainer>
+      </DashboardLayout>
+    );
+  }
+
+  // PARTNER VIEW
   return (
     <DashboardLayout>
       <PageContainer className="max-w-4xl">
@@ -60,12 +213,12 @@ export default function PaymentsPage() {
           <p className="text-muted-foreground font-medium">Kelola pendapatan dari hasil kerja Anda di Kerjain.</p>
         </div>
 
-        {isLoading ? (
-          <div className="space-y-6">
-            <Skeleton className="h-48 w-full rounded-3xl" />
-            <Skeleton className="h-[400px] w-full rounded-3xl" />
+        {partnerLoading ? (
+          <div className="py-12 bg-card/60 backdrop-blur-sm border rounded-3xl">
+            <DynamicLoader text="Memuat data keuangan & saldo" subtext="Menyinkronkan saldo aktif Anda..." size="md" />
           </div>
-        ) : !data ? (
+        ) : !partnerData ? (
+
           <div className="flex items-center justify-center h-40 text-muted-foreground">
             Gagal memuat data dompet.
           </div>
@@ -84,7 +237,7 @@ export default function PaymentsPage() {
                       <span className="font-semibold uppercase tracking-wider text-sm">Saldo Aktif</span>
                     </div>
                     <h2 className="text-4xl md:text-5xl font-extrabold tracking-tighter">
-                      {formatRupiah(data.balance)}
+                      {formatRupiah(partnerData.balance)}
                     </h2>
                   </div>
                   
@@ -94,7 +247,7 @@ export default function PaymentsPage() {
                         render={
                           <Button 
                             className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold rounded-2xl h-14 px-8 text-base shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-                            disabled={!data.canWithdraw}
+                            disabled={!partnerData.canWithdraw}
                           />
                         }
                       >
@@ -103,7 +256,7 @@ export default function PaymentsPage() {
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-md">
                         <DialogHeader>
-                          <DialogTitle className="text-xl">Tarik Dana</DialogTitle>
+                          <DialogTitle className="text-xl font-bold">Tarik Dana</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleWithdraw} className="space-y-4 mt-4">
                           <div>
@@ -116,7 +269,7 @@ export default function PaymentsPage() {
                               className="h-12 text-lg font-mono rounded-xl"
                               required
                             />
-                            {Number(withdrawAmount) > data.balance && (
+                            {Number(withdrawAmount) > partnerData.balance && (
                               <p className="text-xs text-destructive mt-1">Saldo tidak mencukupi.</p>
                             )}
                           </div>
@@ -133,7 +286,7 @@ export default function PaymentsPage() {
                           <div>
                             <label className="text-sm font-bold mb-1 block">Nomor Rekening / HP</label>
                             <Input 
-                              placeholder="Masukkan nomor" 
+                              placeholder="Masukkan nomor rekening atau nomor e-wallet" 
                               value={bankAccount} 
                               onChange={(e) => setBankAccount(e.target.value)}
                               className="h-12 rounded-xl"
@@ -143,7 +296,7 @@ export default function PaymentsPage() {
                           <Button 
                             type="submit" 
                             className="w-full h-12 rounded-xl text-base font-bold mt-4" 
-                            disabled={withdraw.isPending || Number(withdrawAmount) < 10000 || Number(withdrawAmount) > data.balance}
+                            disabled={withdraw.isPending || Number(withdrawAmount) < 10000 || Number(withdrawAmount) > partnerData.balance}
                           >
                             {withdraw.isPending ? "Memproses..." : "Konfirmasi Penarikan"}
                           </Button>
@@ -151,14 +304,13 @@ export default function PaymentsPage() {
                       </DialogContent>
                     </Dialog>
                     
-                    {/* Tooltip/Warning if cannot withdraw */}
-                    {!data.canWithdraw && (
+                    {!partnerData.canWithdraw && (
                       <div className="text-xs bg-black/20 backdrop-blur-sm rounded-xl p-3 flex items-start gap-2 max-w-xs">
                         <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-300" />
                         <span className="text-emerald-50 leading-relaxed">
-                          {data.balance < 10000 
+                          {partnerData.balance < 10000 
                             ? "Saldo minimum penarikan adalah Rp 10.000."
-                            : `Penarikan ditunda T+3 (Sisa ${data.daysRemaining} hari lagi) semenjak pendapatan pertama.`
+                            : `Penarikan ditunda T+3 (Sisa ${partnerData.daysRemaining} hari lagi) semenjak pendapatan pertama.`
                           }
                         </span>
                       </div>
@@ -176,7 +328,7 @@ export default function PaymentsPage() {
                   <h3 className="font-bold text-lg">Riwayat Transaksi</h3>
                 </div>
                 
-                {data.ledger.length === 0 ? (
+                {partnerData.ledger.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <CreditCard className="w-12 h-12 mx-auto mb-3 opacity-20" />
                     <p>Belum ada riwayat transaksi</p>
@@ -184,7 +336,7 @@ export default function PaymentsPage() {
                 ) : (
                   <div className="space-y-4">
                     <AnimatePresence>
-                      {data.ledger.map((trx, i) => (
+                      {partnerData.ledger.map((trx, i) => (
                         <motion.div 
                           key={trx.id}
                           initial={{ opacity: 0, x: -10 }}
@@ -204,8 +356,9 @@ export default function PaymentsPage() {
                               <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
-                                  {new Date(trx.date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                  {formatWIBDateTime(trx.date)}
                                 </span>
+
                                 {trx.status === "PENDING" && (
                                   <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold text-[10px]">PENDING</span>
                                 )}
@@ -234,3 +387,4 @@ export default function PaymentsPage() {
     </DashboardLayout>
   );
 }
+

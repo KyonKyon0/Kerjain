@@ -3,21 +3,31 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { 
+  Loader2, 
+  Mail, 
+  Lock, 
+  User, 
+  ArrowLeft, 
+  Phone,
+  ShoppingBag,
+  Bike,
+  Sparkles,
+  Check
+} from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 import { registerSchema, RegisterFormData } from "@/features/auth/schemas";
 import { useAuthStore } from "@/store/auth.store";
 import { authService } from "@/services/auth.service";
-import { Controller } from "react-hook-form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -30,10 +40,19 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     control,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      role: "consumer",
+      gender: "MALE"
+    }
   });
+
+  const selectedRole = watch("role");
+  const selectedGender = watch("gender");
 
   const registerMutation = useMutation({
     mutationFn: (data: RegisterFormData) => authService.register(data),
@@ -82,150 +101,241 @@ export default function RegisterPage() {
         <div className="w-full max-w-md space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           
           <div className="text-center">
-          <div className="inline-flex items-center justify-center p-4 bg-white shadow-sm rounded-2xl mb-4 text-primary">
-            <User className="w-8 h-8" />
+            <div className="inline-flex items-center justify-center p-4 bg-card border rounded-3xl shadow-sm mb-4 text-primary">
+              <User className="w-8 h-8" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">Daftar Akun Baru</h1>
+            <p className="text-muted-foreground text-sm mt-1">Bergabunglah dengan ekosistem bantuan Kerjain</p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Daftar Akun Baru</h1>
-          <p className="text-muted-foreground mt-2">Bergabunglah dengan komunitas Kerjain</p>
-        </div>
 
-        <Card className="border-none shadow-xl shadow-primary/5 overflow-hidden">
-          <CardContent className="p-6 sm:p-8">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {error && (
-                <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md border border-destructive/20 text-center animate-in fade-in zoom-in-95">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="p-3 text-sm text-green-600 bg-green-50 rounded-md border border-green-200 text-center animate-in fade-in zoom-in-95">
-                  Akun berhasil dibuat! Mengalihkan...
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none" htmlFor="name">
-                  Nama Lengkap
-                </label>
-                <div className="relative group">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                  <Input
-                    placeholder="Nama Lengkap"
-                    className="pl-9 h-11 transition-all duration-200 focus-visible:ring-primary/20 bg-muted/50 focus:bg-background"
-                    {...register("name")}
-                    disabled={registerMutation.isPending || success}
-                  />
-                </div>
-                {errors.name && (
-                  <p className="text-sm text-destructive">{errors.name.message}</p>
+          <Card className="border shadow-xl shadow-primary/5 rounded-3xl overflow-hidden bg-card/95 backdrop-blur-xl">
+            <CardContent className="p-6 sm:p-8">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                {error && (
+                  <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-2xl border border-destructive/20 text-center animate-in fade-in zoom-in-95 font-medium">
+                    {error}
+                  </div>
                 )}
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none" htmlFor="email">
-                  Email
-                </label>
-                <div className="relative group">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="nama@email.com"
-                    className="pl-9 h-11 transition-all duration-200 focus-visible:ring-primary/20 bg-muted/50 focus:bg-background"
-                    {...register("email")}
-                    disabled={registerMutation.isPending || success}
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-sm text-destructive">{errors.email.message}</p>
+                {success && (
+                  <div className="p-3 text-sm text-emerald-600 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-center animate-in fade-in zoom-in-95 font-bold">
+                    Akun berhasil dibuat! Mengalihkan...
+                  </div>
                 )}
-              </div>
+                
+                {/* 1. SELEKTOR PERAN ANDA (Kiri: Konsumen, Kanan: Mitra) */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Pilih Peran Anda
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setValue("role", "consumer")}
+                      className={cn(
+                        "p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all text-center group cursor-pointer relative overflow-hidden",
+                        selectedRole === "consumer"
+                          ? "bg-primary/10 border-primary text-primary shadow-sm ring-2 ring-primary/20"
+                          : "bg-muted/30 border-border/70 text-muted-foreground hover:bg-muted/60"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110",
+                        selectedRole === "consumer" ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                      )}>
+                        <ShoppingBag className="w-5 h-5" />
+                      </div>
+                      <span className="font-extrabold text-xs">Konsumen</span>
+                      <span className="text-[10px] opacity-80">Mencari Bantuan</span>
+                    </button>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none" htmlFor="role">
-                  Peran Anda
-                </label>
-                <Controller
-                  name="role"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value || ""} disabled={registerMutation.isPending || success}>
-                      <SelectTrigger className="w-full h-11 transition-all duration-200 focus-visible:ring-primary/20 bg-muted/50 focus:bg-background">
-                        <SelectValue placeholder="Pilih Konsumen atau Mitra" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="consumer">Konsumen (Mencari Bantuan)</SelectItem>
-                        <SelectItem value="partner">Mitra (Memberi Bantuan)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <button
+                      type="button"
+                      onClick={() => setValue("role", "partner")}
+                      className={cn(
+                        "p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all text-center group cursor-pointer relative overflow-hidden",
+                        selectedRole === "partner"
+                          ? "bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 shadow-sm ring-2 ring-emerald-500/20"
+                          : "bg-muted/30 border-border/70 text-muted-foreground hover:bg-muted/60"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110",
+                        selectedRole === "partner" ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
+                      )}>
+                        <Bike className="w-5 h-5" />
+                      </div>
+                      <span className="font-extrabold text-xs">Mitra Kerja</span>
+                      <span className="text-[10px] opacity-80">Beri Bantuan & Cuan</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. SELEKTOR GENDER (Kiri: Wanita, Kanan: Pria) */}
+                <div className="space-y-2 pt-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Jenis Kelamin (Wajib Pilih)
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setValue("gender", "FEMALE")}
+                      className={cn(
+                        "py-3 px-4 rounded-2xl border flex items-center justify-center gap-2.5 transition-all font-extrabold text-xs cursor-pointer",
+                        selectedGender === "FEMALE"
+                          ? "bg-pink-500/10 border-pink-500 text-pink-600 dark:text-pink-400 shadow-sm ring-2 ring-pink-500/20"
+                          : "bg-muted/30 border-border/70 text-muted-foreground hover:bg-muted/60"
+                      )}
+                    >
+                      <span className="text-lg">👩</span>
+                      <span>Wanita</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setValue("gender", "MALE")}
+                      className={cn(
+                        "py-3 px-4 rounded-2xl border flex items-center justify-center gap-2.5 transition-all font-extrabold text-xs cursor-pointer",
+                        selectedGender === "MALE"
+                          ? "bg-blue-500/10 border-blue-500 text-blue-600 dark:text-blue-400 shadow-sm ring-2 ring-blue-500/20"
+                          : "bg-muted/30 border-border/70 text-muted-foreground hover:bg-muted/60"
+                      )}
+                    >
+                      <span className="text-lg">👨</span>
+                      <span>Pria</span>
+                    </button>
+
+                  </div>
+                </div>
+
+                {/* Nama Lengkap */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground" htmlFor="name">
+                    Nama Lengkap
+                  </label>
+                  <div className="relative group">
+                    <User className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                    <Input
+                      id="name"
+                      placeholder="Nama Lengkap Anda"
+                      className="pl-10 h-12 rounded-2xl transition-all bg-muted/40 focus:bg-background text-sm"
+                      {...register("name")}
+                      disabled={registerMutation.isPending || success}
+                    />
+                  </div>
+                  {errors.name && (
+                    <p className="text-xs text-destructive font-medium">{errors.name.message}</p>
                   )}
-                />
-                {errors.role && (
-                  <p className="text-sm text-destructive">{errors.role.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none" htmlFor="password">
-                  Kata Sandi
-                </label>
-                <div className="relative group">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                  <Input
-                    type="password"
-                    placeholder="Minimal 8 karakter"
-                    className="pl-9 h-11 transition-all duration-200 focus-visible:ring-primary/20 bg-muted/50 focus:bg-background"
-                    {...register("password")}
-                    disabled={registerMutation.isPending || success}
-                  />
                 </div>
-                {errors.password && (
-                  <p className="text-sm text-destructive">{errors.password.message}</p>
-                )}
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none" htmlFor="confirmPassword">
-                  Konfirmasi Kata Sandi
-                </label>
-                <div className="relative group">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                  <Input
-                    type="password"
-                    placeholder="Masukkan ulang kata sandi"
-                    className="pl-9 h-11 transition-all duration-200 focus-visible:ring-primary/20 bg-muted/50 focus:bg-background"
-                    {...register("confirmPassword")}
-                    disabled={registerMutation.isPending || success}
-                  />
+                {/* Email */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground" htmlFor="email">
+                    Alamat Email
+                  </label>
+                  <div className="relative group">
+                    <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="nama@email.com"
+                      className="pl-10 h-12 rounded-2xl transition-all bg-muted/40 focus:bg-background text-sm"
+                      {...register("email")}
+                      disabled={registerMutation.isPending || success}
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-xs text-destructive font-medium">{errors.email.message}</p>
+                  )}
                 </div>
-                {errors.confirmPassword && (
-                  <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
-                )}
-              </div>
 
-              <Button type="submit" className="w-full h-11 mt-6 rounded-xl text-base font-medium shadow-md shadow-primary/20 transition-all hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm" disabled={registerMutation.isPending || success}>
-                {registerMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Mendaftarkan...
-                  </>
-                ) : success ? (
-                  "Berhasil Mendaftar!"
-                ) : (
-                  "Daftar Sekarang"
-                )}
-              </Button>
-            </form>
-          </CardContent>
-          <CardFooter className="flex justify-center p-6 bg-muted/20 border-t border-border/50">
-            <p className="text-sm text-muted-foreground">
-              Sudah punya akun?{" "}
-              <Link href="/login" className="font-semibold text-primary hover:underline hover:text-primary/80 transition-colors">
-                Masuk di sini
-              </Link>
-            </p>
-          </CardFooter>
-        </Card>
+                {/* Nomor Telepon */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground" htmlFor="phone">
+                    Nomor WhatsApp / Seluler
+                  </label>
+                  <div className="relative group">
+                    <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="081234567890"
+                      className="pl-10 h-12 rounded-2xl transition-all bg-muted/40 focus:bg-background text-sm"
+                      {...register("phone")}
+                      disabled={registerMutation.isPending || success}
+                    />
+                  </div>
+                  {errors.phone && (
+                    <p className="text-xs text-destructive font-medium">{errors.phone.message}</p>
+                  )}
+                </div>
+
+                {/* Kata Sandi */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground" htmlFor="password">
+                    Kata Sandi
+                  </label>
+                  <div className="relative group">
+                    <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                    <Input
+                      type="password"
+                      placeholder="Minimal 8 karakter"
+                      className="pl-10 h-12 rounded-2xl transition-all bg-muted/40 focus:bg-background text-sm"
+                      {...register("password")}
+                      disabled={registerMutation.isPending || success}
+                    />
+                  </div>
+                  {errors.password && (
+                    <p className="text-xs text-destructive font-medium">{errors.password.message}</p>
+                  )}
+                </div>
+
+                {/* Konfirmasi Kata Sandi */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground" htmlFor="confirmPassword">
+                    Konfirmasi Kata Sandi
+                  </label>
+                  <div className="relative group">
+                    <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                    <Input
+                      type="password"
+                      placeholder="Masukkan ulang kata sandi"
+                      className="pl-10 h-12 rounded-2xl transition-all bg-muted/40 focus:bg-background text-sm"
+                      {...register("confirmPassword")}
+                      disabled={registerMutation.isPending || success}
+                    />
+                  </div>
+                  {errors.confirmPassword && (
+                    <p className="text-xs text-destructive font-medium">{errors.confirmPassword.message}</p>
+                  )}
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full h-13 mt-6 rounded-2xl text-base font-extrabold shadow-md shadow-primary/20 transition-all hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0" 
+                  disabled={registerMutation.isPending || success}
+                >
+                  {registerMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Mendaftarkan Akun...
+                    </>
+                  ) : success ? (
+                    "Berhasil Mendaftar!"
+                  ) : (
+                    "Daftar Sekarang"
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+            <CardFooter className="flex justify-center p-5 bg-muted/20 border-t border-border/50">
+              <p className="text-xs text-muted-foreground">
+                Sudah punya akun?{" "}
+                <Link href="/login" className="font-bold text-primary hover:underline transition-colors">
+                  Masuk di sini
+                </Link>
+              </p>
+            </CardFooter>
+          </Card>
         </div>
       </main>
     </div>

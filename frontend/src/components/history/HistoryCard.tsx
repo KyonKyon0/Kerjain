@@ -1,5 +1,5 @@
 import { Job } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, formatWIBDate } from "@/lib/utils";
 import { CheckCircle2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { DashboardCard } from "../dashboard/DashboardCard";
@@ -19,14 +19,7 @@ export function HistoryCard({ job, role }: HistoryCardProps) {
   const actualReward = Number(job.rewardAmount ?? (job as any).reward_amount ?? 0);
   const rewardType = job.rewardType || (job as any).reward_type;
   
-  // Safe date parsing
-  let formattedDate = "-";
-  if (createdAt) {
-    const dateObj = new Date(createdAt);
-    if (!isNaN(dateObj.getTime())) {
-      formattedDate = dateObj.toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' });
-    }
-  }
+  const formattedDate = formatWIBDate(createdAt);
   
   return (
     <Link href={`/dashboard/history/${job.id}`} className="block group">
@@ -42,7 +35,7 @@ export function HistoryCard({ job, role }: HistoryCardProps) {
               {isCompleted ? "Selesai" : "Dibatalkan"}
             </span>
           </div>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground font-medium">
             {formattedDate}
           </span>
         </div>
@@ -53,15 +46,15 @@ export function HistoryCard({ job, role }: HistoryCardProps) {
         
         <div className="flex justify-between items-end mt-4">
           <div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5 font-bold">
               {role === "consumer" ? "Mitra" : "Konsumen"}
             </p>
-            <p className="text-sm font-medium">{partnerName || "Menunggu"}</p>
+            <p className="text-sm font-semibold">{partnerName || "Menunggu"}</p>
           </div>
           
           {rewardType === "FIXED" && (
             <div className="text-right">
-              <p className="text-sm font-bold text-foreground">Rp {actualReward.toLocaleString("id-ID")}</p>
+              <p className="text-sm font-extrabold text-foreground">Rp {actualReward.toLocaleString("id-ID")}</p>
             </div>
           )}
         </div>
@@ -69,4 +62,3 @@ export function HistoryCard({ job, role }: HistoryCardProps) {
     </Link>
   );
 }
-

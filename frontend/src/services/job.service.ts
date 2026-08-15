@@ -78,12 +78,13 @@ export const jobService = {
   },
 
   async getMessages(id: string): Promise<{ success: boolean; data: any[] }> {
-    const res = await axiosInstance.get(`/jobs/${id}/chat`);
+    const res = await axiosInstance.get(`/messages/${id}`);
     return res.data;
   },
 
   async sendMessage(id: string, content: string): Promise<{ success: boolean; data: any }> {
-    const res = await axiosInstance.post(`/jobs/${id}/chat`, { content });
+    const res = await axiosInstance.post(`/messages/${id}`, { content });
     return res.data;
   }
 };
+

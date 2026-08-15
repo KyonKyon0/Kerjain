@@ -1,49 +1,90 @@
-import { NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
-import { hashPassword } from '@/lib/auth'
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { hashPassword } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    let { name, email, password, role, phone, address } = body
+    const body = await request.json();
+    let { name, email, password, role, phone, address, gender } = body;
     
-    if (email) email = email.toLowerCase()
+    if (email) email = email.toLowerCase();
 
-    if (!name || !email || !password || !role) {
-      console.log("Register failed: missing required fields", { name: !!name, email: !!email, password: !!password, role: !!role })
-      return NextResponse.json({ success: false, detail: 'Missing required fields' }, { status: 200 })
+    if (!name || !email || !password || !role || !phone) {
+      return NextResponse.json({ success: false, detail: 'Nama, email, password, peran, dan nomor telepon wajib diisi' }, { status: 200 });
     }
 
-    const hashedPassword = await hashPassword(password)
+    phone = phone.trim();
 
-    const user = await prisma.user.upsert({
-      where: { email },
-      update: {
-        name,
-        hashed_password: hashedPassword,
-        role,
-        phone,
-        address
-      },
-      create: {
-        name,
-        email,
-        hashed_password: hashedPassword,
-        role,
-        phone,
-        address
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(20);`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`);
+    } catch {}
+
+    const hashedPassword = await hashPassword(password);
+    let user: any;
+
+    try {
+      user = await prisma.user.upsert({
+        where: { email },
+        update: {
+          name,
+          hashed_password: hashedPassword,
+          role,
+          phone,
+          address,
+          gender: gender || 'MALE'
+        },
+        create: {
+          name,
+          email,
+          hashed_password: hashedPassword,
+          role,
+          phone,
+          address,
+          gender: gender || 'MALE'
+        }
+      });
+    } catch {
+      user = await prisma.user.upsert({
+        where: { email },
+        update: {
+          name,
+          hashed_password: hashedPassword,
+          role,
+          phone,
+          address,
+        },
+        create: {
+          name,
+          email,
+          hashed_password: hashedPassword,
+          role,
+          phone,
+          address,
+        }
+      });
+
+      if (gender) {
+        try {
+          await prisma.$executeRawUnsafe(
+            `UPDATE users SET gender = $1 WHERE id = $2::uuid;`,
+            gender,
+            user.id
+          );
+          user.gender = gender;
+        } catch {}
       }
-    })
+    }
 
     // Remove password from response
-    const { hashed_password, ...userWithoutPassword } = user
+    const { hashed_password, ...userWithoutPassword } = user;
 
     return NextResponse.json({
       success: true,
       message: "Registrasi berhasil",
       data: userWithoutPassword
-    })
+    });
   } catch (error: any) {
-    return NextResponse.json({ detail: error.message }, { status: 500 })
+    return NextResponse.json({ detail: error.message }, { status: 500 });
   }
 }

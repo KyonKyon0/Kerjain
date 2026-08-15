@@ -1,21 +1,20 @@
 "use client";
-import { DashboardLayout } from "@/components/layouts/DashboardLayout";
-import { PageContainer } from "@/components/dashboard/PageContainer";
-import { SectionHeader } from "@/components/dashboard/SectionHeader";
-import { EmptyState } from "@/components/dashboard/EmptyState";
-import { Bell } from "lucide-react";
 
-export default function NotificationsPage() {
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+
+export default function NotificationsRedirectPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/dashboard/notifications");
+  }, [router]);
+
   return (
-    <DashboardLayout>
-      <PageContainer>
-        <SectionHeader title="Notifikasi" description="Pusat pemberitahuan Anda." />
-        <EmptyState 
-          icon={<Bell className="w-12 h-12" />}
-          title="Belum Ada Notifikasi"
-          description="Anda akan menerima pemberitahuan di sini ketika ada aktivitas baru."
-        />
-      </PageContainer>
-    </DashboardLayout>
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    </div>
   );
 }
+

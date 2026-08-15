@@ -8,7 +8,18 @@ interface ChatBubbleProps {
 }
 
 export function ChatBubble({ message, isMe }: ChatBubbleProps) {
-  const time = new Date(message.createdAt).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' });
+  let time = "";
+  try {
+    const rawDate = message.createdAt || (message as any).created_at;
+    if (rawDate) {
+      const parsed = new Date(rawDate);
+      if (!isNaN(parsed.getTime())) {
+        time = parsed.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+  } catch {
+    time = "";
+  }
 
   if (message.type === "SYSTEM") {
     return (
@@ -32,7 +43,7 @@ export function ChatBubble({ message, isMe }: ChatBubbleProps) {
       >
         <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
         <div className={cn("flex items-center justify-end gap-1 mt-1", isMe ? "text-primary-foreground/70" : "text-muted-foreground")}>
-          <span className="text-[10px]">{time}</span>
+          {time && <span className="text-[10px]">{time}</span>}
           {isMe && (
             message.read ? <CheckCheck className="w-3 h-3 text-blue-300" /> : <Check className="w-3 h-3" />
           )}
@@ -41,4 +52,5 @@ export function ChatBubble({ message, isMe }: ChatBubbleProps) {
     </div>
   );
 }
+
 

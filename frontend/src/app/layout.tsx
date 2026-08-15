@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { ProtectedRoute } from "@/components/navigation/ProtectedRoute";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ClientBootstrap } from "@/components/providers/ClientBootstrap";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body className={`${plusJakartaSans.className} min-h-screen flex flex-col antialiased text-foreground selection:bg-primary/20`}>
+        <ClientBootstrap />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <QueryProvider>
             <ProtectedRoute>
@@ -38,3 +40,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+

@@ -18,9 +18,26 @@ export const authService = {
     return res.data;
   },
 
+  async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+    const res = await axiosInstance.post("/auth/forgot-password", { email });
+    if (res.data && res.data.success === false) {
+      throw new Error(res.data.detail || "Gagal mengirim OTP");
+    }
+    return res.data;
+  },
+
+  async resetPassword(data: { email: string; otp: string; new_password: string }): Promise<{ success: boolean; message: string }> {
+    const res = await axiosInstance.post("/auth/reset-password", data);
+    if (res.data && res.data.success === false) {
+      throw new Error(res.data.detail || "Gagal mengatur ulang kata sandi");
+    }
+    return res.data;
+  },
+
   async logout(): Promise<void> {
     // In JWT, logout is usually just deleting the token on client.
     // If backend has invalidation, we can call it here.
     return Promise.resolve();
   }
 };
+

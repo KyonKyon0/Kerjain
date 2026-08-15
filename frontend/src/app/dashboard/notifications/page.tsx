@@ -8,9 +8,10 @@ import { EmptyState } from "@/components/dashboard/EmptyState";
 import { notificationService } from "@/services/notification.service";
 import { Notification } from "@/types";
 import { NotificationCard } from "@/components/notifications/NotificationCard";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DynamicLoader } from "@/components/ui/DynamicLoader";
 import { Bell, Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -60,10 +61,12 @@ export default function NotificationsPage() {
 
         <div className="mt-6 bg-background rounded-2xl border overflow-hidden shadow-sm">
           {loading ? (
-            <div className="p-4 space-y-4">
-              {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
+            <div className="p-8">
+              <DynamicLoader text="Memuat notifikasi" subtext="Memeriksa pembaruan aktivitas Anda..." size="md" />
             </div>
           ) : notifications.length === 0 ? (
+
+
             <EmptyState 
               icon={<Bell className="w-12 h-12" />}
               title="Belum ada notifikasi"

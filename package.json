@@ -7,9 +7,12 @@
   ],
   "scripts": {
     "dev": "npm --workspace=frontend run dev",
-    "build": "npm --workspace=frontend run build"
+    "build": "npm --workspace=frontend run build",
+    "start": "npm --workspace=frontend run start",
+    "postinstall": "npm --workspace=frontend run postinstall"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
   }
 }
+

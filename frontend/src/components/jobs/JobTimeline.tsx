@@ -1,5 +1,9 @@
+"use client";
+
+import React from "react";
 import { CheckCircle2, Clock, Check, XCircle, Navigation, Wrench, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface JobTimelineProps {
   status: "PUBLISHED" | "ACCEPTED" | "ON_THE_WAY" | "WORKING" | "WAITING_CONFIRMATION" | "COMPLETED" | "CANCELLED";
@@ -9,9 +13,9 @@ export function JobTimeline({ status }: JobTimelineProps) {
   const steps = [
     { key: "PUBLISHED", label: "Dipublikasi", icon: Clock },
     { key: "ACCEPTED", label: "Diterima", icon: CheckCircle2 },
-    { key: "ON_THE_WAY", label: "Menuju\nLokasi", icon: Navigation },
+    { key: "ON_THE_WAY", label: "Perjalanan", icon: Navigation },
     { key: "WORKING", label: "Dikerjakan", icon: Wrench },
-    { key: "WAITING_CONFIRMATION", label: "Menunggu", icon: ShieldCheck },
+    { key: "WAITING_CONFIRMATION", label: "Pengecekan", icon: ShieldCheck },
     { key: "COMPLETED", label: "Selesai", icon: Check },
   ];
 
@@ -24,47 +28,86 @@ export function JobTimeline({ status }: JobTimelineProps) {
   
   if (status === "CANCELLED") {
     return (
-      <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+      <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-2xl text-destructive">
         <XCircle className="w-6 h-6 shrink-0" />
         <div>
           <p className="font-bold text-sm">Pekerjaan Dibatalkan</p>
-          <p className="text-xs mt-0.5">Pekerjaan ini tidak dilanjutkan.</p>
+          <p className="text-xs mt-0.5 opacity-90">Pekerjaan ini telah dibatalkan dan tidak dilanjutkan.</p>
         </div>
       </div>
     );
   }
 
+  const progressPercent = (currentIndex / (steps.length - 1)) * 100;
+
   return (
-    <div className="flex items-center justify-between relative px-2">
-      <div className="absolute left-[10%] right-[10%] top-4 h-1 bg-muted -z-10 rounded-full" />
-      <div 
-        className="absolute left-[5%] top-4 h-1 bg-primary -z-10 rounded-full transition-all duration-700 ease-in-out" 
-        style={{ width: `${(currentIndex / 5) * 90}%` }}
-      />
-      
-      {steps.map((step, idx) => {
-        const isPast = idx <= currentIndex;
-        const isCurrent = idx === currentIndex;
-        const Icon = step.icon;
+    <div className="w-full py-4 px-1">
+      {/* Timeline Step Container with perfectly aligned connector line */}
+      <div className="relative">
         
-        return (
-          <div key={step.key} className="flex flex-col items-center">
-            <div className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500",
-              isPast ? "bg-primary text-primary-foreground shadow-md shadow-primary/30" : "bg-muted text-muted-foreground border-2 border-background",
-              isCurrent && "ring-4 ring-primary/20 scale-110"
-            )}>
-              <Icon className="w-4 h-4" />
-            </div>
-            <span className={cn(
-              "text-[10px] sm:text-xs font-semibold mt-2 text-center max-w-[60px] whitespace-pre-line leading-tight",
-              isPast ? "text-primary" : "text-muted-foreground"
-            )}>
-              {step.label}
-            </span>
-          </div>
-        );
-      })}
+        {/* Background Grey Track */}
+        <div className="absolute top-5 left-4 right-4 h-1 bg-muted rounded-full z-0" />
+        
+        {/* Animated Active Emerald Track */}
+        <motion.div 
+          className="absolute top-5 left-4 h-1 bg-gradient-to-r from-primary to-emerald-400 rounded-full z-0 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+          initial={{ width: 0 }}
+          animate={{ width: `calc(${progressPercent}% * 0.92)` }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        />
+
+        {/* Steps Grid - Guaranteed strictly aligned */}
+        <div className="relative z-10 grid grid-cols-6 gap-1 sm:gap-2">
+          {steps.map((step, idx) => {
+            const isCompleted = idx < currentIndex;
+            const isCurrent = idx === currentIndex;
+            const isPastOrCurrent = idx <= currentIndex;
+            const Icon = step.icon;
+            
+            return (
+              <div key={step.key} className="flex flex-col items-center text-center">
+                
+                {/* Step Circle with Fixed Dimensions */}
+                <div className="h-10 flex items-center justify-center">
+                  <motion.div 
+                    initial={false}
+                    animate={{ scale: isCurrent ? 1.15 : 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    className={cn(
+                      "w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300",
+                      isCurrent 
+                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/40 ring-4 ring-primary/20 border-2 border-background"
+                        : isCompleted
+                          ? "bg-emerald-500 text-white shadow-sm border-2 border-background"
+                          : "bg-card text-muted-foreground border-2 border-border/80"
+                    )}
+                  >
+                    {isCompleted ? (
+                      <Check className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.5]" />
+                    ) : (
+                      <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                    )}
+                  </motion.div>
+                </div>
+
+                {/* Step Label - Fixed Height to guarantee vertical alignment */}
+                <div className="h-7 mt-2 flex items-start justify-center w-full">
+                  <span className={cn(
+                    "text-[10px] sm:text-xs font-bold leading-tight line-clamp-1 truncate transition-colors",
+                    isCurrent 
+                      ? "text-primary font-extrabold" 
+                      : isCompleted
+                        ? "text-foreground font-semibold"
+                        : "text-muted-foreground font-medium"
+                  )}>
+                    {step.label}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

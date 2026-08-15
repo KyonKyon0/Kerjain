@@ -18,13 +18,15 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 export default function HistoryDetailPage({ params }: { params: Promise<{ jobId: string }> }) {
-  const { jobId } = React.use(params);
+  const resolvedParams = React.use(params);
+  const jobId = resolvedParams?.jobId;
   const router = useRouter();
   
-  // Failsafe for stuck browser URLs
-  if (jobId === "[object Object]") {
+  if (!jobId || jobId === "[object Object]") {
     if (typeof window !== "undefined") window.location.href = "/dashboard";
+    return null;
   }
+
   
   const { role, user } = useAuthStore();
   

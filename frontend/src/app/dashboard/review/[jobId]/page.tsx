@@ -16,11 +16,14 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 export default function ReviewPage({ params }: { params: Promise<{ jobId: string }> }) {
-  const { jobId } = React.use(params);
+  const resolvedParams = React.use(params);
+  const jobId = resolvedParams?.jobId;
   
-  if (jobId === "[object Object]") {
+  if (!jobId || jobId === "[object Object]") {
     if (typeof window !== "undefined") window.location.href = "/dashboard";
+    return null;
   }
+
   
   const router = useRouter();
   const { role } = useAuthStore();

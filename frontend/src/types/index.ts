@@ -4,8 +4,13 @@ export interface User {
   email: string;
   phone?: string;
   address?: string;
+  avatar_url?: string;
+  avatarUrl?: string;
+  gender?: "MALE" | "FEMALE" | "PRIA" | "WANITA" | string;
   role: "consumer" | "partner";
 }
+
+
 
 export interface AuthState {
   user: User | null;
@@ -57,8 +62,11 @@ export interface Job {
   category?: string;
   lat?: number;
   lng?: number;
+  photoUrl?: string;
+  photo_url?: string;
   distance?: number;
 }
+
 
 export type PaymentMethod = "VA" | "QRIS" | "TRANSFER" | "CASH";
 export type PaymentStatus = "UNPAID" | "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED";

@@ -6,7 +6,21 @@ export async function GET(request: Request) {
   try {
     const user = await getCurrentUser(request);
     if (!user) return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
-    if (user.role !== 'partner') return NextResponse.json({ detail: 'Only partners can access wallet' }, { status: 403 });
+
+    if (user.role !== 'partner') {
+      return NextResponse.json({
+        success: true,
+        data: {
+          balance: 0,
+          ledger: [],
+          canWithdraw: false,
+          daysRemaining: 0,
+          firstIncomeDate: null
+        }
+      });
+    }
+
+
 
     // 1. Get Wallet Balance
     let wallet = await prisma.wallet.findUnique({

@@ -6,29 +6,50 @@ import { PageContainer } from "@/components/dashboard/PageContainer";
 import { SectionHeader } from "@/components/dashboard/SectionHeader";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { messageService } from "@/services/message.service";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DynamicLoader } from "@/components/ui/DynamicLoader";
 import { MessageSquare, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+
 
 export default function ChatListPage() {
   const [chats, setChats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchChats = async () => {
-    const { data } = await messageService.getChats();
-    setChats(data);
-    setLoading(false);
+    try {
+      const res = await messageService.getChats();
+      if (Array.isArray(res.data)) {
+        setChats(res.data);
+      }
+    } catch (e) {
+      console.error("Error fetching chats:", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchChats();
-    const interval = setInterval(fetchChats, 2000); // 2s polling
+    const interval = setInterval(fetchChats, 3000); // 3s polling
     return () => clearInterval(interval);
   }, []);
+
+  const formatChatTime = (timeStr?: string) => {
+    if (!timeStr) return "";
+    try {
+      const d = new Date(timeStr);
+      if (isNaN(d.getTime())) return "";
+      const now = new Date();
+      if (d.toDateString() === now.toDateString()) {
+        return d.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' });
+      }
+      return d.toLocaleDateString("id-ID", { day: 'numeric', month: 'short' });
+    } catch {
+      return "";
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -39,19 +60,14 @@ export default function ChatListPage() {
         />
 
         <div className="mt-6 bg-background rounded-2xl border overflow-hidden shadow-sm">
+
           {loading ? (
-            <div className="p-4 space-y-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="flex gap-4 items-center">
-                  <Skeleton className="w-12 h-12 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-1/3" />
-                    <Skeleton className="h-3 w-1/2" />
-                  </div>
-                </div>
-              ))}
+            <div className="p-8">
+              <DynamicLoader text="Memuat daftar percakapan" subtext="Menyinkronkan obrolan aktif..." size="md" />
             </div>
           ) : chats.length === 0 ? (
+
+
             <EmptyState 
               icon={<MessageSquare className="w-12 h-12" />}
               title="Belum Ada Pesan"
@@ -63,7 +79,7 @@ export default function ChatListPage() {
                 <Link 
                   key={chat.jobId} 
                   href={`/dashboard/chat/${chat.jobId}`}
-                  className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors border-b last:border-0"
+                  className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors border-b last:border-0 group"
                 >
                   <Avatar className="w-12 h-12 border">
                     <AvatarImage src={`https://api.dicebear.com/7.x/notionists/svg?seed=${chat.partnerName}`} />
@@ -76,7 +92,7 @@ export default function ChatListPage() {
                         {chat.partnerName}
                       </h4>
                       <span className={cn("text-[10px] whitespace-nowrap ml-2", chat.unreadCount > 0 ? "text-primary font-bold" : "text-muted-foreground")}>
-                        {new Date(chat.lastMessageTime).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}
+                        {formatChatTime(chat.lastMessageTime)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -93,7 +109,7 @@ export default function ChatListPage() {
                       {chat.jobTitle}
                     </p>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+                  <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
               ))}
             </div>
@@ -103,3 +119,4 @@ export default function ChatListPage() {
     </DashboardLayout>
   );
 }
+

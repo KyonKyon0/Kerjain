@@ -4,18 +4,34 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, Search, Star, Wrench, Zap, Home, ChevronRight, ShieldCheck, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
+import { Footer } from "@/components/landing/Footer";
+import Image from "next/image";
 
 export default function LandingPage() {
+
   return (
     <div className="flex flex-col min-h-screen bg-background selection:bg-primary/20 overflow-hidden">
       {/* Navbar */}
       <header className="fixed top-0 z-50 w-full bg-background/80 backdrop-blur-xl border-b border-border/40">
         <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="bg-primary text-primary-foreground p-1.5 rounded-xl">
-              <Zap className="w-5 h-5 fill-current" />
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="relative w-8 h-8 rounded-xl bg-primary/10 p-1 flex items-center justify-center border border-primary/20">
+              <Image
+                src="/logo-notext.png"
+                alt="Kerjain Logo"
+                width={26}
+                height={26}
+                priority
+                className="object-contain"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (!target.src.includes("Logo_Here")) {
+                    target.src = "/Logo_Here/Kerjain_Logo_NO Text.png";
+                  }
+                }}
+              />
             </div>
-            <span className="text-xl font-bold tracking-tight text-foreground">Kerjain</span>
+            <span className="text-xl font-extrabold tracking-tight text-foreground">Kerjain</span>
           </Link>
           <nav className="hidden md:flex gap-8 items-center">
             <Link href="#layanan" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Layanan</Link>
@@ -101,19 +117,20 @@ export default function LandingPage() {
                 { name: "Keamanan", icon: ShieldCheck, color: "bg-red-500" },
                 { name: "Lainnya", icon: Search, color: "bg-purple-500" },
               ].map((cat, i) => (
-                <motion.div 
-                  key={i}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="flex flex-col items-center gap-3 group cursor-pointer"
-                >
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-sm group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-300 ${cat.color}`}>
-                    <cat.icon className="w-8 h-8" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground text-center">{cat.name}</span>
-                </motion.div>
+                <Link key={i} href="/register">
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.1 }}
+                    className="flex flex-col items-center gap-3 group cursor-pointer"
+                  >
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-sm group-hover:shadow-md group-hover:-translate-y-1 transition-all duration-300 ${cat.color}`}>
+                      <cat.icon className="w-8 h-8" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground text-center group-hover:text-primary transition-colors">{cat.name}</span>
+                  </motion.div>
+                </Link>
               ))}
             </div>
           </div>
@@ -157,7 +174,8 @@ export default function LandingPage() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-24 px-4 bg-primary text-primary-foreground">
+        <section id="mitra" className="py-24 px-4 bg-primary text-primary-foreground">
+
           <div className="container mx-auto max-w-4xl text-center">
             <h2 className="text-3xl md:text-5xl font-bold mb-6">Siap beresin kerjaan rumah?</h2>
             <p className="text-primary-foreground/80 text-lg mb-10 max-w-2xl mx-auto">
@@ -171,43 +189,9 @@ export default function LandingPage() {
         </section>
       </main>
       
-      {/* Footer */}
-      <footer className="bg-muted py-12 px-4 border-t">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="col-span-2">
-              <Link href="/" className="flex items-center gap-2 mb-4">
-                <div className="bg-primary text-primary-foreground p-1 rounded-lg">
-                  <Zap className="w-4 h-4 fill-current" />
-                </div>
-                <span className="text-xl font-bold text-foreground">Kerjain</span>
-              </Link>
-              <p className="text-muted-foreground max-w-xs">
-                Platform layanan jasa lokal terbaik yang menghubungkan kamu dengan ahlinya.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4">Perusahaan</h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><Link href="#" className="hover:text-primary">Tentang Kami</Link></li>
-                <li><Link href="#" className="hover:text-primary">Karir</Link></li>
-                <li><Link href="#" className="hover:text-primary">Blog</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4">Dukungan</h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><Link href="#" className="hover:text-primary">Bantuan</Link></li>
-                <li><Link href="#" className="hover:text-primary">Syarat & Ketentuan</Link></li>
-                <li><Link href="#" className="hover:text-primary">Privasi</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-12 pt-8 border-t border-border text-center text-muted-foreground text-sm">
-            &copy; {new Date().getFullYear()} Kerjain. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      {/* Luxury Footer with Logo and GitHub */}
+      <Footer />
     </div>
   );
 }
+

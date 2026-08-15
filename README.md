@@ -2,6 +2,7 @@
 
 <div align="center">
 
+![Version](https://img.shields.io/badge/Version-v2.2026.08.16-emerald?style=for-the-badge&logo=rocket&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js%2016-Turbopack-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React%2019-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript%205-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
@@ -13,6 +14,25 @@
 **Platform marketplace jasa dan bantuan mikro lokal terpercaya yang menghubungkan Konsumen dengan Mitra kerja terdekat secara instan, aman, dan transparan.**
 
 </div>
+
+---
+
+## 🚀 Catatan Rilis & Pembaruan Versi Terbaru (`v2.2026.08.16`)
+
+- 📈 **Grafik Keuangan Dinamis (*Fintech Spline Chart*)**:
+  - Pantau performa penghasilan riil (QRIS digital vs Tunai cash) langsung dari transaksi database Supabase.
+  - Kurva naik-turun responsif dengan warna dinamis (**Hijau saat naik**, **Merah saat turun**), skala sumbu-Y super sensitif, dan garis ramping seragam (`1.2px`).
+  - Dilengkapi tab rentang waktu lengkap: **7 Hari, 14 Hari, 30 Hari, 3 Bulan, 6 Bulan, dan 1 Tahun**.
+- ⭐ **Badge Rating Aktual Presisi (`★ X,XX`)**:
+  - Menampilkan rating bintang aktual lengkap 2 desimal (misal: `★ 5.00` atau `★ 4.95`) beserta jumlah ulasan riil pengguna.
+- 🔔 **Banner Notifikasi Pembaruan Aplikasi**:
+  - Banner informasi pembaruan terintegrasi di halaman Akun tepat di atas Menu Cepat Mitra dengan penyimpanan penutupan permanen (`localStorage`).
+- 🖼️ **Pemotong Foto Profil (*Image Crop Modal*)**:
+  - Fitur crop foto profil bulat dengan kontrol zoom, drag, dan fisika sentuh natural seperti galeri smartphone.
+- 📍 **Perhitungan Jarak GPS & Durasi Pintar**:
+  - Safe distance bounds (`± 850 m`, `± 2.4 km`) dan format durasi posting adaptif (`menit`, `jam`, `hari`).
+- 📱 **Tata Letak Bebas Overflow (*Zero Horizontal Scroll*)**:
+  - Mengunci kontainer beranda, kartu pekerjaan berjalan, dan pencarian agar 100% responsif tanpa geser horizontal yang merusak UI.
 
 ---
 
@@ -37,7 +57,7 @@ Aplikasi ini dibangun menggunakan arsitektur monorepo modern berbasis **Next.js 
 - **Tombol Radar Zap Energy**: Toggle status online/offline dengan animasi pengumpulan energi partikel saat mengaktifkan radar order.
 - **Filter & Radar Job Terdekat**: Menampilkan pekerjaan publik di sekitar dengan estimasi waktu, imbalan, dan jarak aktual.
 - **Update Progres & Upload Foto**: Mitra dapat mengirimkan foto bukti tahapan kerja langsung ke galeri timeline pekerjaan.
-- **Dompet & Pencairan Otomatis**: Akumulasi saldo imbalan dari pekerjaan selesai dengan mekanisme penahanan keamanan 7 hari (*hold period*) sebelum ditarik ke rekening bank.
+- **Dompet Digital & Grafik Finansial**: Akumulasi saldo imbalan dari pekerjaan selesai dengan grafik performa QRIS vs Tunai dan fitur penarikan dana instan ke rekening bank.
 
 ### 💬 Komunikasi & Notifikasi
 - **Live In-App Chat**: Pertukaran pesan real-time antar pengguna dengan penanda status terbaca (*read status*).
@@ -45,7 +65,7 @@ Aplikasi ini dibangun menggunakan arsitektur monorepo modern berbasis **Next.js 
 
 ### 👤 Profil & Autentikasi
 - **Selektor Peran & Gender**: Tombol peran berdampingan (Konsumen / Mitra) dan selektor jenis kelamin (Wanita / Pria) yang terintegrasi langsung saat registrasi dan profil.
-- **Koleksi Avatar Karakter**: Generator avatar ilustrasi dinamis yang menyesuaikan preferensi gender pengguna.
+- **Koleksi Avatar Karakter & Custom Crop**: Generator avatar dinamis dan pemotong foto profil melingkar berkualitas tinggi.
 - **Pemulihan Kata Sandi (OTP)**: Pengiriman kode OTP 6-digit instan via integrasi Resend Email API dengan template HTML gelap premium.
 
 ### 📱 Navigasi Dock Mobile Modern
@@ -74,22 +94,23 @@ Kerjain/
 │   │   │   │   ├── payments/     # Payment Processing & QRIS
 │   │   │   │   ├── reviews/      # Rating & Review Submissions
 │   │   │   │   ├── users/        # User Profile & Realtime Stats
-│   │   │   │   └── wallet/       # Partner Wallet Balance & Withdrawals
+│   │   │   │   └── wallet/       # Partner Wallet Balance, Stats & Withdrawals
 │   │   │   ├── dashboard/        # Halaman Dashboard Konsumen & Mitra
-│   │   │   ├── profile/          # Halaman Manajemen Profil & Foto
+│   │   │   ├── profile/          # Halaman Manajemen Profil & Crop Foto
 │   │   │   ├── register/         # Halaman Registrasi Interaktif
 │   │   │   ├── login/            # Halaman Masuk
 │   │   │   ├── help/             # Pusat Bantuan 24/7
 │   │   │   └── layout.tsx        # Root Layout dengan Theme Provider
 │   │   ├── components/           # Komponen UI Reusable
-│   │   │   ├── dashboard/        # Komponen Dashboard & Metrik
-│   │   │   ├── jobs/             # JobCard, JobTimeline, ProgressGallery, SlideToConfirm
+│   │   │   ├── dashboard/        # Komponen Dashboard, Wallet & FinancialEarningsChart
+│   │   │   ├── jobs/             # JobCard, JobTimeline, ProgressGallery, DistanceBadge
 │   │   │   ├── layouts/          # TopNav, MobileNav, Sidebar, DashboardLayout
 │   │   │   ├── maps/             # LocationPicker & MapViewer
 │   │   │   ├── notifications/    # NotificationDropdown & Badge
-│   │   │   └── ui/               # Base UI Buttons, Modals, Dialogs, Toasts
+│   │   │   ├── profile/          # ImageCropModal
+│   │   │   └── ui/               # Base UI Buttons, Modals, Dialogs, SmoothDropdown
 │   │   ├── features/             # Modul Fitur (Auth, Jobs, Dashboard)
-│   │   ├── hooks/                # Custom React Hooks (useJobs, useNotifications, useUserLocation)
+│   │   ├── hooks/                # Custom React Hooks (useJobs, useNotifications, useWallet)
 │   │   ├── lib/                  # Utilities (Prisma Client, Axios Instance, Distance, Resend)
 │   │   ├── store/                # Global State (Zustand Auth Store)
 │   │   └── types/                # Definisi Tipe TypeScript
@@ -195,4 +216,4 @@ Repositori ini telah dikonfigurasi secara optimal untuk Vercel:
 
 ## 📄 Lisensi & Hak Cipta
 
-© 2026 **Kerjain Platform**. Seluruh hak cipta dilindungi undang-undang.
+© 2026 **Kerjain Platform** by **KyonKyon0**. Seluruh hak cipta dilindungi undang-undang.

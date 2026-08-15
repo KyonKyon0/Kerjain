@@ -291,14 +291,17 @@ export function ConsumerDashboard() {
                   <motion.div 
                     whileHover={{ y: -3, scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="bg-card border rounded-2xl p-4 text-center hover:border-primary/50 hover:shadow-md transition-all shadow-sm cursor-pointer group"
+                    className="bg-card border rounded-2xl p-3 sm:p-4 text-center hover:border-primary/50 hover:shadow-md transition-all shadow-sm cursor-pointer group h-full flex flex-col items-center justify-center min-h-[96px]"
                   >
-                    <div className={`w-10 h-10 mx-auto mb-2 rounded-xl ${cat.bg} ${cat.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                    <div className={`w-10 h-10 mx-auto mb-2 rounded-xl ${cat.bg} ${cat.color} flex items-center justify-center group-hover:scale-110 transition-transform shrink-0`}>
                       <cat.icon className="w-5 h-5" />
                     </div>
-                    <span className="text-xs font-bold text-foreground line-clamp-1">{cat.name}</span>
+                    <span className="text-[11px] sm:text-xs font-bold text-foreground leading-tight text-center block break-words">
+                      {cat.name}
+                    </span>
                   </motion.div>
                 </Link>
+
               ))}
             </div>
           </section>

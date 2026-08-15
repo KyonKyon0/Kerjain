@@ -281,8 +281,9 @@ export default function AccountPage() {
               Keluar dari Akun
             </Button>
             <p className="text-center text-xs text-muted-foreground mt-4 font-medium">
-              Kerjain App vv2.2026.08.15.19.35
+              Kerjain App vv2.2026.08.15.19.42
             </p>
+
 
 
           </div>

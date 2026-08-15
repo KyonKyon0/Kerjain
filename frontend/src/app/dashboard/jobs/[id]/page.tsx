@@ -49,8 +49,10 @@ import {
   MapPin,
   X,
   ImageIcon,
-  QrCode
+  QrCode,
+  Loader2
 } from "lucide-react";
+
 
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -140,17 +142,29 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   };
 
   const handleUpdateProgress = async (newStatus: string) => {
-    await addProgress.mutateAsync({
-      id: id as string,
-      data: {
-        status: newStatus,
-        note: note || `Pekerjaan dilanjutkan ke tahap ${newStatus}`,
-        photoUrl: photoPreview || undefined
-      }
-    });
-    setNote("");
-    setPhotoPreview(null);
+    const defaultNote = 
+      newStatus === "ON_THE_WAY" ? "Mitra sedang menuju ke lokasi" :
+      newStatus === "ARRIVED" ? "Mitra telah tiba di lokasi pekerjaan" :
+      newStatus === "WORKING" ? "Mitra mulai mengerjakan tugas" :
+      newStatus === "WAITING_CONFIRMATION" ? "Mitra telah menyelesaikan tugas dan meminta konfirmasi" :
+      `Update progres: ${newStatus}`;
+
+    try {
+      await addProgress.mutateAsync({
+        id: id as string,
+        data: {
+          status: newStatus,
+          note: note.trim() !== "" ? note.trim() : defaultNote,
+          photoUrl: photoPreview || undefined
+        }
+      });
+      setNote("");
+      setPhotoPreview(null);
+    } catch (err: any) {
+      toast.error(err.message || "Gagal memperbarui status");
+    }
   };
+
 
 
   const handleComplete = async () => {
@@ -500,43 +514,58 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                   <div className="grid gap-3 pt-2">
                     {job.status === "ACCEPTED" && (
                       <Button 
-                        className="w-full rounded-2xl h-14 text-base font-bold shadow-md shadow-primary/20" 
+                        className="w-full rounded-2xl h-14 text-sm font-extrabold shadow-md bg-primary hover:bg-emerald-600 text-white transition-all hover:scale-[1.01]" 
                         onClick={() => handleUpdateProgress("ON_THE_WAY")} 
                         disabled={addProgress.isPending}
                       >
-                        <Navigation className="w-5 h-5 mr-2" /> Menuju Lokasi
+                        {addProgress.isPending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Navigation className="w-5 h-5 mr-2" />}
+                        Menuju Lokasi
                       </Button>
                     )}
                     {job.status === "ON_THE_WAY" && (
                       <Button 
-                        className="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 h-14 text-base font-bold shadow-md shadow-blue-600/20 text-white" 
+                        className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-14 text-sm font-extrabold shadow-md shadow-blue-500/25 text-white transition-all hover:scale-[1.01]" 
                         onClick={() => handleUpdateProgress("ARRIVED")} 
                         disabled={addProgress.isPending}
                       >
-                        <MapPin className="w-5 h-5 mr-2" /> Telah Tiba di Lokasi
+                        {addProgress.isPending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <MapPin className="w-5 h-5 mr-2" />}
+                        Telah Tiba di Lokasi
                       </Button>
                     )}
                     {job.status === "ARRIVED" && (
                       <Button 
-                        className="w-full rounded-2xl bg-amber-500 hover:bg-amber-600 h-14 text-base font-bold shadow-md shadow-amber-500/20 text-white" 
+                        className="w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 h-14 text-sm font-extrabold shadow-md shadow-amber-500/25 text-white transition-all hover:scale-[1.01]" 
                         onClick={() => handleUpdateProgress("WORKING")} 
                         disabled={addProgress.isPending}
                       >
-                        <Wrench className="w-5 h-5 mr-2" /> Mulai Bekerja
+                        {addProgress.isPending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Wrench className="w-5 h-5 mr-2" />}
+                        Mulai Bekerja
                       </Button>
                     )}
                     {["WORKING", "IN_PROGRESS"].includes(job.status) && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-semibold text-muted-foreground px-1">
-                          Tandai pekerjaan telah tuntas:
-                        </p>
-                        <SlideToConfirm
-                          onConfirm={() => handleUpdateProgress("WAITING_CONFIRMATION")}
-                          label="Geser Selesaikan Tugas"
-                          successLabel="Progres Berhasil Dikirim!"
-                          isLoading={addProgress.isPending}
-                          variant="emerald"
-                        />
+                      <div className="space-y-3">
+                        {photoPreview || note.trim() !== "" ? (
+                          <Button 
+                            className="w-full rounded-2xl h-12 text-xs font-extrabold shadow-sm bg-muted hover:bg-muted/80 text-foreground border border-border" 
+                            onClick={() => handleUpdateProgress("WORKING")} 
+                            disabled={addProgress.isPending}
+                          >
+                            {addProgress.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Camera className="w-4 h-4 mr-2 text-primary" />}
+                            Kirim Catatan & Foto Progres
+                          </Button>
+                        ) : null}
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground px-1 mb-2">
+                            Tandai pekerjaan telah tuntas:
+                          </p>
+                          <SlideToConfirm
+                            onConfirm={() => handleUpdateProgress("WAITING_CONFIRMATION")}
+                            label="Geser Selesaikan Tugas"
+                            successLabel="Tugas Berhasil Diselesaikan!"
+                            isLoading={addProgress.isPending}
+                            variant="primary"
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -551,11 +580,11 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                   <div className="bg-emerald-500/20 w-12 h-12 rounded-2xl flex items-center justify-center mb-3 text-emerald-600">
                     <ShieldCheck className="w-6 h-6" />
                   </div>
-                  <h3 className="font-bold text-lg mb-1 text-emerald-900 dark:text-emerald-400">
+                  <h3 className="font-extrabold text-lg mb-1 text-emerald-900 dark:text-emerald-400">
                     Konfirmasi Penyelesaian
                   </h3>
-                  <p className="text-xs text-emerald-800/80 dark:text-emerald-400/80 mb-5 font-medium">
-                    Mitra menyatakan pekerjaan telah selesai. Periksa hasil kerja dan geser tombol di bawah untuk menyelesaikan pekerjaan.
+                  <p className="text-xs text-emerald-800/80 dark:text-emerald-400/80 mb-5 font-medium leading-relaxed">
+                    Mitra menyatakan pekerjaan telah selesai. Periksa hasil kerja dan geser tombol di bawah untuk menyelesaikan pekerjaan dan meneruskan dana ke mitra.
                   </p>
                   <div className="flex flex-col gap-3">
                     <SlideToConfirm
@@ -563,20 +592,21 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                       label="Geser Konfirmasi Selesai"
                       successLabel="Pekerjaan Berhasil Selesai!"
                       isLoading={confirmJob.isPending}
-                      variant="emerald"
+                      variant="primary"
                     />
                     <Button 
                       variant="outline" 
-                      className="w-full rounded-2xl h-11 text-xs font-bold" 
+                      className="w-full rounded-2xl h-12 text-xs font-bold text-destructive hover:bg-destructive/10 border-destructive/30" 
                       onClick={() => updateStatus.mutate({ id: id as string, status: "WORKING" })} 
                       disabled={updateStatus.isPending}
                     >
-                      Minta Revisi
+                      Minta Penyesuaian / Revisi
                     </Button>
                   </div>
                 </DashboardCard>
               </motion.div>
             )}
+
 
             {/* COMPLETED REVIEW PANEL */}
             {role === "consumer" && job.status === "COMPLETED" && (

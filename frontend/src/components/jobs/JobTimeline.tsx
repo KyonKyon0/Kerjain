@@ -35,10 +35,11 @@ export function JobTimeline({ status }: JobTimelineProps) {
 
   let currentIndex = 0;
   if (status === "ACCEPTED") currentIndex = 1;
-  if (status === "ON_THE_WAY") currentIndex = 2;
-  if (status === "WORKING") currentIndex = 3;
+  if (status === "ON_THE_WAY" || status === "ARRIVED") currentIndex = 2;
+  if (status === "WORKING" || status === "IN_PROGRESS") currentIndex = 3;
   if (status === "WAITING_CONFIRMATION") currentIndex = 4;
   if (status === "COMPLETED") currentIndex = 5;
+
   
   if (status === "CANCELLED") {
     return (

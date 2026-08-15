@@ -15,9 +15,43 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://kerjain.id"),
   title: "Kerjain - Bantu Tetangga, Selesaikan Masalah",
-  description: "Friendly Local Service Marketplace",
+  description: "Friendly Local Service Marketplace - Platform Jasa & Bantuan Mikro Terpercaya",
+  icons: {
+    icon: [
+      { url: "/logo-notext.png", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
+    shortcut: ["/logo-notext.png"],
+    apple: [
+      { url: "/logo-notext.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  openGraph: {
+    title: "Kerjain - Bantu Tetangga, Selesaikan Masalah",
+    description: "Friendly Local Service Marketplace - Solusi Cepat & Terpercaya Jasa Lokal",
+    url: "https://kerjain.id",
+    siteName: "Kerjain",
+    images: [
+      {
+        url: "/logo-notext.png",
+        width: 512,
+        height: 512,
+        alt: "Kerjain Logo",
+      },
+    ],
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Kerjain - Bantu Tetangga, Selesaikan Masalah",
+    description: "Friendly Local Service Marketplace",
+    images: ["/logo-notext.png"],
+  },
 };
+
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

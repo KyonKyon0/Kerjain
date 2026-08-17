@@ -80,7 +80,7 @@ export default function SettingsPage() {
           </Card>
 
           <p className="text-center text-xs text-muted-foreground pt-2 font-medium">
-            KerjaIn Platform • v3.170826.21.14
+            KerjaIn Platform • v3.170826.21.21
           </p>
         </div>
       </PageContainer>

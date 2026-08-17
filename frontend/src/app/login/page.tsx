@@ -82,9 +82,10 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center p-4 bg-white shadow-sm rounded-2xl mb-4 text-primary">
             <Lock className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Selamat Datang Kembali</h1>
-          <p className="text-muted-foreground mt-2">Masuk untuk melanjutkan ke Kerjain</p>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">Selamat Datang Kembali</h1>
+          <p className="text-muted-foreground text-xs font-medium mt-1">Masuk untuk melanjutkan ke Kerjain</p>
         </div>
+
 
         <Card className="border-none shadow-xl shadow-primary/5 overflow-hidden">
           <CardContent className="p-6 sm:p-8">

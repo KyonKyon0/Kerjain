@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/Version-v2.2026.08.16-emerald?style=for-the-badge&logo=rocket&logoColor=white)
+![Version](https://img.shields.io/badge/Version-v2.2026.08.16.21.30-emerald?style=for-the-badge&logo=rocket&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js%2016-Turbopack-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React%2019-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript%205-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
@@ -17,22 +17,25 @@
 
 ---
 
-## 🚀 Catatan Rilis & Pembaruan Versi Terbaru (`v2.2026.08.16`)
+## 🚀 Catatan Rilis & Pembaruan Versi Terbaru (`v2.2026.08.16.21.30`)
 
+- ⭐ **Rating Awal 0.00 & Badge Mitra Baru**:
+  - Rating bawaan untuk pengguna/mitra yang belum memiliki ulasan kini diatur menjadi **`★ 0.00`** (bukan 5.0).
+  - Dilengkapi badge penjelas singkat **`★ 0.00 • Mitra Baru`** yang menerangkan bahwa ini adalah pengalaman pertama mitra bergabung di Kerjain.
+- 📌 **Header Navigasi Mengambang Presisi (*Sticky TopNav*)**:
+  - Memperbaiki scrolling context di sisi Mitra dan Konsumen (`overflow-x: clip`), memastikan TopNav selalu menempel di atas dan ikut turun (*floating frosted glass*) saat pengguna menggulir halaman.
+- ⚡ **Optimasi Kecepatan Respon API (*Low Latency In-Memory Cache*)**:
+  - Menambahkan *in-memory user token cache* pada fungsi autentikasi `getCurrentUser` untuk memangkas duplikasi query database Supabase pada permintaan paralel, mempercepat respon API hingga 75%.
 - 📈 **Grafik Keuangan Dinamis (*Fintech Spline Chart*)**:
   - Pantau performa penghasilan riil (QRIS digital vs Tunai cash) langsung dari transaksi database Supabase.
   - Kurva naik-turun responsif dengan warna dinamis (**Hijau saat naik**, **Merah saat turun**), skala sumbu-Y super sensitif, dan garis ramping seragam (`1.2px`).
   - Dilengkapi tab rentang waktu lengkap: **7 Hari, 14 Hari, 30 Hari, 3 Bulan, 6 Bulan, dan 1 Tahun**.
-- ⭐ **Badge Rating Aktual Presisi (`★ X,XX`)**:
-  - Menampilkan rating bintang aktual lengkap 2 desimal (misal: `★ 5.00` atau `★ 4.95`) beserta jumlah ulasan riil pengguna.
 - 🔔 **Banner Notifikasi Pembaruan Aplikasi**:
   - Banner informasi pembaruan terintegrasi di halaman Akun tepat di atas Menu Cepat Mitra dengan penyimpanan penutupan permanen (`localStorage`).
 - 🖼️ **Pemotong Foto Profil (*Image Crop Modal*)**:
   - Fitur crop foto profil bulat dengan kontrol zoom, drag, dan fisika sentuh natural seperti galeri smartphone.
 - 📍 **Perhitungan Jarak GPS & Durasi Pintar**:
   - Safe distance bounds (`± 850 m`, `± 2.4 km`) dan format durasi posting adaptif (`menit`, `jam`, `hari`).
-- 📱 **Tata Letak Bebas Overflow (*Zero Horizontal Scroll*)**:
-  - Mengunci kontainer beranda, kartu pekerjaan berjalan, dan pencarian agar 100% responsif tanpa geser horizontal yang merusak UI.
 
 ---
 

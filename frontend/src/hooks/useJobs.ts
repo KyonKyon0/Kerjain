@@ -10,7 +10,8 @@ export const useMyJobs = () => {
       const res = await jobService.getMyJobs();
       return res.data as any;
     },
-    refetchInterval: 3500,
+    staleTime: 15000,
+    refetchInterval: 20000,
   });
 };
 
@@ -21,7 +22,8 @@ export const usePartnerJobs = () => {
       const res = await jobService.getPartnerJobs();
       return res.data as any;
     },
-    refetchInterval: 3500,
+    staleTime: 15000,
+    refetchInterval: 20000,
   });
 };
 
@@ -32,7 +34,8 @@ export const useConsumerJobs = () => {
       const res = await jobService.getConsumerJobs();
       return res.data as any;
     },
-    refetchInterval: 3500,
+    staleTime: 15000,
+    refetchInterval: 20000,
   });
 };
 
@@ -43,9 +46,11 @@ export const useSearchJobs = (query: string = "") => {
       const res = await jobService.searchJobs(query);
       return res.data as any;
     },
-    refetchInterval: 3500,
+    staleTime: 15000,
+    refetchInterval: 25000,
   });
 };
+
 
 export const useJobDetail = (id: string) => {
   return useQuery({
@@ -55,7 +60,8 @@ export const useJobDetail = (id: string) => {
       return res.data as any;
     },
     enabled: !!id && id !== "[object Object]" && id !== "%5Bobject%20Object%5D" && decodeURIComponent(id) !== "[object Object]",
-    refetchInterval: 2500,
+    staleTime: 3000,
+    refetchInterval: 8000,
   });
 };
 
@@ -67,7 +73,8 @@ export const useJobTimeline = (id: string) => {
       return res.data as any;
     },
     enabled: !!id && id !== "[object Object]" && id !== "%5Bobject%20Object%5D" && decodeURIComponent(id) !== "[object Object]",
-    refetchInterval: 2500,
+    staleTime: 3000,
+    refetchInterval: 8000,
   });
 };
 
@@ -80,29 +87,16 @@ export const useCreateJob = () => {
     onSuccess: async (res) => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-      
-      let jobId: string | null = null;
-      
-      // Extract from the exact structure backend returns
-      if (res?.data?.job?.id && typeof res.data.job.id === "string") {
-        jobId = res.data.job.id;
-      }
-      
-      const payment = res?.data?.payment;
-      
-      if (!jobId || jobId === "[object Object]") {
-        console.error("Failed to parse valid jobId from response:", res);
-        toast.error("Gagal mendapatkan ID pekerjaan. Format respons tidak sesuai.");
-        return;
-      }
-      
-      if (payment && payment.method === 'QRIS') {
-        toast.success("Pekerjaan berhasil dipublikasikan! Silakan lakukan pembayaran.");
-        router.push(`/dashboard/payment/${jobId}`);
+      toast.success("Pekerjaan berhasil dibuat!");
+      const createdJob = (res?.data?.job || res?.data) as any;
+      if (createdJob?.id) {
+        if (createdJob.payment_type === "QRIS" || createdJob.payment_status === "PENDING") {
+          router.push(`/dashboard/payment/${createdJob.id}`);
+        } else {
+          router.push(`/dashboard/jobs/${createdJob.id}`);
+        }
       } else {
-        toast.success("Pekerjaan berhasil dipublikasikan!");
-        router.push(`/dashboard/jobs/${jobId}`);
+        router.push("/dashboard");
       }
     },
     onError: (error: Error) => {
@@ -113,20 +107,14 @@ export const useCreateJob = () => {
 
 export const useAcceptJob = () => {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (id: string) => jobService.acceptJob(id),
-    onSuccess: (_, id) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", id] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", id, "timeline"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
       toast.success("Pekerjaan berhasil diambil!");
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Gagal mengambil pekerjaan");
-    },
+    onError: (error: Error) => toast.error(error.message || "Gagal mengambil pekerjaan"),
   });
 };
 
@@ -134,13 +122,36 @@ export const useStartJob = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => jobService.startJob(id),
-    onSuccess: (_, id) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", id] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", id, "timeline"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Status: Sedang Dikerjakan");
+      toast.success("Pekerjaan dimulai!");
+    },
+    onError: (error: Error) => toast.error(error.message || "Gagal memulai pekerjaan"),
+  });
+};
+
+export const useDepartJob = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => jobService.updateJobStatus(id, "ON_THE_WAY"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.success("Status diubah: Menuju Lokasi");
+    },
+    onError: (error: Error) => toast.error(error.message || "Gagal memperbarui status"),
+  });
+};
+
+export const useArriveJob = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => jobService.updateJobStatus(id, "ARRIVED"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.success("Status diubah: Tiba di Lokasi");
     },
     onError: (error: Error) => toast.error(error.message || "Gagal memperbarui status"),
   });
@@ -150,15 +161,12 @@ export const useFinishJob = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => jobService.finishJob(id),
-    onSuccess: (_, id) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", id] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", id, "timeline"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Menunggu konfirmasi penyelesaian");
+      toast.success("Menunggu konfirmasi konsumen");
     },
-    onError: (error: Error) => toast.error(error.message || "Gagal memperbarui status"),
+    onError: (error: Error) => toast.error(error.message || "Gagal menyelesaikan pekerjaan"),
   });
 };
 
@@ -166,66 +174,16 @@ export const useConfirmJob = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => jobService.confirmJob(id),
-    onSuccess: (_, id) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", id] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", id, "timeline"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-      queryClient.invalidateQueries({ queryKey: ["wallet"] });
-      toast.success("Pekerjaan selesai!");
+      toast.success("Pekerjaan telah dikonfirmasi selesai!");
     },
-    onError: (error: Error) => toast.error(error.message || "Gagal mengkonfirmasi pekerjaan"),
+    onError: (error: Error) => toast.error(error.message || "Gagal mengonfirmasi pekerjaan"),
   });
 };
 
-export const useReviseJob = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => jobService.reviseJob(id),
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", id] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", id, "timeline"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      toast.success("Pekerjaan dikembalikan untuk revisi");
-    },
-    onError: (error: Error) => toast.error(error.message || "Gagal meminta revisi"),
-  });
-};
-
-export const useCancelJob = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => jobService.cancelJob(id),
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", id] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", id, "timeline"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Pekerjaan dibatalkan");
-    },
-    onError: (error: Error) => toast.error(error.message || "Gagal membatalkan pekerjaan"),
-  });
-};
-
-export const useAddProgress = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { status: string; note?: string; photoUrl?: string } }) => 
-      jobService.addProgress(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", variables.id, "timeline"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Progres berhasil ditambahkan!");
-    },
-    onError: (error: Error) => toast.error(error.message || "Gagal menambahkan progres"),
-  });
-};
+export const useConfirmFinishJob = useConfirmJob;
 
 export const useUpdateJobStatus = () => {
   const queryClient = useQueryClient();
@@ -234,12 +192,50 @@ export const useUpdateJobStatus = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
       queryClient.invalidateQueries({ queryKey: ["jobs", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["jobs", variables.id, "timeline"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("Status berhasil diperbarui");
+      toast.success("Status pekerjaan berhasil diperbarui");
     },
     onError: (error: Error) => toast.error(error.message || "Gagal memperbarui status"),
+  });
+};
+
+export const useAddProgress = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { 
+      id: string; 
+      data?: { status?: string; note?: string; photoUrl?: string };
+      status?: string; 
+      note?: string; 
+      photoUrl?: string; 
+      description?: string; 
+      photo_url?: string;
+    }) => {
+      const status = args.data?.status || args.status || "IN_PROGRESS";
+      const note = args.data?.note || args.note || args.description || "";
+      const photoUrl = args.data?.photoUrl || args.photoUrl || args.photo_url;
+      return jobService.addProgress(args.id, { status, note, photoUrl });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["jobs", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["jobs", variables.id, "timeline"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.success("Progres kerja berhasil ditambahkan");
+    },
+    onError: (error: Error) => toast.error(error.message || "Gagal menambahkan progres"),
+  });
+};
+
+export const useCancelJob = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => jobService.cancelJob(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.success("Pekerjaan berhasil dibatalkan");
+    },
+    onError: (error: Error) => toast.error(error.message || "Gagal membatalkan pekerjaan"),
   });
 };
 
@@ -251,7 +247,8 @@ export const useGetMessages = (id: string) => {
       return res.data;
     },
     enabled: !!id && id !== "[object Object]" && id !== "%5Bobject%20Object%5D" && decodeURIComponent(id) !== "[object Object]",
-    refetchInterval: 2500,
+    staleTime: 1500,
+    refetchInterval: 4000,
   });
 };
 

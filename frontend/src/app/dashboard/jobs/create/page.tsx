@@ -13,6 +13,7 @@ import { Step2Category } from "@/features/jobs/components/Step2Category";
 import { Step3Location } from "@/features/jobs/components/Step3Location";
 import { Step4Reward } from "@/features/jobs/components/Step4Reward";
 import { Step5Review } from "@/features/jobs/components/Step5Review";
+import { motion, AnimatePresence } from "framer-motion";
 
 const STEPS = ["Info Utama", "Kategori", "Lokasi", "Imbalan", "Review"];
 
@@ -31,21 +32,35 @@ export default function CreateJobPage() {
 
   return (
     <DashboardLayout>
-      <PageContainer className="max-w-3xl">
-        <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold tracking-tight mb-2">Buat Pekerjaan Baru</h2>
-          <p className="text-muted-foreground">Isi detail kebutuhan Anda agar mitra yang tepat dapat segera membantu.</p>
+      <PageContainer className="max-w-3xl pb-24 overflow-x-clip">
+        <div className="mb-6 text-center">
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight mb-1 text-foreground">
+            Buat Pekerjaan Baru
+          </h2>
+          <p className="text-muted-foreground text-xs font-medium">
+            Lengkapi formulir terpadu untuk menyiarkan kebutuhan Anda ke mitra terdekat
+          </p>
         </div>
 
-        <DashboardCard className="p-6 sm:p-8">
+        <DashboardCard className="p-5 sm:p-7 bg-card/95 border border-border/80 rounded-3xl shadow-sm">
           <ProgressStepper currentStep={currentStep} steps={STEPS} />
           
-          <div className="mt-8">
-            {currentStep === 1 && <Step1Info />}
-            {currentStep === 2 && <Step2Category />}
-            {currentStep === 3 && <Step3Location />}
-            {currentStep === 4 && <Step4Reward />}
-            {currentStep === 5 && <Step5Review />}
+          <div className="relative mt-6">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentStep}
+                initial={{ opacity: 0, x: 18 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -18 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+              >
+                {currentStep === 1 && <Step1Info />}
+                {currentStep === 2 && <Step2Category />}
+                {currentStep === 3 && <Step3Location />}
+                {currentStep === 4 && <Step4Reward />}
+                {currentStep === 5 && <Step5Review />}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </DashboardCard>
       </PageContainer>

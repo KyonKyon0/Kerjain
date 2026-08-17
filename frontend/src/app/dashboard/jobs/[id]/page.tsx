@@ -13,10 +13,8 @@ import {
   useAddProgress, 
   useUpdateJobStatus 
 } from "@/hooks/useJobs";
-import { useCreatePayment } from "@/hooks/usePayment";
 import { JobTimeline } from "@/components/jobs/JobTimeline";
-import { LocationCard } from "@/components/jobs/LocationCard";
-import { DashboardCard } from "@/components/dashboard/DashboardCard";
+import { MapViewer } from "@/components/maps";
 import { StatusBadge } from "@/components/jobs/StatusBadge";
 import { AcceptDialog } from "@/components/jobs/AcceptDialog";
 import { CompletionDialog } from "@/components/jobs/CompletionDialog";
@@ -25,40 +23,35 @@ import { JobProgressGallery } from "@/components/jobs/JobProgressGallery";
 import { SlideToConfirm } from "@/components/ui/SlideToConfirm";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, 
-  Tag, 
   Wallet, 
   Clock, 
-  UserCircle2, 
-  CheckCircle2, 
   MessageSquare, 
   Phone, 
   Camera, 
-  AlertCircle, 
-  Upload, 
   Navigation, 
   Wrench, 
   ShieldCheck, 
   Zap, 
   Search, 
-  Briefcase, 
   Star, 
   MapPin,
   X,
-  ImageIcon,
   QrCode,
-  Loader2
+  Loader2,
+  Route,
+  Compass,
+  FileText,
+  Image as ImageIcon
 } from "lucide-react";
-
-
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuthStore } from "@/store/auth.store";
 import { toast } from "sonner";
-import { formatWIBDateTime } from "@/lib/utils";
+import { formatWIBDateTime, cn } from "@/lib/utils";
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { calculateHaversineDistance, formatDistanceString, estimateTravelTime } from "@/lib/distance";
 
 export default function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
@@ -72,6 +65,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   const [isAcceptOpen, setIsAcceptOpen] = useState(false);
   const [isCompletionOpen, setIsCompletionOpen] = useState(false);
   const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
+  const [showFullMap, setShowFullMap] = useState(false);
   const { role } = useAuthStore();
 
   const { data: job, isLoading: loading } = useJobDetail(id as string);
@@ -81,20 +75,21 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   const updateStatus = useUpdateJobStatus();
   const confirmJob = useConfirmJob();
   const cancelJob = useCancelJob();
-  const createPayment = useCreatePayment();
+
+  const { lat: userLat, lng: userLng } = useUserLocation();
 
   const [note, setNote] = useState("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isCompressingPhoto, setIsCompressingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Compress photo on client-side to max 800x800 base64 JPEG
+  // Compress photo client-side
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Silakan pilih file gambar yang valid");
+      toast.error("Pilih file gambar yang valid");
       return;
     }
 
@@ -127,7 +122,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
           ctx.drawImage(img, 0, 0, width, height);
           const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.82);
           setPhotoPreview(compressedDataUrl);
-          toast.success("Foto progres siap dilampirkan");
+          toast.success("Foto progres terlampir");
         }
         setIsCompressingPhoto(false);
       };
@@ -143,7 +138,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
 
   const handleUpdateProgress = async (newStatus: string) => {
     const defaultNote = 
-      newStatus === "ON_THE_WAY" ? "Mitra sedang menuju ke lokasi" :
+      newStatus === "ON_THE_WAY" ? "Mitra sedang menuju lokasi" :
       newStatus === "ARRIVED" ? "Mitra telah tiba di lokasi pekerjaan" :
       newStatus === "WORKING" ? "Mitra mulai mengerjakan tugas" :
       newStatus === "WAITING_CONFIRMATION" ? "Mitra telah menyelesaikan tugas dan meminta konfirmasi" :
@@ -165,8 +160,6 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     }
   };
 
-
-
   const handleComplete = async () => {
     await confirmJob.mutateAsync(id as string);
     setIsCompletionOpen(false);
@@ -176,13 +169,10 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   if (loading) {
     return (
       <DashboardLayout>
-        <PageContainer className="max-w-4xl space-y-6">
-          <Skeleton className="h-8 w-32 rounded-lg" />
-          <Skeleton className="h-40 w-full rounded-3xl" />
-          <div className="grid md:grid-cols-3 gap-6">
-            <Skeleton className="h-[400px] md:col-span-2 rounded-3xl" />
-            <Skeleton className="h-[400px] rounded-3xl" />
-          </div>
+        <PageContainer className="max-w-3xl space-y-4 pt-2">
+          <Skeleton className="h-6 w-24 rounded-lg" />
+          <Skeleton className="h-28 w-full rounded-2xl" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
         </PageContainer>
       </DashboardLayout>
     );
@@ -190,442 +180,471 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
 
   if (!job) return null;
 
-  const logs = (timelineData?.data || []).filter((l: any) => l.statusSnapshot !== 'CANCELLED');
-  const recentLogs = [...logs].reverse().slice(0, 3);
+  const jobPhoto = job.photoUrl || (job as any).photo_url;
+
+  // Distance calculation
+  const distanceInMeters = (job.lat && job.lng && userLat && userLng)
+    ? calculateHaversineDistance(userLat, userLng, job.lat, job.lng)
+    : null;
+
+  const distanceText = formatDistanceString(distanceInMeters);
+  const travelTimeText = estimateTravelTime(distanceInMeters);
+
+  const googleMapsRouteUrl = (job.lat && job.lng)
+    ? (userLat && userLng
+        ? `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${job.lat},${job.lng}`
+        : `https://www.google.com/maps/search/?api=1&query=${job.lat},${job.lng}`)
+    : "#";
+
+  const targetPartner = job.partnerName || (job as any).partner?.name;
+  const targetPhone = role === "consumer" ? (job.partnerPhone || (job as any).partner?.phone) : (job.consumerPhone || (job as any).consumer?.phone);
+  const isCancellable = (job.status === "PUBLISHED" || job.status === "WAITING_PAYMENT") && role === "consumer";
 
   return (
     <DashboardLayout>
-      <PageContainer className="max-w-4xl space-y-6">
-        <Button variant="ghost" className="mb-2 p-0 hover:bg-transparent -ml-2 text-muted-foreground hover:text-foreground" onClick={() => router.back()}>
-          <ArrowLeft className="w-4 h-4 mr-2" /> Kembali
+      <PageContainer className="max-w-3xl space-y-3.5 pt-1 pb-20 overflow-x-clip px-3 sm:px-4 md:px-6">
+        
+        {/* Navigation Back */}
+        <Button 
+          variant="ghost" 
+          size="sm"
+          className="p-0 h-8 hover:bg-transparent -ml-1 text-muted-foreground hover:text-foreground text-xs font-bold flex items-center gap-1.5" 
+          onClick={() => router.back()}
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Kembali
         </Button>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card/90 backdrop-blur-md p-6 rounded-3xl border border-border/80 shadow-sm">
-          <div>
-            <div className="flex items-center gap-3 mb-3">
+        {/* 1. COMPACT JOB TITLE HEADER */}
+        <motion.div 
+          initial={{ opacity: 0, y: 8 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          className="bg-card border border-border/80 p-3.5 sm:p-5 rounded-2xl shadow-xs space-y-2 w-full max-w-full overflow-hidden"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
               <StatusBadge status={job.status} />
-              <span className="text-xs font-semibold text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-xl flex items-center">
-                <Clock className="w-3.5 h-3.5 mr-1 text-primary/70" />
+              <span className="text-[10px] sm:text-[11px] font-bold text-muted-foreground bg-muted/60 px-2 sm:px-2.5 py-0.5 rounded-lg flex items-center gap-1">
+                <Clock className="w-3 h-3 text-primary" />
                 {formatWIBDateTime(job.createdAt || (job as any).created_at)}
               </span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">{job.title}</h1>
+            
+            <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wider border border-primary/20">
+              {job.category || "Umum"}
+            </span>
           </div>
-          {job.status === "PUBLISHED" && role === "consumer" && (
-            <Button variant="destructive" className="rounded-2xl shadow-sm" onClick={() => cancelJob.mutate(id as string)}>
-              Batalkan Pekerjaan
-            </Button>
-          )}
+
+          <h1 className="text-base sm:text-xl font-black tracking-tight text-foreground break-words">{job.title}</h1>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 space-y-6">
-            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}>
-              <DashboardCard className="shadow-sm">
-                <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-primary" />
-                  Status & Timeline
-                </h3>
-                <JobTimeline status={job.status} />
-                
-                {/* Riwayat Progres */}
-                {logs.length > 0 && (
-                  <div className="mt-8 border-t border-border pt-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-bold text-sm text-foreground">Riwayat Progres Terbaru</h4>
-                      {logs.length > 3 && (
-                        <Dialog>
-                          <DialogTrigger render={<Button variant="ghost" size="sm" className="text-xs h-7 text-primary hover:text-primary" />}>
-                            Lihat Semua ({logs.length})
-                          </DialogTrigger>
-                          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>Semua Riwayat Progres</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 mt-4">
-                              {logs.map((log: any) => (
-                                <div key={log.id} className="flex gap-4 items-start">
-                                  <div className="w-3 h-3 mt-1.5 rounded-full bg-primary shrink-0 shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
-                                  <div className="flex-1 bg-muted/20 border border-border/50 rounded-2xl p-4">
-                                    <div className="flex justify-between items-center mb-2">
-                                      <span className="text-sm font-bold text-primary">{log.statusSnapshot || log.status_snapshot}</span>
-                                      <span className="text-xs font-medium text-muted-foreground">{formatWIBDateTime(log.createdAt || log.created_at)}</span>
-                                    </div>
-                                    {log.note && <p className="text-sm text-foreground/80">{log.note}</p>}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      )}
-                    </div>
-                    <div className="space-y-4">
-                      {recentLogs.map((log: any) => (
-                        <div key={log.id} className="flex gap-4 items-start">
-                          <div className="w-3 h-3 mt-1.5 rounded-full bg-primary shrink-0 shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
-                          <div className="flex-1 bg-muted/20 border border-border/50 rounded-2xl p-4">
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="text-sm font-bold text-primary">{log.statusSnapshot || log.status_snapshot}</span>
-                              <span className="text-xs font-medium text-muted-foreground">{formatWIBDateTime(log.createdAt || log.created_at)}</span>
-                            </div>
-                            {log.note && <p className="text-sm text-foreground/80">{log.note}</p>}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+        {/* 2. DEDICATED PHOTO ATTACHMENT CARD - PLACED DIRECTLY ABOVE STATUS CARD */}
+        {jobPhoto && (
+          <motion.div 
+            initial={{ opacity: 0, y: 8 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className="bg-card border border-border/80 p-3 sm:p-4 rounded-2xl shadow-xs space-y-2.5 w-full max-w-full overflow-hidden"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-primary text-[11px] font-black uppercase tracking-wider">
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>Foto Lampiran Tugas</span>
+              </div>
+              <span className="text-[9px] text-muted-foreground font-bold bg-muted/60 px-2 py-0.5 rounded-md border border-border/50">
+                Lampiran Konsumen
+              </span>
+            </div>
+            <div className="relative rounded-xl overflow-hidden aspect-video max-h-60 sm:max-h-72 w-full bg-black/40 border border-border/70">
+              <img 
+                src={jobPhoto} 
+                alt="Foto Lampiran Tugas" 
+                className="w-full h-full object-cover" 
+              />
+            </div>
+          </motion.div>
+        )}
 
-              </DashboardCard>
-            </motion.div>
-
-            {/* Live Progress Photos Gallery - Visible to Both Consumer and Partner */}
-            <JobProgressGallery logs={timelineData?.data || []} />
-
-            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-              <DashboardCard className="shadow-sm">
-                <h3 className="font-bold text-lg mb-4">Deskripsi Pekerjaan</h3>
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-line text-sm md:text-base mb-6">
-                  {job.description}
-                </p>
-
-                <div className="grid sm:grid-cols-2 gap-4 border-t border-border pt-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
-                      <Tag className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground font-medium">Kategori</p>
-                      <p className="font-bold text-sm text-foreground">{job.category || "Umum"}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-emerald-500/10 text-emerald-600 rounded-xl">
-                      <Wallet className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground font-medium">Imbalan / Upah</p>
-                      <p className="font-bold text-sm text-foreground">
-                        Rp {((job.rewardAmount ?? (job as any).reward_amount) || 0).toLocaleString("id-ID")}
-                      </p>
-                    </div>
+        {/* 3. MASTER UNIFIED STATUS, TIMELINE, MONEY, PARTNER & LOCATION CARD */}
+        <motion.div 
+          initial={{ opacity: 0, y: 8 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ delay: 0.05 }}
+          className="bg-card border border-border/80 p-3.5 sm:p-5 rounded-2xl shadow-xs space-y-3.5 w-full max-w-full overflow-hidden box-border"
+        >
+          {/* SECTION A: PARTNER / RADAR STATUS STRIP */}
+          {job.status === "WAITING_PAYMENT" ? (
+            <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 w-full max-w-full overflow-hidden">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Clock className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-black text-xs text-foreground truncate">Menunggu Pembayaran QRIS</p>
+                  <p className="text-[10px] text-muted-foreground font-medium line-clamp-1">Selesaikan pembayaran agar tugas aktif di radar</p>
+                </div>
+              </div>
+              {role === "consumer" && (
+                <Button 
+                  size="sm" 
+                  onClick={() => router.push(`/dashboard/payment/${id}`)}
+                  className="rounded-xl h-8 px-3 text-xs font-black bg-primary text-white hover:bg-primary/90 shrink-0 ml-2"
+                >
+                  <QrCode className="w-3.5 h-3.5 mr-1" /> Bayar
+                </Button>
+              )}
+            </div>
+          ) : job.status === "PUBLISHED" ? (
+            <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-primary/10 border border-primary/20 w-full max-w-full overflow-hidden">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <div className="relative flex items-center justify-center shrink-0">
+                  <span className="animate-ping absolute inline-flex h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-primary opacity-40"></span>
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary text-white flex items-center justify-center">
+                    <Search className="w-3.5 h-3.5" />
                   </div>
                 </div>
-              </DashboardCard>
-            </motion.div>
+                <div className="min-w-0">
+                  <p className="font-black text-xs text-foreground truncate">Mencari Mitra di Sekitar</p>
+                  <p className="text-[10px] text-muted-foreground font-medium line-clamp-1">Menyiarkan ke radar mitra aktif terdekat</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 rounded-xl bg-card/60 border border-border/80 w-full max-w-full overflow-hidden">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border border-primary/30 shrink-0">
+                  <AvatarImage src={`https://api.dicebear.com/7.x/notionists/svg?seed=${role === "consumer" ? (targetPartner || "Mitra") : (job.consumerName || (job as any).consumer?.name || "Konsumen")}`} />
+                  <AvatarFallback>{(role === "consumer" ? targetPartner : (job.consumerName || (job as any).consumer?.name))?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="text-[9px] text-muted-foreground uppercase font-black tracking-wider truncate">
+                    {role === "consumer" ? "Mitra yang Mengerjakan" : "Pemilik Tugas"}
+                  </p>
+                  <p className="font-black text-xs text-foreground flex items-center gap-1 truncate">
+                    <span className="truncate">{role === "consumer" ? (targetPartner || "Mitra") : (job.consumerName || (job as any).consumer?.name || "Pemilik")}</span>
+                    <ShieldCheck className="w-3.5 h-3.5 text-primary shrink-0" />
+                  </p>
+                </div>
+              </div>
 
-            {/* Location Card with live GPS distance and Google Maps Directions */}
-            <LocationCard 
-              address={job.address}
-              latitude={job.lat ?? null}
-              longitude={job.lng ?? null}
+              <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                <Button 
+                  size="sm" 
+                  onClick={() => router.push(`/dashboard/chat/${id}`)}
+                  className="flex-1 sm:flex-none rounded-xl h-8 px-3.5 text-xs font-black bg-primary text-white hover:bg-primary/90"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 mr-1" /> Chat
+                </Button>
+                {targetPhone && (
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => window.location.href = `tel:${targetPhone.replace(/[^0-9+]/g, "")}`}
+                    className="rounded-xl h-8 px-2.5 text-xs font-bold border-border/80"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* SECTION B: TIMELINE */}
+          <div className="pt-2 border-t border-border/70 w-full max-w-full overflow-hidden">
+            <h3 className="font-black text-[11px] sm:text-xs uppercase tracking-wider text-foreground flex items-center gap-1.5 mb-1.5">
+              <Zap className="w-3.5 h-3.5 text-primary" />
+              Status & Timeline
+            </h3>
+            <JobTimeline status={job.status} />
+          </div>
+
+          {/* SECTION C: DETAIL UANG & BIAYA TRANSAKSI (INTEGRATED IN MASTER CARD) */}
+          <div className="pt-2.5 border-t border-border/70 w-full max-w-full overflow-hidden">
+            <div className="p-2.5 sm:p-3 rounded-xl bg-card/60 border border-border/80 flex items-center justify-between w-full">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                  <Wallet className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider truncate">Upah / Total Tagihan</p>
+                  <p className="font-mono font-black text-xs sm:text-sm text-emerald-400 truncate">
+                    Rp {((job.rewardAmount ?? (job as any).reward_amount) || 0).toLocaleString("id-ID")}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[9px] sm:text-[10px] font-black uppercase border border-emerald-500/20 shrink-0">
+                <ShieldCheck className="w-3 h-3" />
+                <span>Dana Diamankan</span>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION D: LOCATION & NAVIGATION */}
+          <div className="pt-2.5 border-t border-border/70 space-y-2 w-full max-w-full overflow-hidden">
+            <div className="flex items-start justify-between gap-2.5">
+              <div className="flex items-start gap-2 min-w-0">
+                <MapPin className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Lokasi Pekerjaan</p>
+                  <p className="font-bold text-[11px] sm:text-xs text-foreground mt-0.5 leading-snug break-words">{job.address}</p>
+                </div>
+              </div>
+
+              {job.lat && job.lng && (
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => setShowFullMap(!showFullMap)}
+                  className="rounded-xl h-7 px-2 text-[10px] sm:text-xs font-bold border-border/80 shrink-0"
+                >
+                  {showFullMap ? "Tutup Peta" : "Lihat Peta"}
+                </Button>
+              )}
+            </div>
+
+            {/* Distance Estimate for Partner */}
+            {distanceInMeters !== null && (
+              <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs">
+                <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-[10px] sm:text-[11px]">
+                  <Compass className="w-3 h-3" />
+                  <span>Jarak: ± {distanceText} dari Anda</span>
+                </div>
+                {travelTimeText && (
+                  <span className="text-[10px] font-black text-emerald-400">
+                    {travelTimeText}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Collapsible Map View */}
+            <AnimatePresence>
+              {showFullMap && job.lat && job.lng && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-2 overflow-hidden pt-1"
+                >
+                  <div className="rounded-xl overflow-hidden border border-border/70 h-40">
+                    <MapViewer
+                      lat={job.lat}
+                      lon={job.lng}
+                      address={job.address}
+                      height="h-40"
+                    />
+                  </div>
+                  <a 
+                    href={googleMapsRouteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-primary text-white font-black text-xs rounded-xl hover:bg-primary/90 transition-colors"
+                  >
+                    <Route className="w-3.5 h-3.5" /> Buka Rute di Google Maps
+                  </a>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* SECTION E: DESCRIPTION */}
+          <div className="pt-2.5 border-t border-border/70 space-y-1 w-full max-w-full overflow-hidden">
+            <h4 className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1">
+              <FileText className="w-3 h-3 text-primary" /> Rincian Tugas
+            </h4>
+            <p className="text-[11px] sm:text-xs text-foreground leading-relaxed whitespace-pre-wrap font-medium break-words">
+              {job.description}
+            </p>
+          </div>
+        </motion.div>
+
+        {/* 4. RECENT PROGRESS GALLERY / LOGS */}
+        <JobProgressGallery logs={timelineData?.data || []} />
+
+        {/* 5. ACTION PANELS BASED ON ROLE AND STATUS */}
+        
+        {/* Partner: Take Job */}
+        {role === "partner" && job.status === "PUBLISHED" && (
+          <div className="p-3.5 sm:p-4 bg-card border border-border/80 rounded-2xl shadow-xs space-y-3 w-full max-w-full overflow-hidden">
+            <h3 className="font-black text-xs uppercase tracking-wider text-foreground">
+              Konfirmasi Pengambilan Tugas
+            </h3>
+            <SlideToConfirm 
+              onConfirm={handleAccept} 
+              label="Geser Terima Job" 
+              successLabel="Pekerjaan Diterima!"
+              isLoading={acceptJob.isPending}
+              variant="primary"
             />
           </div>
+        )}
 
-          <div className="space-y-6">
-            {/* PROFILE CARD (CONSUMER OR PARTNER) */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <DashboardCard className="bg-primary text-primary-foreground relative overflow-hidden text-center p-6 shadow-md">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-                
-                {job.status === "WAITING_PAYMENT" ? (
-                  <div>
-                    <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4 border border-white/30">
-                      <QrCode className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="font-extrabold text-lg mb-1">Menunggu Pembayaran</h3>
-                    <p className="text-xs text-white/80">Selesaikan pembayaran QRIS agar pekerjaan ini diterbitkan ke mitra.</p>
-                  </div>
-                ) : job.status === "PUBLISHED" ? (
-                  <div>
-                    <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4 border border-white/30">
-                      <UserCircle2 className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="font-bold text-lg mb-1">Mencari Mitra</h3>
-                    <p className="text-xs text-white/80">Pekerjaan ini menunggu mitra yang bersedia mengambilnya.</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-5">
-                    <div className="flex items-center gap-4 bg-white/10 p-4 rounded-2xl backdrop-blur-sm">
-                      <Avatar className="w-14 h-14 border-2 border-white/50">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/notionists/svg?seed=${role === "consumer" ? (job.partnerName || job.partner?.name) : (job.consumerName || job.consumer?.name)}`} />
-                        <AvatarFallback>{(role === "consumer" ? (job.partnerName || job.partner?.name) : (job.consumerName || job.consumer?.name))?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="text-left">
-                        <p className="text-[10px] uppercase font-bold tracking-wider opacity-80 mb-1">
-                          {role === "consumer" ? "Mitra yang menangani" : "Pemilik Pekerjaan"}
-                        </p>
-                        <p className="font-bold text-lg">{role === "consumer" ? (job.partnerName || job.partner?.name || "Menunggu...") : (job.consumerName || job.consumer?.name || "Pemilik")}</p>
-                      </div>
-                    </div>
-                    {(() => {
-                      const targetPhone = role === "consumer" ? (job.partnerPhone || job.partner?.phone) : (job.consumerPhone || job.consumer?.phone);
-                      return (
-                        <div className="grid grid-cols-2 gap-3">
-                          <Button 
-                            variant="secondary" 
-                            className="w-full bg-white text-primary hover:bg-white/90 rounded-xl font-bold h-12"
-                            onClick={() => router.push(`/dashboard/chat/${id}`)}
-                          >
-                            <MessageSquare className="w-5 h-5 mr-2" /> Chat
-                          </Button>
-                          <Button 
-                            variant="secondary" 
-                            className="w-full bg-white/20 hover:bg-white/30 text-white border-0 rounded-xl font-bold h-12"
-                            onClick={() => {
-                              if (targetPhone && targetPhone.trim() !== "") {
-                                const cleanPhone = targetPhone.replace(/[^0-9+]/g, "");
-                                window.location.href = `tel:${cleanPhone}`;
-                              } else {
-                                toast.error("Nomor telepon lawan bicara belum didaftarkan");
-                              }
-                            }}
-                          >
-                            <Phone className="w-5 h-5 mr-2" /> Telepon
-                          </Button>
-                        </div>
-                      );
-                    })()}
+        {/* Partner: Active Progress Update */}
+        {role === "partner" && ["ACCEPTED", "ON_THE_WAY", "ARRIVED", "WORKING", "IN_PROGRESS"].includes(job.status) && (
+          <div className="p-3.5 sm:p-4 bg-card border border-border/80 rounded-2xl shadow-xs space-y-3 w-full max-w-full overflow-hidden">
+            <h3 className="font-black text-xs uppercase tracking-wider text-foreground flex items-center gap-1.5">
+              <Camera className="w-3.5 h-3.5 text-primary" /> Update Status & Progres
+            </h3>
+            
+            <textarea 
+              className="w-full text-xs p-3 rounded-xl border border-border/80 bg-card outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none font-medium text-foreground"
+              placeholder="Catatan progres kerja (opsional)..."
+              rows={2}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
 
-                  </div>
-                )}
-              </DashboardCard>
-            </motion.div>
-
-            {/* ACTION PANEL CONSUMER (WAITING_PAYMENT -> Selesaikan Pembayaran) */}
-            {role === "consumer" && job.status === "WAITING_PAYMENT" && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                <DashboardCard className="border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 shadow-md space-y-3">
-                  <div className="bg-amber-500/20 w-12 h-12 rounded-2xl flex items-center justify-center mb-1 text-amber-600 dark:text-amber-400">
-                    <Clock className="w-6 h-6 animate-pulse" />
-                  </div>
-                  <h3 className="font-extrabold text-lg text-amber-900 dark:text-amber-300">
-                    Menunggu Pembayaran QRIS
-                  </h3>
-                  <p className="text-xs text-amber-800/80 dark:text-amber-400/80 leading-relaxed font-medium">
-                    Selesaikan pembayaran QRIS Anda agar pekerjaan otomatis aktif dan diterbitkan ke mitra di sekitar.
-                  </p>
-                  
-                  <div className="flex flex-col gap-2.5 pt-2">
-                    <Button 
-                      className="w-full rounded-2xl h-14 text-sm font-extrabold shadow-md bg-primary hover:bg-emerald-600 text-white"
-                      onClick={() => router.push(`/dashboard/payment/${id}`)}
-                    >
-                      <QrCode className="w-5 h-5 mr-2" /> Bayar Sekarang
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full rounded-2xl h-11 text-xs font-bold text-destructive hover:bg-destructive/10 border-destructive/30"
-                      onClick={() => {
-                        cancelJob.mutate(id as string);
-                        router.push("/dashboard");
-                      }}
-                      disabled={cancelJob.isPending}
-                    >
-                      Batalkan Pekerjaan
-                    </Button>
-                  </div>
-                </DashboardCard>
-              </motion.div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handlePhotoSelect}
+            />
+            
+            {photoPreview ? (
+              <div className="relative rounded-xl overflow-hidden border border-emerald-500/40 aspect-video max-h-36 bg-black/40">
+                <img src={photoPreview} alt="Foto Progres" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setPhotoPreview(null)}
+                  className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 text-white hover:bg-destructive transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isCompressingPhoto}
+                className="w-full rounded-xl h-9 text-xs font-bold border-dashed border-border/80 text-muted-foreground hover:text-foreground"
+              >
+                <Camera className="w-3.5 h-3.5 mr-1 text-primary" /> + Lampirkan Foto Progres
+              </Button>
             )}
-
-
-            {/* ACTION PANEL PARTNER (PUBLISHED -> SlideToConfirm Terima Pekerjaan) */}
-            {role === "partner" && job.status === "PUBLISHED" && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                <DashboardCard className="border-primary/20 shadow-md">
-                  <div className="bg-primary/10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 text-primary">
-                    <Briefcase className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-bold text-lg mb-1">Ambil Pekerjaan?</h3>
-                  <p className="text-xs text-muted-foreground mb-5">Geser tombol di bawah untuk menyetujui dan mengambil pekerjaan ini.</p>
-                  
-                  <SlideToConfirm 
-                    onConfirm={handleAccept} 
-                    label="Geser Terima Job" 
-                    successLabel="Pekerjaan Diterima!"
-                    isLoading={acceptJob.isPending}
+            
+            <div className="pt-1">
+              {job.status === "ACCEPTED" && (
+                <Button 
+                  className="w-full rounded-xl h-11 text-xs font-black shadow-sm bg-primary text-white hover:bg-primary/90" 
+                  onClick={() => handleUpdateProgress("ON_THE_WAY")} 
+                  disabled={addProgress.isPending}
+                >
+                  {addProgress.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Navigation className="w-3.5 h-3.5 mr-1.5" />}
+                  Menuju Lokasi
+                </Button>
+              )}
+              {job.status === "ON_THE_WAY" && (
+                <Button 
+                  className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 h-11 text-xs font-black shadow-sm text-white" 
+                  onClick={() => handleUpdateProgress("ARRIVED")} 
+                  disabled={addProgress.isPending}
+                >
+                  {addProgress.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <MapPin className="w-3.5 h-3.5 mr-1.5" />}
+                  Telah Tiba di Lokasi
+                </Button>
+              )}
+              {job.status === "ARRIVED" && (
+                <Button 
+                  className="w-full rounded-xl bg-amber-500 hover:bg-amber-600 h-11 text-xs font-black shadow-sm text-white" 
+                  onClick={() => handleUpdateProgress("WORKING")} 
+                  disabled={addProgress.isPending}
+                >
+                  {addProgress.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Wrench className="w-3.5 h-3.5 mr-1.5" />}
+                  Mulai Bekerja
+                </Button>
+              )}
+              {["WORKING", "IN_PROGRESS"].includes(job.status) && (
+                <div className="space-y-2">
+                  {photoPreview || note.trim() !== "" ? (
+                    <Button 
+                      className="w-full rounded-xl h-10 text-xs font-bold bg-muted hover:bg-muted/80 text-foreground border border-border/80" 
+                      onClick={() => handleUpdateProgress("WORKING")} 
+                      disabled={addProgress.isPending}
+                    >
+                      {addProgress.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Camera className="w-3.5 h-3.5 mr-1.5 text-primary" />}
+                      Kirim Catatan & Foto
+                    </Button>
+                  ) : null}
+                  <SlideToConfirm
+                    onConfirm={() => handleUpdateProgress("WAITING_CONFIRMATION")}
+                    label="Geser Selesaikan Tugas"
+                    successLabel="Tugas Selesai!"
+                    isLoading={addProgress.isPending}
                     variant="primary"
                   />
-                </DashboardCard>
-              </motion.div>
-            )}
-
-            {/* ACTION PANEL PARTNER (ACTIVE PROGRESS UPDATE) */}
-            {role === "partner" && ["ACCEPTED", "ON_THE_WAY", "ARRIVED", "WORKING", "IN_PROGRESS"].includes(job.status) && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                <DashboardCard className="shadow-md space-y-4">
-                  <h3 className="font-bold text-lg flex items-center">
-                    <Camera className="w-5 h-5 mr-2 text-primary" /> Update Progres & Foto
-                  </h3>
-                  
-                  <textarea 
-                    className="w-full text-sm p-4 rounded-2xl border bg-muted/30 outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
-                    placeholder="Catatan progres (contoh: Menuju lokasi / sedang memperbaiki / selesai)"
-                    rows={2}
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                  />
-
-                  {/* Hidden File Input for Camera/Gallery */}
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/*"
-                    capture="environment"
-                    className="hidden"
-                    onChange={handlePhotoSelect}
-                  />
-                  
-                  {/* Photo Upload / Preview Box */}
-                  {photoPreview ? (
-                    <div className="relative rounded-2xl overflow-hidden border border-emerald-500/40 aspect-video bg-black/40">
-                      <img src={photoPreview} alt="Pratinjau Foto" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => setPhotoPreview(null)}
-                        className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white hover:bg-destructive transition-colors shadow-md"
-                        title="Hapus Foto"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                      <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-xl bg-black/60 backdrop-blur-sm text-white text-[11px] font-bold">
-                        Foto Siap Terlampir
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isCompressingPhoto}
-                      className="w-full h-24 border-2 border-dashed border-primary/30 rounded-2xl flex flex-col items-center justify-center bg-primary/5 hover:bg-primary/10 transition-colors text-primary cursor-pointer group"
-                    >
-                      <div className="w-8 h-8 bg-primary/15 rounded-xl flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
-                        <Camera className="w-4 h-4" />
-                      </div>
-                      <span className="font-bold text-xs">
-                        {isCompressingPhoto ? "Memproses Foto..." : "+ Lampirkan Foto Bukti / Progres"}
-                      </span>
-                    </button>
-                  )}
-                  
-                  <div className="grid gap-3 pt-2">
-                    {job.status === "ACCEPTED" && (
-                      <Button 
-                        className="w-full rounded-2xl h-14 text-sm font-extrabold shadow-md bg-primary hover:bg-emerald-600 text-white transition-all hover:scale-[1.01]" 
-                        onClick={() => handleUpdateProgress("ON_THE_WAY")} 
-                        disabled={addProgress.isPending}
-                      >
-                        {addProgress.isPending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Navigation className="w-5 h-5 mr-2" />}
-                        Menuju Lokasi
-                      </Button>
-                    )}
-                    {job.status === "ON_THE_WAY" && (
-                      <Button 
-                        className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-14 text-sm font-extrabold shadow-md shadow-blue-500/25 text-white transition-all hover:scale-[1.01]" 
-                        onClick={() => handleUpdateProgress("ARRIVED")} 
-                        disabled={addProgress.isPending}
-                      >
-                        {addProgress.isPending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <MapPin className="w-5 h-5 mr-2" />}
-                        Telah Tiba di Lokasi
-                      </Button>
-                    )}
-                    {job.status === "ARRIVED" && (
-                      <Button 
-                        className="w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 h-14 text-sm font-extrabold shadow-md shadow-amber-500/25 text-white transition-all hover:scale-[1.01]" 
-                        onClick={() => handleUpdateProgress("WORKING")} 
-                        disabled={addProgress.isPending}
-                      >
-                        {addProgress.isPending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Wrench className="w-5 h-5 mr-2" />}
-                        Mulai Bekerja
-                      </Button>
-                    )}
-                    {["WORKING", "IN_PROGRESS"].includes(job.status) && (
-                      <div className="space-y-3">
-                        {photoPreview || note.trim() !== "" ? (
-                          <Button 
-                            className="w-full rounded-2xl h-12 text-xs font-extrabold shadow-sm bg-muted hover:bg-muted/80 text-foreground border border-border" 
-                            onClick={() => handleUpdateProgress("WORKING")} 
-                            disabled={addProgress.isPending}
-                          >
-                            {addProgress.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Camera className="w-4 h-4 mr-2 text-primary" />}
-                            Kirim Catatan & Foto Progres
-                          </Button>
-                        ) : null}
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground px-1 mb-2">
-                            Tandai pekerjaan telah tuntas:
-                          </p>
-                          <SlideToConfirm
-                            onConfirm={() => handleUpdateProgress("WAITING_CONFIRMATION")}
-                            label="Geser Selesaikan Tugas"
-                            successLabel="Tugas Berhasil Diselesaikan!"
-                            isLoading={addProgress.isPending}
-                            variant="primary"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </DashboardCard>
-              </motion.div>
-            )}
-
-            {/* ACTION PANEL CONSUMER (WAITING CONFIRMATION -> SlideToConfirm Selesai) */}
-            {role === "consumer" && job.status === "WAITING_CONFIRMATION" && (
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}>
-                <DashboardCard className="border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 shadow-md">
-                  <div className="bg-emerald-500/20 w-12 h-12 rounded-2xl flex items-center justify-center mb-3 text-emerald-600">
-                    <ShieldCheck className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-extrabold text-lg mb-1 text-emerald-900 dark:text-emerald-400">
-                    Konfirmasi Penyelesaian
-                  </h3>
-                  <p className="text-xs text-emerald-800/80 dark:text-emerald-400/80 mb-5 font-medium leading-relaxed">
-                    Mitra menyatakan pekerjaan telah selesai. Periksa hasil kerja dan geser tombol di bawah untuk menyelesaikan pekerjaan dan meneruskan dana ke mitra.
-                  </p>
-                  <div className="flex flex-col gap-3">
-                    <SlideToConfirm
-                      onConfirm={handleComplete}
-                      label="Geser Konfirmasi Selesai"
-                      successLabel="Pekerjaan Berhasil Selesai!"
-                      isLoading={confirmJob.isPending}
-                      variant="primary"
-                    />
-                    <Button 
-                      variant="outline" 
-                      className="w-full rounded-2xl h-12 text-xs font-bold text-destructive hover:bg-destructive/10 border-destructive/30" 
-                      onClick={() => updateStatus.mutate({ id: id as string, status: "WORKING" })} 
-                      disabled={updateStatus.isPending}
-                    >
-                      Minta Penyesuaian / Revisi
-                    </Button>
-                  </div>
-                </DashboardCard>
-              </motion.div>
-            )}
-
-
-            {/* COMPLETED REVIEW PANEL */}
-            {role === "consumer" && job.status === "COMPLETED" && (
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-                <DashboardCard className="shadow-sm border-primary/20">
-                  <div className="bg-primary/10 w-12 h-12 rounded-2xl flex items-center justify-center mb-4 text-primary">
-                    <Star className="w-6 h-6 fill-current" />
-                  </div>
-                  <h3 className="font-bold text-lg mb-2 text-primary">Pekerjaan Selesai</h3>
-                  <p className="text-sm text-muted-foreground mb-6 font-medium">Terima kasih telah menggunakan Kerjain. Berikan review untuk mitra.</p>
-                  <Button className="w-full rounded-2xl h-14 text-base font-bold shadow-md shadow-primary/20" onClick={() => router.push(`/dashboard/review/${id}`)}>
-                    Beri Ulasan Mitra
-                  </Button>
-                </DashboardCard>
-              </motion.div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
+        {/* Consumer: Waiting Confirmation */}
+        {role === "consumer" && job.status === "WAITING_CONFIRMATION" && (
+          <div className="p-3.5 sm:p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl shadow-xs space-y-3 w-full max-w-full overflow-hidden">
+            <h3 className="font-black text-xs uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4" /> Konfirmasi Penyelesaian Tugas
+            </h3>
+            <p className="text-xs text-muted-foreground font-medium">
+              Mitra telah menyelesaikan pekerjaan. Periksa hasil kerja dan geser untuk menyelesaikan pembayaran.
+            </p>
+            <div className="flex flex-col gap-2 pt-1">
+              <SlideToConfirm
+                onConfirm={handleComplete}
+                label="Geser Konfirmasi Selesai"
+                successLabel="Pekerjaan Berhasil Selesai!"
+                isLoading={confirmJob.isPending}
+                variant="primary"
+              />
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="w-full rounded-xl h-9 text-xs font-bold text-destructive hover:bg-destructive/10 border-destructive/30" 
+                onClick={() => updateStatus.mutate({ id: id as string, status: "WORKING" })} 
+                disabled={updateStatus.isPending}
+              >
+                Minta Penyesuaian / Revisi
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Consumer: Completed Review */}
+        {role === "consumer" && job.status === "COMPLETED" && (
+          <div className="p-3.5 sm:p-4 bg-card border border-border/80 rounded-2xl shadow-xs text-center space-y-2.5 w-full max-w-full overflow-hidden">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+              <Star className="w-5 h-5 fill-current" />
+            </div>
+            <h3 className="font-black text-xs uppercase tracking-wider text-foreground">Tugas Telah Tuntas</h3>
+            <Button 
+              className="w-full rounded-xl h-11 font-black bg-primary text-white hover:bg-primary/90 text-xs" 
+              onClick={() => router.push(`/dashboard/review/${id}`)}
+            >
+              Beri Ulasan Mitra
+            </Button>
+          </div>
+        )}
+
+        {/* 6. STANDALONE CANCEL JOB BUTTON AT THE BOTTOM */}
+        {isCancellable && (
+          <div className="pt-4 border-t border-border/70 flex justify-center">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                cancelJob.mutate(id as string);
+                router.push("/dashboard");
+              }}
+              disabled={cancelJob.isPending}
+              className="w-full sm:w-auto rounded-xl h-11 px-6 font-bold text-xs text-destructive hover:bg-destructive/10 border-destructive/30 flex items-center justify-center gap-1.5"
+            >
+              {cancelJob.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <X className="w-3.5 h-3.5" />}
+              Batalkan Pekerjaan Ini
+            </Button>
+          </div>
+        )}
+
+        {/* Dialogs */}
         <AcceptDialog 
           isOpen={isAcceptOpen} 
           onOpenChange={setIsAcceptOpen} 
@@ -652,6 +671,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
           }}
           continueLabel="Lanjut Beri Ulasan Mitra"
         />
+
       </PageContainer>
     </DashboardLayout>
   );

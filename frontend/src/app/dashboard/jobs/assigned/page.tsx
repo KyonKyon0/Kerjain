@@ -66,9 +66,10 @@ export default function AssignedJobsPage() {
     <DashboardLayout>
       <PageContainer className="max-w-5xl">
         <div className="mb-6">
-          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-1 text-foreground">Pekerjaan Saya</h2>
-          <p className="text-muted-foreground font-medium">Daftar pekerjaan yang sedang Anda tangani saat ini.</p>
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight mb-1 text-foreground">Pekerjaan Saya</h2>
+          <p className="text-muted-foreground font-medium text-xs">Daftar pekerjaan yang sedang Anda tangani saat ini.</p>
         </div>
+
 
         {/* Custom Tab Navigation */}
         <div className="flex overflow-x-auto hide-scrollbar gap-2 mb-6 pb-2 border-b border-border/50">

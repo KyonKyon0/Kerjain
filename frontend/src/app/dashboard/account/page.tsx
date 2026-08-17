@@ -24,10 +24,14 @@ import {
   Search,
   Zap,
   TrendingUp,
-  X,
   Sparkles,
-  MapPin
+  MapPin,
+  ShieldCheck,
+  X
 } from "lucide-react";
+
+
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -37,7 +41,9 @@ import { axiosInstance } from "@/lib/axios";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-const APP_VERSION = "v2.2026.08.16.00.22";
+const APP_VERSION = "v2.2026.08.16.21.30";
+
+
 
 export default function AccountPage() {
   const { user, role, logout, setUser } = useAuthStore();
@@ -46,7 +52,7 @@ export default function AccountPage() {
   const [stats, setStats] = useState({
     completed_jobs: 0,
     active_jobs: 0,
-    rating: 5.0,
+    rating: 0.0,
     total_reviews: 0,
     total_earnings: 0,
     completion_rate: 100
@@ -176,14 +182,27 @@ export default function AccountPage() {
                   {(user as any)?.gender === "FEMALE" ? "👩 Wanita" : "👨 Pria"}
                 </span>
               )}
-              <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full text-xs font-black tracking-wide flex items-center gap-1.5 shadow-2xs">
-                <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500 shrink-0" />
-                <span>★ {Number(stats.rating || 5.0).toFixed(2)}</span>
-                {stats.total_reviews > 0 && (
-                  <span className="text-[10px] opacity-80 font-bold">({stats.total_reviews})</span>
-                )}
-              </span>
+              {role === "partner" ? (
+                stats.total_reviews > 0 ? (
+                  <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full text-xs font-black tracking-wide flex items-center gap-1.5 shadow-2xs">
+                    <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500 shrink-0" />
+                    <span>★ {Number(stats.rating).toFixed(2)}</span>
+                    <span className="text-[10px] opacity-80 font-bold">({stats.total_reviews})</span>
+                  </span>
+                ) : (
+                  <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-xs font-black tracking-wide flex items-center gap-1.5 shadow-2xs" title="Baru bergabung di Kerjain">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span>★ 0.00 • Mitra Baru</span>
+                  </span>
+                )
+              ) : (
+                <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-xs font-black tracking-wide flex items-center gap-1.5 shadow-2xs">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Terverifikasi</span>
+                </span>
+              )}
             </div>
+
 
             {/* Actual Real Stats for Partner from Supabase */}
             {role === "partner" && (
@@ -200,12 +219,15 @@ export default function AccountPage() {
                   ) : (
                     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
                       <p className="text-xl font-extrabold text-foreground group-hover:text-primary transition-colors">
-                        {stats.rating > 0 ? stats.rating.toFixed(1) : "5.0"} <span className="text-amber-500 text-sm">★</span>
+                        {stats.total_reviews > 0 ? stats.rating.toFixed(1) : "0.0"} <span className="text-amber-500 text-sm">★</span>
                       </p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{stats.total_reviews} ulasan diterima</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {stats.total_reviews > 0 ? `${stats.total_reviews} ulasan diterima` : "Mitra Baru (Pengalaman Pertama)"}
+                      </p>
                     </motion.div>
                   )}
                 </Link>
+
 
                 <Link href="/dashboard/history" className="text-center p-3 rounded-2xl bg-muted/40 hover:bg-muted/70 transition-colors group">
                   <p className="text-xs text-muted-foreground font-semibold mb-1 flex items-center justify-center gap-1">

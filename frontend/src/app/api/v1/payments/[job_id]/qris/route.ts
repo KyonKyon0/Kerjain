@@ -78,8 +78,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ job
       });
     }
 
-    return NextResponse.json({ success: true, payment_number: result.payment.payment_number, total_payment: result.payment.total_payment || payment.amount })
+    return NextResponse.json({ 
+      success: true, 
+      payment_number: result.payment.payment_number, 
+      total_payment: result.payment.total_payment || payment.amount,
+      fee: result.payment.fee || result.payment.tax || 0,
+      order_id: result.payment.order_id || payment.id,
+      transaction_id: result.payment.transaction_id || result.payment.id || null,
+      expired_at: result.payment.expired_at || null,
+      status: result.payment.status || 'UNPAID',
+      raw_payment: result.payment || null
+    })
   } catch (error: any) {
+
     console.error("QRIS Route Error:", error)
     return NextResponse.json({ detail: error.message }, { status: 500 })
   }

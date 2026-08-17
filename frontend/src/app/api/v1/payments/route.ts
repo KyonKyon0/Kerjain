@@ -47,14 +47,18 @@ export async function POST(request: Request) {
         data: { amount, method }
       });
     } else {
-      const paymentId = crypto.randomUUID()
-      const partnerIdSql = job.partner_id ? job.partner_id : null
-      await prisma.$executeRaw`
-        INSERT INTO "payments" ("id", "job_id", "consumer_id", "partner_id", "amount", "method", "status", "created_at", "updated_at")
-        VALUES (${paymentId}::uuid, ${job_id}::uuid, ${user.id}::uuid, ${partnerIdSql}::uuid, ${amount}, ${method}::payment_method, 'UNPAID'::payment_status, NOW(), NOW())
-      `
-      payment = await prisma.payment.findUnique({ where: { id: paymentId } })
+      payment = await prisma.payment.create({
+        data: {
+          job_id: job_id,
+          consumer_id: user.id,
+          partner_id: job.partner_id || null,
+          amount: amount,
+          method: method || 'CASH',
+          status: 'UNPAID',
+        }
+      });
     }
+
 
     return NextResponse.json({ success: true, message: 'Tagihan berhasil dibuat', data: payment })
   } catch (error: any) {

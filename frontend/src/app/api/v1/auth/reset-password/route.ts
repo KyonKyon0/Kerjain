@@ -48,8 +48,9 @@ export async function POST(request: Request) {
     await prisma.$executeRawUnsafe(`
       UPDATE "password_resets"
       SET "used" = true
-      WHERE "id" = $1::uuid
-    `, resetRecord.id);
+      WHERE "id"::text = $1
+    `, String(resetRecord.id));
+
 
     // Hash the new password
     const hashedPassword = await hashPassword(new_password);

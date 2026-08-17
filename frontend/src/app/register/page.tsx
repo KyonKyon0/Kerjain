@@ -104,9 +104,10 @@ export default function RegisterPage() {
             <div className="inline-flex items-center justify-center p-4 bg-card border rounded-3xl shadow-sm mb-4 text-primary">
               <User className="w-8 h-8" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">Daftar Akun Baru</h1>
-            <p className="text-muted-foreground text-sm mt-1">Bergabunglah dengan ekosistem bantuan Kerjain</p>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">Daftar Akun Baru</h1>
+            <p className="text-muted-foreground text-xs font-medium mt-1">Bergabunglah dengan ekosistem bantuan Kerjain</p>
           </div>
+
 
           <Card className="border shadow-xl shadow-primary/5 rounded-3xl overflow-hidden bg-card/95 backdrop-blur-xl">
             <CardContent className="p-6 sm:p-8">

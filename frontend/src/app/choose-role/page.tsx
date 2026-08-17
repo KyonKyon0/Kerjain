@@ -55,11 +55,12 @@ export default function ChooseRolePage() {
       <div className="w-full max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Pilih Peran Anda</h1>
-          <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">Pilih Peran Anda</h1>
+          <p className="text-muted-foreground text-xs font-medium mt-1 max-w-md mx-auto">
             Beri tahu kami bagaimana Anda ingin menggunakan Kerjain agar kami dapat menyesuaikan pengalaman Anda.
           </p>
         </div>
+
 
         <div className="grid md:grid-cols-2 gap-6">
           <button

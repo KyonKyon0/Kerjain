@@ -76,74 +76,64 @@ export function MobileNav() {
 
           return (
             <div key={item.name} className="relative w-full h-full flex items-center justify-center px-0.5">
-              <Link
-                href={item.href}
-                className="relative w-full h-full rounded-2xl flex flex-col items-center justify-center outline-none group z-10 transition-all"
-              >
-                {/* Active Liquid Glass Pill - perfectly framed inside the cell */}
-                {isActive && (
+              {item.isHighlight ? (
+                <Link
+                  href={item.href}
+                  className="relative w-full h-full flex items-center justify-center outline-none group z-10 transition-all"
+                >
                   <motion.div
-                    layoutId="activeDockPill"
-                    className="absolute inset-x-1 inset-y-0.5 rounded-[18px] bg-primary/15 dark:bg-primary/20 border border-primary/30 dark:border-primary/40 backdrop-blur-md shadow-sm pointer-events-none z-0"
-                    transition={{
-                      type: "spring",
-                      stiffness: 380,
-                      damping: 28,
-                    }}
-                  />
-                )}
-
-                {/* Full-height Parenthesis Brackets ( ) accommodating the glass pill */}
-                {item.isHighlight && (
-                  <>
-                    {/* Left Curved Parenthesis ( */}
-                    <svg 
-                      viewBox="0 0 14 54" 
-                      className="absolute -left-0.5 top-0 bottom-0 h-full w-3 text-emerald-500 dark:text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.9)] pointer-events-none z-20"
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="3.2" 
-                      strokeLinecap="round"
-                      preserveAspectRatio="none"
-                    >
-                      <path d="M12 2 C2 14, 2 40, 12 52" />
-                    </svg>
-
-                    {/* Right Curved Parenthesis ) */}
-                    <svg 
-                      viewBox="0 0 14 54" 
-                      className="absolute -right-0.5 top-0 bottom-0 h-full w-3 text-emerald-500 dark:text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.9)] pointer-events-none z-20"
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="3.2" 
-                      strokeLinecap="round"
-                      preserveAspectRatio="none"
-                    >
-                      <path d="M2 2 C12 14, 12 40, 2 52" />
-                    </svg>
-                  </>
-                )}
-
-                <div className="relative z-10 flex flex-col items-center justify-center">
-                  <item.icon 
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.94 }}
                     className={cn(
-                      "h-5 w-5 transition-all duration-200",
-                      item.isHighlight 
-                        ? "text-emerald-600 dark:text-emerald-400 stroke-[2.4] scale-105" 
-                        : (isActive ? "text-primary scale-110 drop-shadow-sm" : "text-muted-foreground group-hover:text-foreground")
-                    )} 
-                  />
-                  <span className={cn(
-                    "text-[10px] mt-0.5 transition-all duration-200 tracking-tight leading-none",
-                    item.isHighlight
-                      ? "font-black text-emerald-600 dark:text-emerald-400"
-                      : (isActive ? "font-extrabold text-primary" : "font-medium text-muted-foreground group-hover:text-foreground")
-                  )}>
-                    {item.name}
-                  </span>
-                </div>
-              </Link>
+                      "w-full h-[52px] rounded-[18px] flex flex-col items-center justify-center transition-all duration-200 shadow-xs",
+                      isActive
+                        ? "bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-md shadow-emerald-900/30 ring-1 ring-emerald-400/40"
+                        : "bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25"
+                    )}
+                  >
+                    <item.icon className="h-6 w-6 stroke-[2.4] transition-transform duration-200 group-hover:scale-105" />
+                    <span className="text-[10px] font-black tracking-tight leading-none mt-0.5">
+                      {item.name}
+                    </span>
+                  </motion.div>
+                </Link>
+              ) : (
+                <Link
+                  href={item.href}
+                  className="relative w-full h-full rounded-2xl flex flex-col items-center justify-center outline-none group z-10 transition-all"
+                >
+                  {/* Active Liquid Glass Pill - perfectly framed inside the cell */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeDockPill"
+                      className="absolute inset-x-1 inset-y-0.5 rounded-[18px] bg-primary/15 dark:bg-primary/20 border border-primary/30 dark:border-primary/40 backdrop-blur-md shadow-sm pointer-events-none z-0"
+                      transition={{
+                        type: "spring",
+                        stiffness: 380,
+                        damping: 28,
+                      }}
+                    />
+                  )}
+
+                  <div className="relative z-10 flex flex-col items-center justify-center">
+                    <item.icon 
+                      className={cn(
+                        "h-5 w-5 transition-all duration-200",
+                        isActive ? "text-primary scale-110 drop-shadow-sm" : "text-muted-foreground group-hover:text-foreground"
+                      )} 
+                    />
+                    <span className={cn(
+                      "text-[10px] mt-0.5 transition-all duration-200 tracking-tight leading-none",
+                      isActive ? "font-extrabold text-primary" : "font-medium text-muted-foreground group-hover:text-foreground"
+                    )}>
+                      {item.name}
+                    </span>
+                  </div>
+                </Link>
+              )}
             </div>
+
+
           );
         })}
       </nav>

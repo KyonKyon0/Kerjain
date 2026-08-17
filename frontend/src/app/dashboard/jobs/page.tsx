@@ -17,7 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 type TabType = "AKTIF" | "MENUNGGU" | "SELESAI" | "DRAFT";
 
 export default function MyJobsPage() {
-  const [activeTab, setActiveTab] = useState<TabType>("AKTIF");
+  const [activeTab, setActiveTab] = useState<TabType>("MENUNGGU");
   const { role } = useAuthStore();
   const router = useRouter();
 
@@ -35,7 +35,7 @@ export default function MyJobsPage() {
     { id: "AKTIF", label: "Aktif", icon: Zap },
     { id: "MENUNGGU", label: "Menunggu Mitra", icon: Clock },
     { id: "SELESAI", label: "Selesai", icon: CheckCircle2 },
-    { id: "DRAFT", label: "Dibatalkan", icon: FileText }, // Assuming cancelled is draft/history here
+    { id: "DRAFT", label: "Dibatalkan", icon: FileText },
   ];
 
   const filteredJobs = jobs.filter((job: any) => {
@@ -48,33 +48,36 @@ export default function MyJobsPage() {
 
   return (
     <DashboardLayout>
-      <PageContainer className="max-w-5xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <PageContainer className="max-w-5xl overflow-x-clip px-3.5 sm:px-6 w-full max-w-full">
+        
+        {/* Header Title */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 sm:mb-6 w-full max-w-full overflow-hidden">
           <div>
-            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-1 text-foreground">Daftar Pekerjaan</h2>
-            <p className="text-muted-foreground font-medium">Kelola status dan riwayat orderan Anda.</p>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight mb-0.5 text-foreground">Daftar Pekerjaan</h2>
+            <p className="text-muted-foreground font-medium text-xs">Kelola status dan riwayat orderan Anda.</p>
           </div>
+
           <Link href="/dashboard/jobs/create" className="hidden md:block">
-            <Button className="rounded-2xl shadow-lg shadow-primary/20 h-12 px-6 font-bold">
-              <Plus className="w-5 h-5 mr-2" /> Buat Pekerjaan Baru
+            <Button className="rounded-2xl shadow-lg shadow-primary/20 h-11 px-5 font-bold text-xs bg-primary text-white hover:bg-primary/90">
+              <Plus className="w-4 h-4 mr-1.5" /> Buat Pekerjaan Baru
             </Button>
           </Link>
         </div>
 
         {/* Custom Tab Navigation */}
-        <div className="flex overflow-x-auto hide-scrollbar gap-2 mb-6 pb-2 border-b border-border/50">
+        <div className="flex overflow-x-auto hide-scrollbar gap-1.5 sm:gap-2 mb-4 sm:mb-6 pb-2 border-b border-border/50 w-full max-w-full">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabType)}
-                className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all whitespace-nowrap outline-none ${
+                className={`relative flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap outline-none shrink-0 ${
                   isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                <tab.icon className={`w-4 h-4 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
-                {tab.label}
+                <tab.icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                <span>{tab.label}</span>
                 {isActive && (
                   <motion.div 
                     layoutId="activeTabIndicator" 
@@ -82,38 +85,41 @@ export default function MyJobsPage() {
                   />
                 )}
               </button>
-            )
+            );
           })}
         </div>
 
+        {/* Jobs Content List */}
         {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => <Skeleton key={i} className="h-48 rounded-3xl" />)}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 w-full max-w-full">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-44 rounded-2xl" />)}
           </div>
         ) : filteredJobs.length === 0 ? (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full">
             <EmptyState 
-              icon={<Briefcase className="w-12 h-12 text-muted-foreground" />}
+              icon={<Briefcase className="w-10 h-10 text-muted-foreground" />}
               title="Tidak Ada Pekerjaan"
               description={`Belum ada pekerjaan di kategori ${tabs.find(t => t.id === activeTab)?.label}.`}
               action={
                 <Link href="/dashboard/jobs/create">
-                  <Button className="rounded-2xl h-12 px-6 font-bold shadow-md shadow-primary/20 mt-4">Buat Pekerjaan Baru</Button>
+                  <Button className="rounded-xl h-10 px-5 font-bold text-xs shadow-md shadow-primary/20 mt-3 bg-primary text-white">
+                    Buat Pekerjaan Baru
+                  </Button>
                 </Link>
               }
             />
           </motion.div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 w-full max-w-full min-w-0">
             <AnimatePresence mode="popLayout">
               {filteredJobs.map((job: any, i: number) => (
                 <motion.div
                   key={job.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: i * 0.05 }}
-                  layout
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: i * 0.04 }}
+                  className="w-full max-w-full min-w-0 overflow-hidden"
                 >
                   <JobCard job={job} />
                 </motion.div>
@@ -124,13 +130,13 @@ export default function MyJobsPage() {
       </PageContainer>
       
       {/* Mobile Sticky FAB */}
-      <div className="md:hidden fixed bottom-[90px] right-4 z-40">
+      <div className="md:hidden fixed bottom-[86px] right-4 z-40">
         <Link href="/dashboard/jobs/create">
           <motion.div 
             whileTap={{ scale: 0.9 }}
-            className="w-14 h-14 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg shadow-primary/40"
+            className="w-13 h-13 bg-primary text-white rounded-full flex items-center justify-center shadow-lg shadow-primary/40"
           >
-            <Plus className="w-6 h-6" />
+            <Plus className="w-6 h-6 stroke-[2.5]" />
           </motion.div>
         </Link>
       </div>

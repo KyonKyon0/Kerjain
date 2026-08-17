@@ -16,7 +16,7 @@ export function TopNav() {
   else if (hour >= 15 && hour < 18) greeting = "Selamat Sore";
 
   return (
-    <header className="h-16 border-b border-border/80 bg-background/95 backdrop-blur-xl sticky top-0 z-30 w-full flex items-center justify-between px-4 sm:px-6 md:px-8 shadow-sm">
+    <header className="h-16 border-b border-border/80 bg-background/85 backdrop-blur-xl sticky top-0 z-40 w-full flex items-center justify-between px-4 sm:px-6 md:px-8 shadow-xs transition-all">
       {/* Mobile Title & Greeting with Kerjain Logo NO Text */}
       <div className="md:hidden flex items-center gap-2.5">
         <Link href="/dashboard" className="relative w-8 h-8 rounded-xl bg-primary/10 p-1 flex items-center justify-center border border-primary/20 shrink-0">

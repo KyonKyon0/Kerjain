@@ -54,10 +54,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ job
           data: { status: 'PUBLISHED' }
         })
       ]);
-      return NextResponse.json({ success: true, status: 'SUCCESS' })
+      return NextResponse.json({ 
+        success: true, 
+        status: 'SUCCESS',
+        transaction: result.transaction,
+        order_id: payment.id,
+        amount: payment.amount
+      })
     }
 
-    return NextResponse.json({ success: true, status: 'UNPAID' })
+    return NextResponse.json({ 
+      success: true, 
+      status: 'UNPAID',
+      transaction: result.transaction || null,
+      order_id: payment.id
+    })
+
   } catch (error: any) {
     console.error("Check Route Error:", error)
     return NextResponse.json({ detail: error.message }, { status: 500 })

@@ -157,16 +157,17 @@ export default function ForgotPasswordPage() {
               {step === 2 && <KeyRound className="w-7 h-7" />}
               {step === 3 && <Sparkles className="w-7 h-7 text-emerald-500" />}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">
               {step === 1 && "Lupa Kata Sandi"}
               {step === 2 && "Verifikasi Kode OTP"}
               {step === 3 && "Kata Sandi Diperbarui!"}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1.5 max-w-xs mx-auto">
+            <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
               {step === 1 && "Masukkan email terdaftar untuk menerima 6-digit kode verifikasi."}
               {step === 2 && `Kode telah dikirim ke ${email}. Masukkan kode dan sandi baru.`}
               {step === 3 && "Akun Anda kini aman. Anda dapat masuk dengan kata sandi baru."}
             </p>
+
           </div>
 
           <CardContent className="p-6 sm:p-8">

@@ -29,10 +29,11 @@ export default function WaitingPartnerPage() {
           </div>
         </div>
 
-        <h2 className="text-3xl font-bold tracking-tight mb-4">Pekerjaan Berhasil Dipublikasikan!</h2>
-        <p className="text-muted-foreground text-lg mb-8 max-w-md">
+        <h2 className="text-xl sm:text-2xl font-black tracking-tight mb-2 text-foreground">Pekerjaan Berhasil Dipublikasikan!</h2>
+        <p className="text-muted-foreground text-xs sm:text-sm mb-6 max-w-md">
           Pekerjaan Anda kini dapat dilihat oleh mitra di sekitar Anda. Kami akan memberi tahu Anda segera setelah ada mitra yang mengambilnya.
         </p>
+
 
         <div className="p-4 bg-blue-50 border border-blue-200 text-blue-700 rounded-2xl flex items-center gap-4 text-left max-w-md w-full mb-8">
           <Clock className="w-10 h-10 shrink-0 text-blue-500" />

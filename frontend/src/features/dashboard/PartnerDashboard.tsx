@@ -40,7 +40,7 @@ export function PartnerDashboard() {
   const [stats, setStats] = useState({
     completed_jobs: 0,
     active_jobs: 0,
-    rating: 5.0,
+    rating: 0.0,
     total_reviews: 0,
     total_earnings: 0,
     completion_rate: 100
@@ -88,15 +88,16 @@ export function PartnerDashboard() {
     },
     {
       title: "Rating Bintang",
-      value: stats.rating > 0 ? stats.rating.toFixed(1) : "5.0",
+      value: stats.total_reviews > 0 ? stats.rating.toFixed(1) : "0.0",
       suffix: "★",
-      subtitle: `${stats.total_reviews} ulasan`,
+      subtitle: stats.total_reviews > 0 ? `${stats.total_reviews} ulasan diterima` : "Mitra Baru (0 Ulasan)",
       icon: Star,
       iconColor: "text-amber-500",
       iconBg: "bg-amber-500/10",
       borderColor: "border-amber-500/25 hover:border-amber-500/50",
       href: "/dashboard/history",
     },
+
     {
       title: "Tingkat Sukses",
       value: `${completionRate}%`,
@@ -159,19 +160,20 @@ export function PartnerDashboard() {
         <div className="overflow-hidden pr-2">
           <div className="flex items-center gap-2 mb-0.5">
             <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/50"}`} />
-            <span className={`text-[11px] font-bold uppercase tracking-wider ${isOnline ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
-              {isOnline ? "Mitra Aktif • Online" : "Mode Istirahat • Offline"}
+            <span className={`text-[11px] font-black uppercase tracking-wider ${isOnline ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+              {isOnline ? "Mitra Aktif" : "Mode Istirahat"}
             </span>
           </div>
-          <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight text-foreground truncate">
+          <h1 className="text-lg sm:text-2xl font-black tracking-tight text-foreground truncate">
             Halo, {user?.name?.split(' ')[0] || "Mitra"}! {isOnline ? "🛵" : "💤"}
           </h1>
           <p className="text-muted-foreground font-medium text-xs truncate sm:whitespace-normal">
             {isOnline 
-              ? "Online & siap menerima orderan baru." 
-              : "Offline. Tekan petir untuk aktifkan radar."}
+              ? "Siap menerima dan mengerjakan orderan baru." 
+              : "Tekan tombol petir untuk mengaktifkan radar."}
           </p>
         </div>
+
 
         <div className="shrink-0">
           <ZapEnergyToggle isOnline={isOnline} onToggle={setIsOnline} />
@@ -286,54 +288,13 @@ export function PartnerDashboard() {
                 Buka Radar Peta <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
               </Link>
             </div>
-            <div className="space-y-3 w-full max-w-full min-w-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-full min-w-0">
+              {availableJobs.slice(0, 4).map((job: any) => (
+                <JobCard key={job.id} job={job} showDistance={true} />
+              ))}
 
-              {availableJobs.slice(0, 3).map((job: any, index: number) => {
-                let distStr: string | null = null;
-                if (userLat && userLng && job.lat && job.lng) {
-                  const dMeters = calculateHaversineDistance(userLat, userLng, job.lat, job.lng);
-                  distStr = formatDistanceString(dMeters);
-                }
-                const postedDuration = formatRelativeDuration(job.createdAt || job.created_at);
-
-                return (
-                  <Link key={job.id} href={`/dashboard/jobs/${job.id}`}>
-                    <motion.div 
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.35, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                      whileHover={{ y: -3, scale: 1.005 }}
-                      whileTap={{ scale: 0.985 }}
-                      className="bg-card border rounded-2xl sm:rounded-3xl p-4 sm:p-5 hover:border-primary/50 hover:shadow-md transition-all shadow-xs cursor-pointer group mb-3 w-full max-w-full min-w-0 overflow-hidden"
-                    >
-                      <div className="flex justify-between items-start mb-2.5 gap-2 min-w-0">
-                        <h4 className="font-bold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors line-clamp-1 min-w-0 flex-1">{job.title}</h4>
-                        <span className="font-extrabold text-sm sm:text-base text-emerald-600 dark:text-emerald-400 shrink-0">Rp {(job.rewardAmount ?? job.reward_amount ?? 0).toLocaleString('id-ID')}</span>
-                      </div>
-                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-3 leading-relaxed">{job.description}</p>
-                      <div className="flex items-center justify-between pt-2.5 border-t border-border/60 gap-2 flex-wrap min-w-0">
-                        <div className="flex items-center text-[11px] sm:text-xs font-medium text-muted-foreground gap-2 flex-wrap min-w-0">
-                          <span className="flex items-center gap-1 bg-muted/60 px-2.5 py-0.5 rounded-lg shrink-0">
-                            <MapPin className="w-3 h-3 text-primary"/> {distStr ? `± ${distStr} dari Anda` : (job.address ? job.address : "Lokasi tersedia")}
-                          </span>
-                          <span className="flex items-center gap-1 bg-muted/60 px-2.5 py-0.5 rounded-lg shrink-0 text-foreground font-semibold">
-                            <History className="w-3 h-3 text-primary"/> {postedDuration}
-                          </span>
-                        </div>
-                        <Button size="sm" className="rounded-xl shadow-xs bg-primary hover:bg-emerald-600 transition-all font-bold text-xs h-8 px-3.5 shrink-0">
-                          Ambil Job
-                        </Button>
-                      </div>
-                    </motion.div>
-                  </Link>
-                );
-              })}
-
-
-
-              
               {availableJobs.length === 0 && (
-                <div className="text-center py-8 bg-card rounded-2xl border border-dashed border-border/80">
+                <div className="col-span-full text-center py-8 bg-card rounded-2xl border border-dashed border-border/80">
                   <div className="w-12 h-12 bg-muted/60 rounded-full flex items-center justify-center mx-auto mb-2">
                     <Search className="w-6 h-6 text-muted-foreground opacity-50" />
                   </div>

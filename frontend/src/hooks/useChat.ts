@@ -9,8 +9,11 @@ export const useChatList = () => {
       const res = await messageService.getChats();
       return res.data;
     },
+    staleTime: 15000,
+    refetchInterval: 25000,
   });
 };
+
 
 export const useMessages = (jobId: string) => {
   return useQuery({

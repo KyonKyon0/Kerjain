@@ -45,9 +45,12 @@ export const useWallet = () => {
     queryFn: async (): Promise<WalletData> => {
       const res = await axiosInstance.get("/wallet");
       return res.data.data;
-    }
+    },
+    staleTime: 20000,
+    refetchInterval: 30000,
   });
 };
+
 
 export const useWithdraw = () => {
   const queryClient = useQueryClient();

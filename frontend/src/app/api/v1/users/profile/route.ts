@@ -11,93 +11,97 @@ export async function GET(request: Request) {
 
     if (user.role === 'consumer') {
       try {
-        const statsRows: any[] = await prisma.$queryRawUnsafe(
-          `SELECT 
-            COUNT(*) FILTER (WHERE status = 'COMPLETED') as completed_jobs,
-            COUNT(*) FILTER (WHERE status IN ('PUBLISHED', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION', 'IN_PROGRESS')) as active_jobs,
-            COUNT(*) as total_jobs,
-            COALESCE(SUM(reward_amount) FILTER (WHERE status = 'COMPLETED'), 0) as total_spending
-          FROM jobs
-          WHERE consumer_id = $1::uuid;`,
-          user.id
-        );
-
-        if (statsRows && statsRows.length > 0) {
-          const row = statsRows[0];
-          computedStats = {
-            completed_jobs: Number(row.completed_jobs || 0),
-            active_jobs: Number(row.active_jobs || 0),
-            total_jobs: Number(row.total_jobs || 0),
-            total_spending: Number(row.total_spending || 0),
-          };
-        }
-      } catch {
-        // Fallback with standard Prisma
-        const [completedJobsCount, activeJobsCount, totalJobsCount] = await Promise.all([
-          prisma.job.count({ where: { consumer_id: user.id, status: 'COMPLETED' } }),
+        const [completedCount, activeCount, totalCount, paidPaymentsAggregate, activePaidJobsAggregate] = await Promise.all([
+          prisma.job.count({
+            where: { consumer_id: user.id, status: 'COMPLETED' }
+          }),
           prisma.job.count({
             where: {
               consumer_id: user.id,
               status: { in: ['PUBLISHED', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION', 'IN_PROGRESS'] }
             }
           }),
-          prisma.job.count({ where: { consumer_id: user.id } })
+          prisma.job.count({
+            where: { consumer_id: user.id }
+          }),
+          prisma.payment.aggregate({
+            where: { consumer_id: user.id, status: 'SUCCESS' },
+            _sum: { amount: true }
+          }),
+          prisma.job.aggregate({
+            where: { 
+              consumer_id: user.id, 
+              status: { in: ['PUBLISHED', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION', 'IN_PROGRESS', 'COMPLETED'] } 
+            },
+            _sum: { reward_amount: true }
+          })
         ]);
 
+        const paymentTotal = Number(paidPaymentsAggregate._sum?.amount || 0);
+        const jobsTotal = Number(activePaidJobsAggregate._sum?.reward_amount || 0);
+        const totalSpending = Math.max(paymentTotal, jobsTotal);
+
         computedStats = {
-          completed_jobs: completedJobsCount,
-          active_jobs: activeJobsCount,
-          total_jobs: totalJobsCount,
+          completed_jobs: completedCount,
+          active_jobs: activeCount,
+          total_jobs: totalCount,
+          total_spending: totalSpending,
+        };
+      } catch (err: any) {
+        console.error('Error computing consumer stats:', err);
+        computedStats = {
+          completed_jobs: 0,
+          active_jobs: 0,
+          total_jobs: 0,
           total_spending: 0,
         };
       }
     } else {
       try {
-        const results = await Promise.all([
-          prisma.$queryRawUnsafe(
-            `SELECT 
-              COUNT(*) FILTER (WHERE status = 'COMPLETED') as completed_jobs,
-              COUNT(*) FILTER (WHERE status IN ('ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION', 'IN_PROGRESS')) as active_jobs,
-              COUNT(*) as total_jobs,
-              COALESCE(SUM(reward_amount) FILTER (WHERE status = 'COMPLETED'), 0) as total_earnings
-            FROM jobs
-            WHERE partner_id = $1::uuid;`,
-            user.id
-          ),
-          prisma.$queryRawUnsafe(
-            `SELECT COALESCE(AVG(rating), 5.0) as avg_rating, COUNT(*) as total_reviews FROM reviews WHERE reviewee_id = $1::uuid;`,
-            user.id
-          )
+        const [completedCount, activeCount, totalCount, earningsAggregate, reviewAggregate] = await Promise.all([
+          prisma.job.count({
+            where: { partner_id: user.id, status: 'COMPLETED' }
+          }),
+          prisma.job.count({
+            where: {
+              partner_id: user.id,
+              status: { in: ['ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION', 'IN_PROGRESS'] }
+            }
+          }),
+          prisma.job.count({
+            where: { partner_id: user.id }
+          }),
+          prisma.job.aggregate({
+            where: { partner_id: user.id, status: 'COMPLETED' },
+            _sum: { reward_amount: true }
+          }),
+          prisma.review.aggregate({
+            where: { reviewee_id: user.id },
+            _avg: { rating: true },
+            _count: { rating: true }
+          })
         ]);
 
-        const jobStatsRows: any = results[0];
-        const reviewStatsRows: any = results[1];
-
-        const jobRow = Array.isArray(jobStatsRows) && jobStatsRows[0] ? jobStatsRows[0] : {};
-        const reviewRow = Array.isArray(reviewStatsRows) && reviewStatsRows[0] ? reviewStatsRows[0] : {};
-
-
-        const completedJobs = Number(jobRow.completed_jobs || 0);
-        const totalJobs = Number(jobRow.total_jobs || 0);
-        const totalReviews = Number(reviewRow.total_reviews || 0);
-        const avgRating = totalReviews > 0 ? Number(Number(reviewRow.avg_rating || 5.0).toFixed(1)) : (completedJobs > 0 ? 5.0 : 0);
-        const completionRate = totalJobs > 0 ? Math.round((completedJobs / totalJobs) * 100) : 100;
+        const totalReviews = reviewAggregate._count?.rating || 0;
+        const avgRating = totalReviews > 0 ? Number(Number(reviewAggregate._avg?.rating || 0).toFixed(2)) : 0;
+        const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 100;
 
         computedStats = {
-          completed_jobs: completedJobs,
-          active_jobs: Number(jobRow.active_jobs || 0),
-          total_jobs: totalJobs,
+          completed_jobs: completedCount,
+          active_jobs: activeCount,
+          total_jobs: totalCount,
           rating: avgRating,
           total_reviews: totalReviews,
-          total_earnings: Number(jobRow.total_earnings || 0),
+          total_earnings: Number(earningsAggregate._sum?.reward_amount || 0),
           completion_rate: completionRate
         };
-      } catch {
+      } catch (err: any) {
+        console.error('Error computing partner stats:', err);
         computedStats = {
           completed_jobs: 0,
           active_jobs: 0,
           total_jobs: 0,
-          rating: 5.0,
+          rating: 0,
           total_reviews: 0,
           total_earnings: 0,
           completion_rate: 100
@@ -128,37 +132,15 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { name, phone, address, avatar_url, gender } = body;
 
-    // Execute update
-    try {
-      await prisma.$executeRawUnsafe(
-        `UPDATE users SET 
-          name = COALESCE($1, name), 
-          phone = $2, 
-          address = $3, 
-          avatar_url = $4, 
-          gender = COALESCE($5, gender),
-          updated_at = NOW() 
-        WHERE id = $6::uuid;`,
-        name ? name.trim() : null,
-        phone !== undefined ? (phone ? phone.trim() : null) : null,
-        address !== undefined ? (address ? address.trim() : null) : null,
-        avatar_url !== undefined ? avatar_url : null,
-        gender ? gender.trim() : null,
-        user.id
-      );
-    } catch {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          name: name ? name.trim() : undefined,
-          phone: phone !== undefined ? (phone ? phone.trim() : null) : undefined,
-          address: address !== undefined ? (address ? address.trim() : null) : undefined,
-        }
-      });
-    }
-
-    const updatedUser = await prisma.user.findUnique({
+    const updatedUser = await prisma.user.update({
       where: { id: user.id },
+      data: {
+        name: name ? name.trim() : undefined,
+        phone: phone !== undefined ? (phone ? phone.trim() : null) : undefined,
+        address: address !== undefined ? (address ? address.trim() : null) : undefined,
+        avatar_url: avatar_url !== undefined ? avatar_url : undefined,
+        gender: gender ? gender.trim() : undefined,
+      },
       select: {
         id: true,
         name: true,

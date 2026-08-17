@@ -8,7 +8,7 @@ import { useCreateJobStore } from "@/store/create-job.store";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Camera, Upload, X, ImageIcon, Sparkles, Loader2 } from "lucide-react";
+import { Camera, Upload, X, Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 export function Step1Info() {
@@ -66,7 +66,7 @@ export function Step1Info() {
         setValue("photoUrl", compressedDataUrl);
         updateDraft({ photoUrl: compressedDataUrl });
         setIsCompressing(false);
-        toast.success("Foto pekerjaan berhasil dilampirkan");
+        toast.success("Foto berhasil dilampirkan");
       };
       img.src = event.target?.result as string;
     };
@@ -77,7 +77,7 @@ export function Step1Info() {
     setPhotoPreview(null);
     setValue("photoUrl", null);
     updateDraft({ photoUrl: null });
-    toast.info("Foto pekerjaan dihapus");
+    toast.info("Foto lampiran dihapus");
   };
 
   const onSubmit = (data: Step1FormData) => {
@@ -86,36 +86,14 @@ export function Step1Info() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <div className="space-y-2">
-        <label className="text-sm font-bold text-foreground">Judul Pekerjaan</label>
-        <Input 
-          placeholder="Contoh: Bantu angkat galon air / Perbaiki kran bocor" 
-          className="h-12 bg-muted/30 focus:bg-background transition-colors rounded-2xl text-sm"
-          {...register("title")} 
-        />
-        {errors.title && <p className="text-xs text-destructive font-medium">{errors.title.message}</p>}
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-bold text-foreground">Deskripsi Lengkap</label>
-        <Textarea 
-          placeholder="Jelaskan detail pekerjaan, kondisi barang, apa saja yang perlu disiapkan..." 
-          className="min-h-[120px] bg-muted/30 focus:bg-background transition-colors resize-none rounded-2xl text-sm"
-          {...register("description")} 
-        />
-        {errors.description && <p className="text-xs text-destructive font-medium">{errors.description.message}</p>}
-      </div>
-
-      {/* Foto Pekerjaan / Barang */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-bold text-foreground flex items-center gap-1.5">
-            <Camera className="w-4 h-4 text-primary" />
-            Foto Pekerjaan / Lokasi (Opsional)
-          </label>
-          <span className="text-xs text-muted-foreground font-medium">Bantu mitra paham tugas</span>
-        </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      
+      {/* 1. LAMPIRAN FOTO DI PALING ATAS (CLEAN & PROFESSIONAL) */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-black uppercase tracking-wider text-foreground flex items-center gap-1.5">
+          <Camera className="w-3.5 h-3.5 text-primary" />
+          Lampiran Foto (Opsional)
+        </label>
 
         <input
           ref={fileInputRef}
@@ -127,8 +105,8 @@ export function Step1Info() {
         />
 
         {photoPreview ? (
-          <div className="relative rounded-2xl overflow-hidden border border-emerald-500/40 aspect-video bg-black/40 group">
-            <img src={photoPreview} alt="Foto Pekerjaan" className="w-full h-full object-cover" />
+          <div className="relative rounded-2xl overflow-hidden border border-emerald-500/40 aspect-video bg-black/40 group max-h-52 w-full">
+            <img src={photoPreview} alt="Foto Tugas" className="w-full h-full object-cover" />
             
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <Button
@@ -151,8 +129,8 @@ export function Step1Info() {
               </Button>
             </div>
 
-            <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-xl bg-black/60 backdrop-blur-sm text-white text-[11px] font-bold">
-              ✓ Foto Siap Terpasang
+            <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-xl bg-black/70 backdrop-blur-sm text-white text-[11px] font-bold">
+              ✓ Foto Terlampir
             </div>
           </div>
         ) : (
@@ -160,29 +138,62 @@ export function Step1Info() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isCompressing}
-            className="w-full h-28 border-2 border-dashed border-primary/30 rounded-2xl flex flex-col items-center justify-center bg-primary/5 hover:bg-primary/10 transition-colors text-primary cursor-pointer group"
+            className="w-full h-22 border-2 border-dashed border-border/80 hover:border-primary/50 rounded-2xl flex flex-col items-center justify-center bg-card/60 hover:bg-card transition-all text-primary cursor-pointer group"
           >
             {isCompressing ? (
-              <div className="flex flex-col items-center gap-2">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <span className="text-xs font-bold">Memproses foto...</span>
+              <div className="flex flex-col items-center gap-1.5">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <span className="text-xs font-bold text-muted-foreground">Mengompres foto...</span>
               </div>
             ) : (
               <div className="flex flex-col items-center">
-                <div className="w-10 h-10 bg-primary/15 rounded-2xl flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
-                  <Camera className="w-5 h-5 text-primary" />
+                <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center mb-1 group-hover:scale-105 transition-transform text-primary">
+                  <Camera className="w-4 h-4" />
                 </div>
-                <span className="font-extrabold text-xs">+ Unggah Foto Pekerjaan / Barang</span>
-                <span className="text-[11px] text-muted-foreground mt-0.5">Kamera langsung atau pilih dari galeri</span>
+                <span className="font-black text-xs text-foreground group-hover:text-primary transition-colors">
+                  + Pilih Foto atau Ambil Gambar
+                </span>
               </div>
             )}
           </button>
         )}
       </div>
 
-      <div className="flex justify-end pt-4 border-t">
-        <Button type="submit" className="rounded-2xl shadow-md px-8 h-12 font-extrabold hover:-translate-y-0.5 transition-transform bg-primary hover:bg-emerald-600">
-          Selanjutnya
+
+      {/* 2. JUDUL TUGAS */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-black uppercase tracking-wider text-foreground">
+          Judul Tugas <span className="text-destructive">*</span>
+        </label>
+        <Input 
+          placeholder="Contoh: Perbaikan instalasi listrik / Angkut barang" 
+          className="h-12 bg-card border-border/80 text-foreground font-medium rounded-2xl text-xs sm:text-sm focus:ring-2 focus:ring-primary/20"
+          {...register("title")} 
+        />
+        {errors.title && <p className="text-[11px] text-destructive font-bold">{errors.title.message}</p>}
+      </div>
+
+      {/* 3. DETAIL & INSTRUKSI */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-black uppercase tracking-wider text-foreground">
+          Detail & Instruksi Pengerjaan <span className="text-destructive">*</span>
+        </label>
+        <Textarea 
+          placeholder="Tuliskan rincian kebutuhan, estimasi waktu, atau perlengkapan yang perlu dibawa mitra..." 
+          className="min-h-[110px] bg-card border-border/80 text-foreground font-medium resize-none rounded-2xl text-xs sm:text-sm focus:ring-2 focus:ring-primary/20"
+          {...register("description")} 
+        />
+        {errors.description && <p className="text-[11px] text-destructive font-bold">{errors.description.message}</p>}
+      </div>
+
+      {/* FOOTER ACTIONS */}
+      <div className="flex justify-end pt-4 border-t border-border/70">
+        <Button 
+          type="submit" 
+          className="rounded-2xl shadow-sm px-6 h-11 font-extrabold bg-primary text-white hover:bg-primary/90 flex items-center gap-1.5"
+        >
+          <span>Lanjut ke Kategori</span>
+          <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
     </form>

@@ -11,9 +11,9 @@ interface JobTimelineProps {
 
 export function JobTimeline({ status }: JobTimelineProps) {
   const steps = [
-    { key: "PUBLISHED", label: "Dipublikasi", icon: Clock },
+    { key: "PUBLISHED", label: "Publikasi", icon: Clock },
     { key: "ACCEPTED", label: "Diterima", icon: CheckCircle2 },
-    { key: "ON_THE_WAY", label: "Perjalanan", icon: Navigation },
+    { key: "ON_THE_WAY", label: "Menuju", icon: Navigation },
     { key: "WORKING", label: "Dikerjakan", icon: Wrench },
     { key: "WAITING_CONFIRMATION", label: "Pengecekan", icon: ShieldCheck },
     { key: "COMPLETED", label: "Selesai", icon: Check },
@@ -21,13 +21,11 @@ export function JobTimeline({ status }: JobTimelineProps) {
 
   if (status === "WAITING_PAYMENT") {
     return (
-      <div className="flex items-center gap-3.5 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-900 dark:text-amber-300 shadow-sm">
-        <Clock className="w-6 h-6 shrink-0 text-amber-600 dark:text-amber-400 animate-pulse" />
-        <div>
-          <p className="font-extrabold text-sm">Menunggu Pembayaran QRIS</p>
-          <p className="text-xs mt-0.5 opacity-90 leading-relaxed">
-            Pekerjaan belum dipublikasikan. Selesaikan pembayaran QRIS agar pekerjaan otomatis aktif dan dapat diambil oleh mitra di sekitar.
-          </p>
+      <div className="flex items-center gap-2.5 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400 text-xs w-full max-w-full overflow-hidden">
+        <Clock className="w-4 h-4 shrink-0 text-amber-400 animate-pulse" />
+        <div className="min-w-0">
+          <p className="font-bold text-foreground text-xs">Menunggu Pembayaran QRIS</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">Selesaikan pembayaran QRIS agar tugas aktif di radar mitra.</p>
         </div>
       </div>
     );
@@ -39,82 +37,77 @@ export function JobTimeline({ status }: JobTimelineProps) {
   if (status === "WORKING" || status === "IN_PROGRESS") currentIndex = 3;
   if (status === "WAITING_CONFIRMATION") currentIndex = 4;
   if (status === "COMPLETED") currentIndex = 5;
-
   
   if (status === "CANCELLED") {
     return (
-      <div className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-2xl text-destructive">
-        <XCircle className="w-6 h-6 shrink-0" />
+      <div className="flex items-center gap-2.5 p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-xs w-full max-w-full overflow-hidden">
+        <XCircle className="w-4 h-4 shrink-0" />
         <div>
-          <p className="font-bold text-sm">Pekerjaan Dibatalkan</p>
-          <p className="text-xs mt-0.5 opacity-90">Pekerjaan ini telah dibatalkan dan tidak dilanjutkan.</p>
+          <p className="font-bold text-xs">Pekerjaan Dibatalkan</p>
+          <p className="text-[10px] opacity-90">Pekerjaan ini telah dibatalkan.</p>
         </div>
       </div>
     );
   }
 
-
-  const progressPercent = (currentIndex / (steps.length - 1)) * 100;
-
   return (
-    <div className="w-full py-4 px-1">
-      {/* Timeline Step Container with perfectly aligned connector line */}
-      <div className="relative">
+    <div className="w-full max-w-full overflow-hidden py-1">
+      {/* Timeline Step Container */}
+      <div className="relative w-full max-w-full">
         
-        {/* Background Grey Track */}
-        <div className="absolute top-5 left-4 right-4 h-1 bg-muted rounded-full z-0" />
+        {/* Background Grey Track connecting center of col 1 to col 6 (8.33% to 91.67%) */}
+        <div className="absolute top-[14px] sm:top-[16px] left-[8.33%] right-[8.33%] h-1 bg-muted rounded-full z-0" />
         
         {/* Animated Active Emerald Track */}
         <motion.div 
-          className="absolute top-5 left-4 h-1 bg-gradient-to-r from-primary to-emerald-400 rounded-full z-0 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+          className="absolute top-[14px] sm:top-[16px] left-[8.33%] h-1 bg-gradient-to-r from-primary to-emerald-400 rounded-full z-0"
           initial={{ width: 0 }}
-          animate={{ width: `calc(${progressPercent}% * 0.92)` }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          animate={{ width: `${(currentIndex / 5) * 83.34}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
         />
 
-        {/* Steps Grid - Guaranteed strictly aligned */}
-        <div className="relative z-10 grid grid-cols-6 gap-1 sm:gap-2">
+        {/* Steps Grid - strictly responsive and never overflows */}
+        <div className="relative z-10 grid grid-cols-6 w-full gap-0.5 sm:gap-1">
           {steps.map((step, idx) => {
             const isCompleted = idx < currentIndex;
             const isCurrent = idx === currentIndex;
-            const isPastOrCurrent = idx <= currentIndex;
             const Icon = step.icon;
             
             return (
-              <div key={step.key} className="flex flex-col items-center text-center">
+              <div key={step.key} className="flex flex-col items-center text-center min-w-0 w-full overflow-hidden">
                 
-                {/* Step Circle with Fixed Dimensions */}
-                <div className="h-10 flex items-center justify-center">
+                {/* Step Circle with responsive dimensions */}
+                <div className="h-7 sm:h-8 flex items-center justify-center">
                   <motion.div 
                     initial={false}
-                    animate={{ scale: isCurrent ? 1.15 : 1 }}
+                    animate={{ scale: isCurrent ? 1.08 : 1 }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     className={cn(
-                      "w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300",
+                      "w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-300 shrink-0",
                       isCurrent 
-                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/40 ring-4 ring-primary/20 border-2 border-background"
+                        ? "bg-primary text-white shadow-md shadow-primary/40 ring-2 sm:ring-3 ring-primary/20 border-2 border-background"
                         : isCompleted
-                          ? "bg-emerald-500 text-white shadow-sm border-2 border-background"
+                          ? "bg-emerald-500 text-white shadow-xs border-2 border-background"
                           : "bg-card text-muted-foreground border-2 border-border/80"
                     )}
                   >
                     {isCompleted ? (
-                      <Check className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.5]" />
+                      <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" />
                     ) : (
-                      <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                      <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     )}
                   </motion.div>
                 </div>
 
-                {/* Step Label - Fixed Height to guarantee vertical alignment */}
-                <div className="h-7 mt-2 flex items-start justify-center w-full">
+                {/* Step Label with proper truncation */}
+                <div className="h-5 mt-1 flex items-start justify-center w-full px-0.5">
                   <span className={cn(
-                    "text-[10px] sm:text-xs font-bold leading-tight line-clamp-1 truncate transition-colors",
+                    "text-[8px] sm:text-[10px] md:text-xs font-bold leading-tight truncate max-w-full transition-colors",
                     isCurrent 
-                      ? "text-primary font-extrabold" 
+                      ? "text-primary font-black" 
                       : isCompleted
                         ? "text-foreground font-semibold"
-                        : "text-muted-foreground font-medium"
+                        : "text-muted-foreground/70 font-medium"
                   )}>
                     {step.label}
                   </span>

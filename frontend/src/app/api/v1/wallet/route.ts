@@ -27,52 +27,43 @@ export async function GET(request: Request) {
       });
     }
 
-    // 1. Get Wallet Balance
-    let wallet = await prisma.wallet.findUnique({
-      where: { user_id: user.id }
-    });
-    
-    if (!wallet) {
-      wallet = await prisma.wallet.create({
-        data: { user_id: user.id, balance: 0 }
-      });
-    }
-
-    // 2. Fetch All Completed Jobs (both QRIS and CASH)
-    const completedJobs = await prisma.job.findMany({
-      where: {
-        partner_id: user.id,
-        status: 'COMPLETED'
-      },
-      include: {
-        payments: true
-      },
-      orderBy: { updated_at: 'desc' }
-    });
-
-    // 3. Fetch QRIS Payments
-    const payments = await prisma.payment.findMany({
-      where: {
-        partner_id: user.id,
-        method: 'QRIS',
-        status: 'SUCCESS',
-        job: {
+    // Parallelize all 4 database queries concurrently via Promise.all
+    const [walletResult, completedJobs, payments, withdrawals] = await Promise.all([
+      prisma.wallet.upsert({
+        where: { user_id: user.id },
+        update: {},
+        create: { user_id: user.id, balance: 0 }
+      }),
+      prisma.job.findMany({
+        where: {
+          partner_id: user.id,
           status: 'COMPLETED'
-        }
-      },
-      include: {
-        job: {
-          select: { title: true, updated_at: true }
-        }
-      },
-      orderBy: { created_at: 'desc' }
-    });
+        },
+        include: {
+          payments: { select: { id: true, method: true, status: true } }
+        },
+        orderBy: { updated_at: 'desc' }
+      }),
+      prisma.payment.findMany({
+        where: {
+          partner_id: user.id,
+          method: 'QRIS',
+          status: 'SUCCESS',
+          job: { status: 'COMPLETED' }
+        },
+        include: {
+          job: { select: { title: true, updated_at: true } }
+        },
+        orderBy: { created_at: 'desc' }
+      }),
+      prisma.withdrawal.findMany({
+        where: { user_id: user.id },
+        orderBy: { created_at: 'desc' }
+      })
+    ]);
 
-    // 4. Fetch Withdrawals
-    const withdrawals = await prisma.withdrawal.findMany({
-      where: { user_id: user.id },
-      orderBy: { created_at: 'desc' }
-    });
+    const wallet = walletResult;
+
 
     // 5. Calculate QRIS vs CASH breakdown
     let totalEarnings = 0;

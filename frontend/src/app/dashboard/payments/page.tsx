@@ -88,8 +88,8 @@ export default function PaymentsPage() {
       <DashboardLayout>
         <PageContainer className="max-w-4xl space-y-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-1">Riwayat & Pembayaran</h1>
-            <p className="text-muted-foreground font-medium text-xs sm:text-sm">Pantau seluruh pengeluaran dan status pembayaran pesanan Anda.</p>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight mb-1">Riwayat & Pembayaran</h1>
+            <p className="text-muted-foreground font-medium text-xs">Pantau seluruh pengeluaran dan status pembayaran pesanan Anda.</p>
           </div>
 
           <div className="space-y-5">
@@ -102,10 +102,11 @@ export default function PaymentsPage() {
                       <CreditCard className="w-4 h-4" />
                       <span className="font-semibold uppercase tracking-wider text-xs">Total Pengeluaran Selesai</span>
                     </div>
-                    <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
                       {formatRupiah(totalSpent)}
                     </h2>
                   </div>
+
                   <Link href="/dashboard/jobs/create">
                     <Button className="bg-white text-primary hover:bg-white/90 font-bold rounded-xl h-11 px-5 shadow-sm text-xs sm:text-sm">
                       + Buat Pekerjaan Baru
@@ -213,8 +214,8 @@ export default function PaymentsPage() {
     <DashboardLayout>
       <PageContainer className="max-w-4xl space-y-5 pb-24 overflow-x-hidden w-full max-w-full">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-1">Keuangan & Saldo</h1>
-          <p className="text-muted-foreground font-medium text-xs sm:text-sm">Kelola pendapatan dari hasil kerja Anda di Kerjain.</p>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight mb-1">Keuangan & Saldo</h1>
+          <p className="text-muted-foreground font-medium text-xs">Kelola pendapatan dari hasil kerja Anda di Kerjain.</p>
         </div>
 
         {partnerLoading ? (
@@ -246,10 +247,11 @@ export default function PaymentsPage() {
                       <span>Saldo Dompet Digital (QRIS)</span>
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+                      <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
                         {formatRupiah(partnerData.balance)}
                       </h2>
                     </div>
+
                     <p className="text-[11px] text-emerald-100/80 mt-1">
                       Saldo siap ditarik ke rekening bank atau e-wallet Anda.
                     </p>

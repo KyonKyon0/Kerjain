@@ -7,23 +7,14 @@ import { PageContainer } from "@/components/dashboard/PageContainer";
 import { 
   PlusCircle, 
   History, 
-  CreditCard, 
   ChevronRight, 
-  Search, 
   Zap, 
-  MapPin, 
-  UserCheck, 
-  Star, 
-  ShieldCheck, 
-  Home,
-  Wallet,
-  Briefcase,
-  CheckCircle,
-  ArrowUpRight,
-  Sparkles,
+  Wallet, 
+  Briefcase, 
+  CheckCircle, 
+  ArrowUpRight, 
   ShoppingBag,
-  Wrench,
-  Paintbrush
+  HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,14 +22,11 @@ import { JobCard } from "@/components/jobs/JobCard";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { axiosInstance } from "@/lib/axios";
-import { useRouter } from "next/navigation";
 
 export function ConsumerDashboard() {
   const { user } = useAuthStore();
-  const router = useRouter();
   const { data: jobs = [], isLoading: loadingJobs } = useConsumerJobs();
 
-  const [loadingStats, setLoadingStats] = useState(true);
   const [stats, setStats] = useState({
     completed_jobs: 0,
     active_jobs: 0,
@@ -55,8 +43,6 @@ export function ConsumerDashboard() {
         }
       } catch (err) {
         console.error("Error fetching consumer stats:", err);
-      } finally {
-        setLoadingStats(false);
       }
     };
 
@@ -69,13 +55,17 @@ export function ConsumerDashboard() {
 
   const completedJobsList = jobs.filter((j: any) => j.status === 'COMPLETED');
   
-  // Use real stats from Supabase fallbacking to array calculations
+  // All jobs that are paid/active or completed
+  const allPaidJobs = jobs.filter((j: any) => 
+    ['PUBLISHED', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION', 'IN_PROGRESS', 'COMPLETED'].includes(j.status)
+  );
+  const localSpendingSum = allPaidJobs.reduce((acc: number, j: any) => acc + Number(j.rewardAmount ?? j.reward_amount ?? 0), 0);
+
+  // Synchronized metrics
   const activeJobsCount = stats.active_jobs > 0 ? stats.active_jobs : activeJobsList.length;
   const completedJobsCount = stats.completed_jobs > 0 ? stats.completed_jobs : completedJobsList.length;
   const totalJobsCount = stats.total_jobs > 0 ? stats.total_jobs : jobs.length;
-  const spending = stats.total_spending > 0 
-    ? stats.total_spending 
-    : completedJobsList.reduce((acc: number, j: any) => acc + Number(j.rewardAmount ?? j.reward_amount ?? 0), 0);
+  const spending = stats.total_spending > 0 ? stats.total_spending : localSpendingSum;
 
   const consumerStatCards = [
     {
@@ -92,7 +82,7 @@ export function ConsumerDashboard() {
     {
       title: "Total Pengeluaran",
       value: `Rp ${spending.toLocaleString("id-ID")}`,
-      subtitle: "Pekerjaan selesai",
+      subtitle: "Biaya pekerjaan Anda",
       icon: Wallet,
       iconColor: "text-blue-500",
       iconBg: "bg-blue-500/10",
@@ -128,220 +118,139 @@ export function ConsumerDashboard() {
       name: "Buat Pekerjaan", 
       href: "/dashboard/jobs/create", 
       icon: PlusCircle, 
-      color: "text-emerald-500", 
-      bg: "bg-emerald-500/10", 
+      color: "text-emerald-400", 
+      bg: "bg-emerald-500/15", 
     },
     { 
       name: "Pantau Job", 
       href: "/dashboard/jobs/assigned", 
       icon: Briefcase, 
-      color: "text-blue-500", 
-      bg: "bg-blue-500/10", 
+      color: "text-blue-400", 
+      bg: "bg-blue-500/15", 
     },
     { 
       name: "Riwayat Order", 
       href: "/dashboard/history", 
       icon: History, 
-      color: "text-purple-500", 
-      bg: "bg-purple-500/10", 
+      color: "text-purple-400", 
+      bg: "bg-purple-500/15", 
     },
     { 
-      name: "Bantuan CS", 
+      name: "Pusat Bantuan", 
       href: "/help", 
-      icon: Zap, 
-      color: "text-amber-500", 
-      bg: "bg-amber-500/10", 
+      icon: HelpCircle, 
+      color: "text-amber-400", 
+      bg: "bg-amber-500/15", 
     },
   ];
 
   return (
-    <PageContainer>
+    <PageContainer className="overflow-x-clip">
       {/* 1. Header Card Nama & Status Konsumen */}
-      <div className="mb-6 bg-card/80 backdrop-blur-md p-5 sm:p-6 rounded-3xl border border-border/80 shadow-sm relative overflow-hidden">
+      <div className="mb-4 sm:mb-6 bg-card/80 backdrop-blur-md p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-border/80 shadow-xs relative overflow-hidden">
         <div className="flex items-center gap-2 mb-1">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-            Konsumen Aktif • Siap Memesan
+          <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-400">
+            Konsumen Aktif
           </span>
         </div>
-        <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">
+        <h1 className="text-lg sm:text-2xl font-black tracking-tight text-foreground">
           Halo, {user?.name?.split(' ')[0] || "Konsumen"}! 👋
         </h1>
-        <p className="text-muted-foreground font-medium text-xs sm:text-sm mt-0.5">
+        <p className="text-muted-foreground font-medium text-xs mt-0.5">
           Butuh bantuan apa hari ini? Unggah pekerjaan Anda dan mitra terdekat siap membantu.
         </p>
       </div>
 
-      {/* 2. 4 Metric / Stat Cards (Pekerjaan Aktif, Pengeluaran, Job Selesai, Total Pesanan) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+      {/* 2. 4 Metric / Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-6">
         {consumerStatCards.map((card, i) => (
           <Link key={i} href={card.href} className="block group">
             <motion.div
-              whileHover={{ y: -3, scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className={`p-4 rounded-2xl md:rounded-3xl bg-card/95 border ${card.borderColor} shadow-sm hover:shadow-md transition-all h-full flex flex-col justify-between`}
+              whileHover={{ y: -2, scale: 1.01 }}
+              transition={{ duration: 0.2 }}
+              className={`h-full p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border bg-card/90 backdrop-blur-md shadow-xs transition-all ${card.borderColor}`}
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className={`w-8 h-8 rounded-xl ${card.iconBg} ${card.iconColor} flex items-center justify-center group-hover:scale-105 transition-transform`}>
-                    <card.icon className="w-4 h-4" />
-                  </div>
-                  <span className="text-[11px] md:text-xs font-semibold text-muted-foreground line-clamp-1">{card.title}</span>
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className={`p-2 rounded-xl sm:rounded-2xl ${card.iconBg} ${card.iconColor}`}>
+                  <card.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
-                <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+                <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground/50 group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
               </div>
-
-              <div>
-                {loadingStats ? (
-                  <Skeleton className="h-7 w-20 rounded-lg mb-1" />
-                ) : (
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-lg md:text-xl font-black text-foreground tracking-tight line-clamp-1">
-                      {card.value}
-                    </span>
-                    {card.suffix && (
-                      <span className="text-xs font-bold text-muted-foreground">{card.suffix}</span>
-                    )}
-                  </div>
+              <p className="text-[11px] sm:text-xs font-bold text-muted-foreground mb-0.5 sm:mb-1">{card.title}</p>
+              <div className="flex items-baseline gap-1">
+                <span className="text-base sm:text-2xl font-black tracking-tight text-foreground">{card.value}</span>
+                {card.suffix && (
+                  <span className="text-[10px] sm:text-xs font-bold text-muted-foreground">{card.suffix}</span>
                 )}
-                <span className="text-[10px] md:text-[11px] font-medium text-muted-foreground/80 line-clamp-1">
-                  {card.subtitle}
-                </span>
               </div>
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground/80 font-medium mt-0.5">{card.subtitle}</p>
             </motion.div>
           </Link>
         ))}
       </div>
 
-      {/* 3. 4 Tombol Cepat dalam 1 Card Tunggal Ditaruh di Bawah Card Statistik */}
-      <div className="bg-card/90 backdrop-blur-md border border-border/80 rounded-3xl p-4 sm:p-5 mb-8 shadow-sm">
-        <div className="grid grid-cols-4 gap-2 sm:gap-4">
-          {quickActions.map((item, i) => (
-            <Link key={i} href={item.href} className="block group text-center">
-              <motion.div
-                whileHover={{ y: -3, scale: 1.03 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                className="flex flex-col items-center justify-center p-2 sm:p-3 rounded-2xl hover:bg-muted/40 transition-colors"
-              >
-                <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${item.bg} ${item.color} flex items-center justify-center mb-2 shadow-sm group-hover:scale-110 transition-transform`}>
-                  <item.icon className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2]" />
+      {/* 3. UNIFIED SINGLE CARD FOR QUICK ACTIONS (BUAT, PANTAU, RIWAYAT, BANTUAN) */}
+      <div className="mb-6 bg-card border border-border/80 p-2 sm:p-3 rounded-2xl sm:rounded-3xl shadow-xs">
+        <div className="grid grid-cols-4 gap-1 sm:gap-2">
+          {quickActions.map((action, i) => (
+            <Link key={i} href={action.href} className="block group">
+              <div className="flex flex-col items-center text-center p-2 sm:p-2.5 rounded-xl hover:bg-muted/50 transition-colors">
+                <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl ${action.bg} ${action.color} flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform shadow-2xs`}>
+                  <action.icon className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                 </div>
-                <span className="text-[11px] sm:text-xs font-bold text-foreground line-clamp-1">
-                  {item.name}
-                </span>
-              </motion.div>
+                <span className="font-bold text-[10px] sm:text-xs text-foreground line-clamp-1">{action.name}</span>
+              </div>
             </Link>
           ))}
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6 w-full max-w-full min-w-0">
-        <div className="lg:col-span-2 space-y-6 w-full max-w-full min-w-0">
-          {/* Active Job Tracker */}
-          <section className="w-full max-w-full min-w-0">
-
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-extrabold text-lg text-foreground flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Pekerjaan yang Sedang Berjalan ({activeJobsList.length})
-              </h3>
-              {activeJobsList.length > 2 && (
-                <Link href="/dashboard/jobs/assigned" className="text-xs font-bold text-primary hover:underline">
-                  Lihat Semua
-                </Link>
-              )}
-            </div>
-
-            {activeJobsList.length === 0 ? (
-              <div className="bg-card/70 border border-dashed rounded-3xl p-8 text-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
-                  <Briefcase className="w-6 h-6" />
-                </div>
-                <h4 className="font-bold text-sm text-foreground">Tidak Ada Pekerjaan Aktif</h4>
-                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Saat ini Anda belum memiliki pekerjaan yang sedang berjalan. Buat pekerjaan baru untuk menemukan mitra.
-                </p>
-                <Button 
-                  onClick={() => router.push("/dashboard/jobs/create")}
-                  className="rounded-xl font-bold text-xs h-10 px-4 bg-primary hover:bg-emerald-600"
-                >
-                  + Buat Pekerjaan Sekarang
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {activeJobsList.slice(0, 2).map((job: any) => (
-                  <JobCard key={job.id} job={job} />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Popular Categories */}
-          <section>
-            <h3 className="font-extrabold text-lg mb-4 text-foreground">Layanan Populer</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { name: "Perbaikan Rumah", category: "Perbaikan", icon: Wrench, color: "text-blue-500", bg: "bg-blue-500/10" },
-                { name: "Kebersihan", category: "Bersih-bersih", icon: Sparkles, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-                { name: "Angkat Barang", category: "Angkat Barang", icon: ShoppingBag, color: "text-purple-500", bg: "bg-purple-500/10" },
-              ].map((cat, i) => (
-                <Link key={i} href={`/dashboard/jobs/create`}>
-                  <motion.div 
-                    whileHover={{ y: -3, scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="bg-card border rounded-2xl p-3 sm:p-4 text-center hover:border-primary/50 hover:shadow-md transition-all shadow-sm cursor-pointer group h-full flex flex-col items-center justify-center min-h-[96px]"
-                  >
-                    <div className={`w-10 h-10 mx-auto mb-2 rounded-xl ${cat.bg} ${cat.color} flex items-center justify-center group-hover:scale-110 transition-transform shrink-0`}>
-                      <cat.icon className="w-5 h-5" />
-                    </div>
-                    <span className="text-[11px] sm:text-xs font-bold text-foreground leading-tight text-center block break-words">
-                      {cat.name}
-                    </span>
-                  </motion.div>
-                </Link>
-
-              ))}
-            </div>
-          </section>
+      {/* 4. Active Jobs Section */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base sm:text-lg font-black text-foreground flex items-center gap-1.5">
+              <Zap className="w-4 h-4 text-primary" /> Pekerjaan Berlangsung
+            </h2>
+            <p className="text-[11px] sm:text-xs text-muted-foreground font-medium">Pantau progres pekerjaan Anda secara langsung</p>
+          </div>
+          {activeJobsList.length > 0 && (
+            <Link href="/dashboard/jobs/assigned">
+              <Button variant="ghost" size="sm" className="text-xs font-bold text-primary">
+                Lihat Semua <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+              </Button>
+            </Link>
+          )}
         </div>
 
-        <div className="space-y-6">
-          {/* Safety & Escrow Banner */}
-          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-3xl p-5 shadow-sm space-y-3">
-            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-              <div className="p-2 rounded-xl bg-emerald-500/20">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <h4 className="font-extrabold text-sm">Garansi Aman Kerjain</h4>
-            </div>
-            <p className="text-xs text-emerald-800/80 dark:text-emerald-400/80 leading-relaxed">
-              Dana pembayaran Anda disimpan aman dalam rekening bersama (escrow) dan hanya diteruskan ke mitra setelah Anda mengonfirmasi pekerjaan selesai.
-            </p>
+        {loadingJobs ? (
+          <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+            <Skeleton className="h-36 rounded-2xl" />
+            <Skeleton className="h-36 rounded-2xl" />
           </div>
-
-          {/* Quick Help Card */}
-          <div className="bg-card border rounded-3xl p-5 shadow-sm space-y-3">
-            <div className="flex items-center gap-2 text-foreground">
-              <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                <Zap className="w-4 h-4" />
-              </div>
-              <h4 className="font-bold text-sm">Pusat Layanan Cepat</h4>
+        ) : activeJobsList.length === 0 ? (
+          <div className="p-6 sm:p-8 text-center bg-card/60 border border-border/80 rounded-2xl sm:rounded-3xl space-y-3">
+            <div className="w-11 h-11 rounded-2xl bg-muted flex items-center justify-center mx-auto text-muted-foreground">
+              <Briefcase className="w-5 h-5" />
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Membutuhkan panduan posting atau ingin berkonsultasi mengenai pesanan Anda?
+            <p className="text-xs sm:text-sm font-bold text-foreground">Tidak Ada Pekerjaan yang Sedang Berjalan</p>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto font-medium">
+              Semua pekerjaan Anda telah selesai atau belum ada pesanan baru yang dibuat.
             </p>
-            <Button 
-              variant="outline" 
-              onClick={() => router.push("/help")}
-              className="w-full rounded-2xl h-11 text-xs font-bold"
-            >
-              Hubungi Bantuan CS 24/7
-            </Button>
+            <Link href="/dashboard/jobs/create" className="inline-block pt-1">
+              <Button className="rounded-xl h-10 px-4 text-xs font-black bg-primary text-white hover:bg-primary/90 shadow-sm">
+                <PlusCircle className="w-3.5 h-3.5 mr-1.5" /> Buat Pekerjaan Sekarang
+              </Button>
+            </Link>
           </div>
-        </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+            {activeJobsList.slice(0, 4).map((job: any) => (
+              <JobCard key={job.id} job={job} />
+            ))}
+          </div>
+        )}
       </div>
     </PageContainer>
   );

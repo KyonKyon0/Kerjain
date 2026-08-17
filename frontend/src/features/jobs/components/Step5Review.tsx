@@ -4,8 +4,8 @@ import { useCreateJobStore } from "@/store/create-job.store";
 import { useCreateJob } from "@/hooks/useJobs";
 import { CreateJobData } from "@/features/jobs/schemas";
 import { Button } from "@/components/ui/button";
-import { Loader2, MapPin, Tag, Wallet, Camera } from "lucide-react";
-import { DashboardCard } from "@/components/dashboard/DashboardCard";
+import { Loader2, MapPin, Tag, Wallet, Camera, ArrowLeft, Send, Sparkles } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 export function Step5Review() {
   const { draft, prevStep, resetDraft } = useCreateJobStore();
@@ -21,83 +21,85 @@ export function Step5Review() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <div className="text-center mb-6">
-        <h3 className="text-xl font-extrabold text-foreground">Ringkasan Pekerjaan</h3>
-        <p className="text-muted-foreground text-sm mt-1">Periksa kembali detail pekerjaan Anda sebelum diterbitkan ke mitra.</p>
+    <div className="space-y-5">
+      <div>
+        <label className="text-xs font-black uppercase tracking-wider text-foreground">
+          Ringkasan & Konfirmasi Publikasi
+        </label>
+        <p className="text-muted-foreground text-xs font-medium mt-0.5">
+          Periksa kembali rincian tugas Anda sebelum disiarkan ke radar mitra terdekat
+        </p>
       </div>
 
-      <DashboardCard className="bg-muted/10 border-2 rounded-3xl p-6 space-y-4">
+      <Card className="bg-card border border-border/80 rounded-3xl p-5 sm:p-6 shadow-2xs space-y-4">
         {draft.photoUrl && (
-          <div className="relative rounded-2xl overflow-hidden aspect-video border border-border/80 bg-black/40 mb-4">
-            <img src={draft.photoUrl} alt="Foto Pekerjaan" className="w-full h-full object-cover" />
-            <div className="absolute top-2 left-2 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-xl text-white text-[11px] font-bold flex items-center gap-1">
-              <Camera className="w-3 h-3" /> Foto Terlampir
+          <div className="relative rounded-2xl overflow-hidden aspect-video border border-border/80 bg-black/40 max-h-52 w-full">
+            <img src={draft.photoUrl} alt="Foto Tugas" className="w-full h-full object-cover" />
+            <div className="absolute bottom-2 left-2 px-2.5 py-1 bg-black/70 backdrop-blur-sm rounded-xl text-white text-[10px] font-bold flex items-center gap-1">
+              <Camera className="w-3 h-3" /> Foto Lampiran Terpasang
             </div>
           </div>
         )}
 
-        <h4 className="font-extrabold text-xl text-primary">{draft.title}</h4>
-        <p className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">{draft.description}</p>
+        <div>
+          <span className="px-2 py-0.5 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wider border border-primary/20">
+            {draft.category || "Tugas Umum"}
+          </span>
+          <h3 className="font-black text-lg sm:text-xl text-foreground mt-1.5 tracking-tight">{draft.title}</h3>
+          <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed mt-1 font-medium">{draft.description}</p>
+        </div>
         
-        <div className="space-y-3.5 pt-4 border-t border-border/70">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 text-primary rounded-xl shrink-0"><Tag className="w-4 h-4" /></div>
-            <div>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Kategori</p>
-              <p className="font-bold text-sm text-foreground">{draft.category}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border/70">
+          <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-card/60 border border-border/60">
+            <div className="p-1.5 bg-red-500/10 text-red-500 rounded-xl shrink-0 mt-0.5"><MapPin className="w-4 h-4" /></div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Lokasi Tugas</p>
+              <p className="font-bold text-xs text-foreground truncate mt-0.5">{draft.address}</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-500/10 text-red-600 rounded-xl shrink-0"><MapPin className="w-4 h-4" /></div>
-            <div>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Lokasi</p>
-              <p className="font-bold text-sm text-foreground">{draft.address}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/10 text-emerald-600 rounded-xl shrink-0"><Wallet className="w-4 h-4" /></div>
-            <div>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Imbalan / Upah</p>
-              <p className="font-bold text-sm text-foreground">
+          <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-card/60 border border-border/60">
+            <div className="p-1.5 bg-emerald-500/10 text-emerald-500 rounded-xl shrink-0 mt-0.5"><Wallet className="w-4 h-4" /></div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Nominal Imbalan</p>
+              <p className="font-black text-xs text-emerald-400 mt-0.5">
                 Rp {draft.rewardAmount?.toLocaleString("id-ID")}
               </p>
             </div>
           </div>
-
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/10 text-blue-600 rounded-xl shrink-0"><Wallet className="w-4 h-4" /></div>
-            <div>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Metode Pembayaran</p>
-              <p className="font-bold text-sm text-foreground">
-                {draft.paymentMethod === "QRIS" ? "QRIS (Otomatis & Aman)" : draft.paymentMethod === "CASH" ? "Tunai (Cash Langsung)" : "Lainnya"}
-              </p>
-            </div>
-          </div>
         </div>
-      </DashboardCard>
 
-      <div className="flex justify-between pt-4 border-t mt-8 gap-4">
+        <div className="p-3 rounded-2xl bg-card/60 border border-border/60 flex items-center justify-between">
+          <span className="text-[11px] font-bold text-muted-foreground">Metode Pembayaran</span>
+          <span className="text-xs font-black text-foreground">
+            {draft.paymentMethod === "QRIS" ? "QRIS Rekber Otomatis" : "Tunai di Tempat (Cash)"}
+          </span>
+        </div>
+      </Card>
+
+      <div className="flex items-center justify-between pt-4 border-t border-border/70">
         <Button 
           type="button" 
           variant="outline" 
           onClick={prevStep} 
-          className="rounded-2xl h-12 px-6 font-bold" 
+          className="rounded-2xl h-11 px-5 font-bold border-border/80 flex items-center gap-1.5" 
           disabled={createJob.isPending}
         >
-          Kembali
+          <ArrowLeft className="w-4 h-4" />
+          <span>Kembali</span>
         </Button>
         <Button 
           onClick={handlePublish} 
-          className="rounded-2xl shadow-md px-8 h-12 font-extrabold hover:-translate-y-0.5 transition-transform bg-primary hover:bg-emerald-600" 
+          className="rounded-2xl shadow-sm px-7 h-11 font-black bg-primary text-white hover:bg-primary/90 flex items-center gap-1.5" 
           disabled={createJob.isPending}
         >
           {createJob.isPending ? (
-            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menerbitkan...</>
+            <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Menyiarkan Tugas...</>
           ) : (
-            "Terbitkan Sekarang"
+            <>
+              <Sparkles className="w-4 h-4" />
+              <span>Publikasikan Sekarang</span>
+            </>
           )}
         </Button>
       </div>

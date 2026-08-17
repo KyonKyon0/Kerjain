@@ -62,7 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className={`${plusJakartaSans.className} min-h-screen flex flex-col antialiased text-foreground selection:bg-primary/20`}>
         <ClientBootstrap />
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <QueryProvider>
             <ProtectedRoute>
               {children}

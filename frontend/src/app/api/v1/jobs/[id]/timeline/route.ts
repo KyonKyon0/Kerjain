@@ -8,9 +8,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const user = await getCurrentUser(request);
     if (!user) return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
 
-    try {
-      await prisma.$executeRawUnsafe(`UPDATE job_progress_logs SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL;`);
-    } catch {}
 
     const logs = await prisma.jobProgress.findMany({
       where: { job_id: resolvedParams.id },

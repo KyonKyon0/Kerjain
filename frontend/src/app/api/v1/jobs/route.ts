@@ -117,14 +117,17 @@ export async function POST(request: Request) {
     let payment = null;
     if (paymentMethod === 'QRIS') {
       const amount = body.rewardAmount ? Number(body.rewardAmount) : 0;
-      const paymentId = crypto.randomUUID();
-      await prisma.$executeRaw`
-        INSERT INTO "payments" ("id", "job_id", "consumer_id", "amount", "method", "status", "created_at", "updated_at")
-        VALUES (${paymentId}::uuid, ${job.id}::uuid, ${user.id}::uuid, ${amount}, 'QRIS'::payment_method, 'UNPAID'::payment_status, NOW(), NOW())
-      `;
-      
-      payment = await prisma.payment.findUnique({ where: { id: paymentId } });
+      payment = await prisma.payment.create({
+        data: {
+          job_id: job.id,
+          consumer_id: user.id,
+          amount: amount,
+          method: 'QRIS',
+          status: 'UNPAID',
+        }
+      });
     }
+
 
     return NextResponse.json({ 
       success: true, 

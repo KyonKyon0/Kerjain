@@ -41,9 +41,14 @@ import { axiosInstance } from "@/lib/axios";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-const APP_VERSION = "v2.2026.08.16.21.30";
-
-
+const APP_VERSION = "v2.4.0 (Build a99ca93)";
+const BUILD_INFO = {
+  version: "v2.4.0-stable",
+  commit: "a99ca93",
+  date: "17 Agustus 2026",
+  environment: "Production (Vercel & Supabase)",
+  engine: "Next.js 16.3 (Turbopack) • React 19 • Prisma 7"
+};
 
 export default function AccountPage() {
   const { user, role, logout, setUser } = useAuthStore();
@@ -154,7 +159,7 @@ export default function AccountPage() {
               <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-xl bg-background border border-border/80 p-0.5 shadow-md flex items-center justify-center">
                 <Image
                   src="/logo-notext.png"
-                  alt="Kerjain"
+                  alt="KerjaIn"
                   width={20}
                   height={20}
                   className="object-contain"
@@ -203,7 +208,6 @@ export default function AccountPage() {
               )}
             </div>
 
-
             {/* Actual Real Stats for Partner from Supabase */}
             {role === "partner" && (
               <div className="grid grid-cols-2 gap-4 mt-6 w-full border-t border-border/70 pt-5">
@@ -227,7 +231,6 @@ export default function AccountPage() {
                     </motion.div>
                   )}
                 </Link>
-
 
                 <Link href="/dashboard/history" className="text-center p-3 rounded-2xl bg-muted/40 hover:bg-muted/70 transition-colors group">
                   <p className="text-xs text-muted-foreground font-semibold mb-1 flex items-center justify-center gap-1">
@@ -274,13 +277,13 @@ export default function AccountPage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs sm:text-sm font-black text-foreground">Pembaruan Aplikasi Terbaru</span>
+                      <span className="text-xs sm:text-sm font-black text-foreground">Pembaruan Sistem & Kode Terbaru</span>
                       <span className="bg-primary/20 text-primary px-2 py-0.2 rounded-md text-[10px] font-extrabold border border-primary/30">
-                        {APP_VERSION}
+                        {BUILD_INFO.version}
                       </span>
                     </div>
                     <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
-                      Fitur & penyempurnaan baru telah aktif di akun Anda:
+                      Penyempurnaan arsitektur landing page, performa, dan integrasi pilar bangsa:
                     </p>
                   </div>
                 </div>
@@ -299,30 +302,30 @@ export default function AccountPage() {
               {/* User-friendly Release Notes List */}
               <div className="space-y-1.5 pt-1 text-xs text-foreground/90 relative z-10">
                 <div className="flex items-start gap-2 bg-card/60 rounded-xl p-2 border border-border/40">
-                  <TrendingUp className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
                   <p className="text-[11px] leading-relaxed">
-                    <strong className="text-foreground">Grafik Keuangan Baru:</strong> Pantau penghasilan QRIS dan Tunai secara real-time dengan grafik naik-turun yang responsif.
+                    <strong className="text-foreground">Showcase Interaktif & Eksplorasi Layar:</strong> 11 Layar resolusi tinggi konsumen dan mitra dengan rotasi visual terintegrasi.
                   </p>
                 </div>
 
                 <div className="flex items-start gap-2 bg-card/60 rounded-xl p-2 border border-border/40">
-                  <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0 mt-0.5" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-teal-500 shrink-0 mt-0.5" />
                   <p className="text-[11px] leading-relaxed">
-                    <strong className="text-foreground">Badge Rating Lengkap:</strong> Penilaian bintang aktual Anda kini tampil detail dengan 2 desimal (misal: ★ 5,00).
+                    <strong className="text-foreground">Pilar Asta Cita & SDGs 2030:</strong> Tampilan backdrop pilar bangsa dengan kartu fokus simetris dan transisi panggung.
                   </p>
                 </div>
 
                 <div className="flex items-start gap-2 bg-card/60 rounded-xl p-2 border border-border/40">
-                  <MapPin className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
+                  <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
                   <p className="text-[11px] leading-relaxed">
-                    <strong className="text-foreground">Jarak & Durasi Pintar:</strong> Estimasi jarak ke lokasi pekerjaan lebih presisi serta waktu posting kini langsung terlihat jelas.
+                    <strong className="text-foreground">Portal Hitam Eksklusif (CTA):</strong> Tipografi kinetik berurutan mewah dengan efek scroll-linked fade out.
                   </p>
                 </div>
 
                 <div className="flex items-start gap-2 bg-card/60 rounded-xl p-2 border border-border/40">
                   <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                   <p className="text-[11px] leading-relaxed">
-                    <strong className="text-foreground">Tampilan Lebih Padat:</strong> Kartu tugas berjalan kini lebih ringkas, hemat ruang, dan nyaman dilihat.
+                    <strong className="text-foreground">Footer Gelap Terpadu:</strong> 4 Kolom navigasi, status sistem aktif, dan tautan open-source GitHub resmi.
                   </p>
                 </div>
               </div>
@@ -389,6 +392,49 @@ export default function AccountPage() {
             </div>
           ))}
 
+          {/* Dedicated System & Code Version Specifications Card */}
+          <div>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2">
+              Informasi Versi & Sistem
+            </h3>
+            <div className="bg-card/90 backdrop-blur-md border border-border/80 rounded-3xl p-5 shadow-sm space-y-3.5">
+              <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-xs">
+                    📦
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">Versi Aplikasi (Build)</p>
+                    <p className="text-[11px] text-muted-foreground">{BUILD_INFO.environment}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-black">
+                    {BUILD_INFO.version}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-2.5 rounded-2xl bg-muted/40 border border-border/40">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold block">Commit Hash</span>
+                  <span className="font-mono font-bold text-foreground text-xs">{BUILD_INFO.commit}</span>
+                </div>
+                <div className="p-2.5 rounded-2xl bg-muted/40 border border-border/40">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold block">Tanggal Rilis</span>
+                  <span className="font-bold text-foreground text-xs">{BUILD_INFO.date}</span>
+                </div>
+              </div>
+
+              <div className="pt-1">
+                <p className="text-[10.5px] text-muted-foreground font-medium flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span>Stack: {BUILD_INFO.engine}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Logout Button */}
           <div className="pt-2 pb-6">
             <Button 
@@ -400,7 +446,7 @@ export default function AccountPage() {
               Keluar dari Akun
             </Button>
             <p className="text-center text-xs text-muted-foreground mt-4 font-medium">
-              Kerjain App {APP_VERSION}
+              KerjaIn Platform &bull; {APP_VERSION}
             </p>
           </div>
         </div>

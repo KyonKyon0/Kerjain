@@ -78,6 +78,10 @@ export default function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
+
+          <p className="text-center text-xs text-muted-foreground pt-2 font-medium">
+            KerjaIn Platform • v3.170826.21.14
+          </p>
         </div>
       </PageContainer>
     </DashboardLayout>

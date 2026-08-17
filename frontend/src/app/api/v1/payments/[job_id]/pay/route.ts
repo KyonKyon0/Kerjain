@@ -10,13 +10,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ job
 
     // Simulate payment processing
     const payment = await prisma.payment.updateMany({
-      where: { job_id: resolvedParams.job_id, status: 'UNPAID' },
+      where: { job_id: resolvedParams.job_id, consumer_id: user.id, status: 'UNPAID' },
       data: { status: 'SUCCESS', paid_at: new Date() }
     })
 
     if (payment.count > 0) {
       await prisma.job.updateMany({
-        where: { id: resolvedParams.job_id, status: 'WAITING_PAYMENT' },
+        where: { id: resolvedParams.job_id, consumer_id: user.id, status: 'WAITING_PAYMENT' },
         data: { status: 'PUBLISHED' }
       })
     }

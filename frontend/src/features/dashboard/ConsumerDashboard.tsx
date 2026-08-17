@@ -23,6 +23,37 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { axiosInstance } from "@/lib/axios";
 
+const CONSUMER_QUICK_ACTIONS = [
+  { 
+    name: "Buat Pekerjaan", 
+    href: "/dashboard/jobs/create", 
+    icon: PlusCircle, 
+    color: "text-emerald-400", 
+    bg: "bg-emerald-500/15", 
+  },
+  { 
+    name: "Pantau Job", 
+    href: "/dashboard/jobs/assigned", 
+    icon: Briefcase, 
+    color: "text-blue-400", 
+    bg: "bg-blue-500/15", 
+  },
+  { 
+    name: "Riwayat Order", 
+    href: "/dashboard/history", 
+    icon: History, 
+    color: "text-purple-400", 
+    bg: "bg-purple-500/15", 
+  },
+  { 
+    name: "Pusat Bantuan", 
+    href: "/help", 
+    icon: HelpCircle, 
+    color: "text-amber-400", 
+    bg: "bg-amber-500/15", 
+  },
+];
+
 export function ConsumerDashboard() {
   const { user } = useAuthStore();
   const { data: jobs = [], isLoading: loadingJobs } = useConsumerJobs();
@@ -49,100 +80,75 @@ export function ConsumerDashboard() {
     fetchConsumerStats();
   }, []);
 
-  const activeJobsList = jobs.filter((j: any) => 
-    ['PUBLISHED', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION', 'IN_PROGRESS'].includes(j.status)
-  );
+  const { activeJobsList, completedJobsList, consumerStatCards } = React.useMemo(() => {
+    const active = jobs.filter((j: any) => 
+      ['PUBLISHED', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION', 'IN_PROGRESS'].includes(j.status)
+    );
 
-  const completedJobsList = jobs.filter((j: any) => j.status === 'COMPLETED');
-  
-  // All jobs that are paid/active or completed
-  const allPaidJobs = jobs.filter((j: any) => 
-    ['PUBLISHED', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION', 'IN_PROGRESS', 'COMPLETED'].includes(j.status)
-  );
-  const localSpendingSum = allPaidJobs.reduce((acc: number, j: any) => acc + Number(j.rewardAmount ?? j.reward_amount ?? 0), 0);
+    const completed = jobs.filter((j: any) => j.status === 'COMPLETED');
+    
+    // All jobs that are paid/active or completed
+    const allPaid = jobs.filter((j: any) => 
+      ['PUBLISHED', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION', 'IN_PROGRESS', 'COMPLETED'].includes(j.status)
+    );
+    const localSpendingSum = allPaid.reduce((acc: number, j: any) => acc + Number(j.rewardAmount ?? j.reward_amount ?? 0), 0);
 
-  // Synchronized metrics
-  const activeJobsCount = stats.active_jobs > 0 ? stats.active_jobs : activeJobsList.length;
-  const completedJobsCount = stats.completed_jobs > 0 ? stats.completed_jobs : completedJobsList.length;
-  const totalJobsCount = stats.total_jobs > 0 ? stats.total_jobs : jobs.length;
-  const spending = stats.total_spending > 0 ? stats.total_spending : localSpendingSum;
+    // Synchronized metrics
+    const activeJobsCount = stats.active_jobs > 0 ? stats.active_jobs : active.length;
+    const completedJobsCount = stats.completed_jobs > 0 ? stats.completed_jobs : completed.length;
+    const totalJobsCount = stats.total_jobs > 0 ? stats.total_jobs : jobs.length;
+    const spending = stats.total_spending > 0 ? stats.total_spending : localSpendingSum;
 
-  const consumerStatCards = [
-    {
-      title: "Pekerjaan Aktif",
-      value: `${activeJobsCount}`,
-      suffix: "Job",
-      subtitle: activeJobsCount > 0 ? "Sedang berjalan" : "Tidak ada pesanan",
-      icon: Briefcase,
-      iconColor: "text-emerald-500",
-      iconBg: "bg-emerald-500/10",
-      borderColor: "border-emerald-500/25 hover:border-emerald-500/50",
-      href: "/dashboard/jobs/assigned",
-    },
-    {
-      title: "Total Pengeluaran",
-      value: `Rp ${spending.toLocaleString("id-ID")}`,
-      subtitle: "Biaya pekerjaan Anda",
-      icon: Wallet,
-      iconColor: "text-blue-500",
-      iconBg: "bg-blue-500/10",
-      borderColor: "border-blue-500/25 hover:border-blue-500/50",
-      href: "/dashboard/payments",
-    },
-    {
-      title: "Job Selesai",
-      value: `${completedJobsCount}`,
-      suffix: "Job",
-      subtitle: "Berhasil tuntas",
-      icon: CheckCircle,
-      iconColor: "text-teal-500",
-      iconBg: "bg-teal-500/10",
-      borderColor: "border-teal-500/25 hover:border-teal-500/50",
-      href: "/dashboard/history",
-    },
-    {
-      title: "Total Pesanan",
-      value: `${totalJobsCount}`,
-      suffix: "Total",
-      subtitle: "Riwayat permintaan",
-      icon: ShoppingBag,
-      iconColor: "text-purple-500",
-      iconBg: "bg-purple-500/10",
-      borderColor: "border-purple-500/25 hover:border-purple-500/50",
-      href: "/dashboard/history",
-    },
-  ];
+    const cards = [
+      {
+        title: "Pekerjaan Aktif",
+        value: `${activeJobsCount}`,
+        suffix: "Job",
+        subtitle: activeJobsCount > 0 ? "Sedang berjalan" : "Tidak ada pesanan",
+        icon: Briefcase,
+        iconColor: "text-emerald-500",
+        iconBg: "bg-emerald-500/10",
+        borderColor: "border-emerald-500/25 hover:border-emerald-500/50",
+        href: "/dashboard/jobs/assigned",
+      },
+      {
+        title: "Total Pengeluaran",
+        value: `Rp ${spending.toLocaleString("id-ID")}`,
+        subtitle: "Biaya pekerjaan Anda",
+        icon: Wallet,
+        iconColor: "text-blue-500",
+        iconBg: "bg-blue-500/10",
+        borderColor: "border-blue-500/25 hover:border-blue-500/50",
+        href: "/dashboard/payments",
+      },
+      {
+        title: "Job Selesai",
+        value: `${completedJobsCount}`,
+        suffix: "Job",
+        subtitle: "Berhasil tuntas",
+        icon: CheckCircle,
+        iconColor: "text-teal-500",
+        iconBg: "bg-teal-500/10",
+        borderColor: "border-teal-500/25 hover:border-teal-500/50",
+        href: "/dashboard/history",
+      },
+      {
+        title: "Total Pesanan",
+        value: `${totalJobsCount}`,
+        suffix: "Total",
+        subtitle: "Riwayat permintaan",
+        icon: ShoppingBag,
+        iconColor: "text-purple-500",
+        iconBg: "bg-purple-500/10",
+        borderColor: "border-purple-500/25 hover:border-purple-500/50",
+        href: "/dashboard/history",
+      },
+    ];
 
-  const quickActions = [
-    { 
-      name: "Buat Pekerjaan", 
-      href: "/dashboard/jobs/create", 
-      icon: PlusCircle, 
-      color: "text-emerald-400", 
-      bg: "bg-emerald-500/15", 
-    },
-    { 
-      name: "Pantau Job", 
-      href: "/dashboard/jobs/assigned", 
-      icon: Briefcase, 
-      color: "text-blue-400", 
-      bg: "bg-blue-500/15", 
-    },
-    { 
-      name: "Riwayat Order", 
-      href: "/dashboard/history", 
-      icon: History, 
-      color: "text-purple-400", 
-      bg: "bg-purple-500/15", 
-    },
-    { 
-      name: "Pusat Bantuan", 
-      href: "/help", 
-      icon: HelpCircle, 
-      color: "text-amber-400", 
-      bg: "bg-amber-500/15", 
-    },
-  ];
+    return { activeJobsList: active, completedJobsList: completed, consumerStatCards: cards };
+  }, [jobs, stats]);
+
+  const quickActions = CONSUMER_QUICK_ACTIONS;
 
   return (
     <PageContainer className="overflow-x-clip">

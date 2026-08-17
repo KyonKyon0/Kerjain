@@ -35,6 +35,7 @@ export async function GET(request: Request) {
     const jobs = await prisma.job.findMany({
       where: whereClause,
       orderBy: { created_at: 'desc' },
+      take: 50,
       include: {
         consumer: { select: { id: true, name: true, phone: true } },
         partner: { select: { id: true, name: true, phone: true } }

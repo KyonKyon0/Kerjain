@@ -54,23 +54,23 @@ export function Step2Category() {
       </div>
       {errors.category && <p className="text-xs text-destructive font-bold text-center">{errors.category.message}</p>}
 
-      <div className="flex items-center justify-between pt-4 border-t border-border/70">
+      <div className="flex items-center justify-between gap-2.5 pt-4 border-t border-border/70 w-full overflow-hidden">
         <Button 
           type="button" 
           variant="outline" 
           onClick={prevStep} 
-          className="rounded-2xl h-11 px-5 font-bold border-border/80 flex items-center gap-1.5"
+          className="rounded-2xl h-11 px-3.5 sm:px-5 font-bold border-border/80 flex items-center gap-1.5 shrink-0 text-xs sm:text-sm"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4 shrink-0" />
           <span>Kembali</span>
         </Button>
         <Button 
           type="submit" 
-          className="rounded-2xl shadow-sm px-6 h-11 font-extrabold bg-primary text-white hover:bg-primary/90 flex items-center gap-1.5" 
+          className="rounded-2xl shadow-sm px-4 sm:px-6 h-11 font-extrabold bg-primary text-white hover:bg-primary/90 flex items-center justify-center gap-1.5 text-xs sm:text-sm shrink-0 min-w-0" 
           disabled={!selectedCategory}
         >
-          <span>Lanjut ke Lokasi</span>
-          <ArrowRight className="w-4 h-4" />
+          <span className="truncate">Lanjut ke Lokasi</span>
+          <ArrowRight className="w-4 h-4 shrink-0" />
         </Button>
       </div>
     </form>

@@ -1,3 +1,4 @@
+import React from "react";
 import { Job } from "@/types";
 import { cn, formatWIBDate } from "@/lib/utils";
 import { CheckCircle2, XCircle } from "lucide-react";
@@ -9,7 +10,7 @@ interface HistoryCardProps {
   role: "consumer" | "partner";
 }
 
-export function HistoryCard({ job, role }: HistoryCardProps) {
+export const HistoryCard = React.memo(function HistoryCard({ job, role }: HistoryCardProps) {
   const isCompleted = job.status === "COMPLETED";
   const partnerName = role === "consumer" 
     ? (job.partnerName || (job as any).partner?.name) 
@@ -61,4 +62,4 @@ export function HistoryCard({ job, role }: HistoryCardProps) {
       </DashboardCard>
     </Link>
   );
-}
+});

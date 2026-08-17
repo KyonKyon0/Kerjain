@@ -34,9 +34,9 @@ function GithubIcon({ className = "w-4 h-4" }: { className?: string }) {
 export function Footer() {
   return (
     <footer className="bg-[#03060d] text-zinc-300 border-t border-white/10 relative overflow-hidden">
-      {/* Dynamic Cosmic Backglow Lights */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[350px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none -translate-y-1/2" />
-      <div className="absolute bottom-0 right-1/4 w-[600px] h-[350px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none translate-y-1/2" />
+      {/* Dynamic Cosmic Backglow Lights (Optimized for Mobile) */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[350px] bg-emerald-500/10 rounded-full blur-2xl sm:blur-[140px] pointer-events-none -translate-y-1/2 transform-gpu" />
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[350px] bg-cyan-500/10 rounded-full blur-2xl sm:blur-[140px] pointer-events-none translate-y-1/2 transform-gpu" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.05),transparent)]" />
 
       <div className="container mx-auto px-4 md:px-6 pt-20 pb-12 relative z-10">

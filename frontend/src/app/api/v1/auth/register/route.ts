@@ -15,21 +15,21 @@ export async function POST(request: Request) {
 
     phone = phone.trim();
 
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return NextResponse.json({ success: false, detail: 'Email sudah terdaftar. Silakan gunakan email lain atau masuk.' }, { status: 400 });
+    }
+
     const hashedPassword = await hashPassword(password);
     let user: any;
 
     try {
-      user = await prisma.user.upsert({
-        where: { email },
-        update: {
-          name,
-          hashed_password: hashedPassword,
-          role,
-          phone,
-          address,
-          gender: gender || 'MALE'
-        },
-        create: {
+      user = await prisma.user.create({
+        data: {
           name,
           email,
           hashed_password: hashedPassword,
@@ -40,16 +40,8 @@ export async function POST(request: Request) {
         }
       });
     } catch {
-      user = await prisma.user.upsert({
-        where: { email },
-        update: {
-          name,
-          hashed_password: hashedPassword,
-          role,
-          phone,
-          address,
-        },
-        create: {
+      user = await prisma.user.create({
+        data: {
           name,
           email,
           hashed_password: hashedPassword,

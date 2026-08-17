@@ -8,6 +8,15 @@ export async function PUT(request: Request, { params }: { params: Promise<{ jobI
     const user = await getCurrentUser(request)
     if (!user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
 
+    const job = await prisma.job.findUnique({
+      where: { id: resolvedParams.jobId },
+      select: { consumer_id: true, partner_id: true }
+    });
+
+    if (!job || (job.consumer_id !== user.id && job.partner_id !== user.id)) {
+      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
+
     await prisma.message.updateMany({
       where: {
         jobId: resolvedParams.jobId,

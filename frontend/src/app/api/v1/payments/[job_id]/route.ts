@@ -9,7 +9,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ job_
     if (!user) return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 })
 
     const payment = await prisma.payment.findFirst({
-      where: { job_id: resolvedParams.job_id },
+      where: { 
+        job_id: resolvedParams.job_id,
+        OR: [
+          { consumer_id: user.id },
+          { partner_id: user.id }
+        ]
+      },
       orderBy: { created_at: 'desc' }
     })
 

@@ -28,6 +28,37 @@ import { useUserLocation } from "@/hooks/useUserLocation";
 import { calculateHaversineDistance, formatDistanceString } from "@/lib/distance";
 import { formatRelativeDuration } from "@/lib/utils";
 
+const PARTNER_QUICK_ACTIONS = [
+  { 
+    name: "Cari Job", 
+    href: "/dashboard/jobs/search", 
+    icon: Search, 
+    color: "text-blue-500", 
+    bg: "bg-blue-500/10", 
+  },
+  { 
+    name: "Job Aktif", 
+    href: "/dashboard/jobs/assigned", 
+    icon: Briefcase, 
+    color: "text-emerald-500", 
+    bg: "bg-emerald-500/10", 
+  },
+  { 
+    name: "Keuangan", 
+    href: "/dashboard/payments", 
+    icon: Wallet, 
+    color: "text-purple-500", 
+    bg: "bg-purple-500/10", 
+  },
+  { 
+    name: "Bantuan CS", 
+    href: "/help", 
+    icon: Zap, 
+    color: "text-amber-500", 
+    bg: "bg-amber-500/10", 
+  },
+];
+
 export function PartnerDashboard() {
   const { user } = useAuthStore();
   const { data: myJobs = [] } = usePartnerJobs();
@@ -63,94 +94,67 @@ export function PartnerDashboard() {
     fetchStats();
   }, []);
 
+  const { activeJobsList, performanceCards } = React.useMemo(() => {
+    const active = myJobs.filter((j: any) => 
+      ['ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION', 'IN_PROGRESS'].includes(j.status)
+    );
 
-  const activeJobsList = myJobs.filter((j: any) => 
-    ['ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'WORKING', 'WAITING_CONFIRMATION', 'IN_PROGRESS'].includes(j.status)
-  );
+    const completed = myJobs.filter((j: any) => j.status === 'COMPLETED');
+    const completedJobsCount = stats.completed_jobs > 0 ? stats.completed_jobs : completed.length;
+    const completionRate = stats.completion_rate;
+    const earnings = stats.total_earnings > 0 
+      ? stats.total_earnings 
+      : completed.reduce((acc: any, job: any) => acc + Number(job.rewardAmount ?? job.reward_amount ?? 0), 0);
 
-  const completedJobsList = myJobs.filter((j: any) => j.status === 'COMPLETED');
-  const completedJobsCount = stats.completed_jobs > 0 ? stats.completed_jobs : completedJobsList.length;
-  const completionRate = stats.completion_rate;
-  const earnings = stats.total_earnings > 0 
-    ? stats.total_earnings 
-    : completedJobsList.reduce((acc: any, job: any) => acc + Number(job.rewardAmount ?? job.reward_amount ?? 0), 0);
+    const cards = [
+      {
+        title: "Total Pendapatan",
+        value: `Rp ${earnings.toLocaleString("id-ID")}`,
+        subtitle: "Siap dicairkan",
+        icon: Wallet,
+        iconColor: "text-emerald-500",
+        iconBg: "bg-emerald-500/10",
+        borderColor: "border-emerald-500/25 hover:border-emerald-500/50",
+        href: "/dashboard/payments",
+      },
+      {
+        title: "Rating Bintang",
+        value: stats.total_reviews > 0 ? stats.rating.toFixed(1) : "0.0",
+        suffix: "★",
+        subtitle: stats.total_reviews > 0 ? `${stats.total_reviews} ulasan diterima` : "Mitra Baru (0 Ulasan)",
+        icon: Star,
+        iconColor: "text-amber-500",
+        iconBg: "bg-amber-500/10",
+        borderColor: "border-amber-500/25 hover:border-amber-500/50",
+        href: "/dashboard/history",
+      },
+      {
+        title: "Tingkat Sukses",
+        value: `${completionRate}%`,
+        subtitle: `${completedJobsCount} orderan`,
+        icon: CheckCircle,
+        iconColor: "text-teal-500",
+        iconBg: "bg-teal-500/10",
+        borderColor: "border-teal-500/25 hover:border-teal-500/50",
+        href: "/dashboard/history",
+      },
+      {
+        title: "Job Selesai",
+        value: `${completedJobsCount}`,
+        suffix: "Job",
+        subtitle: "Pekerjaan sukses",
+        icon: Briefcase,
+        iconColor: "text-blue-500",
+        iconBg: "bg-blue-500/10",
+        borderColor: "border-blue-500/25 hover:border-blue-500/50",
+        href: "/dashboard/history",
+      },
+    ];
 
-  const performanceCards = [
-    {
-      title: "Total Pendapatan",
-      value: `Rp ${earnings.toLocaleString("id-ID")}`,
-      subtitle: "Siap dicairkan",
-      icon: Wallet,
-      iconColor: "text-emerald-500",
-      iconBg: "bg-emerald-500/10",
-      borderColor: "border-emerald-500/25 hover:border-emerald-500/50",
-      href: "/dashboard/payments",
-    },
-    {
-      title: "Rating Bintang",
-      value: stats.total_reviews > 0 ? stats.rating.toFixed(1) : "0.0",
-      suffix: "★",
-      subtitle: stats.total_reviews > 0 ? `${stats.total_reviews} ulasan diterima` : "Mitra Baru (0 Ulasan)",
-      icon: Star,
-      iconColor: "text-amber-500",
-      iconBg: "bg-amber-500/10",
-      borderColor: "border-amber-500/25 hover:border-amber-500/50",
-      href: "/dashboard/history",
-    },
+    return { activeJobsList: active, performanceCards: cards };
+  }, [myJobs, stats]);
 
-    {
-      title: "Tingkat Sukses",
-      value: `${completionRate}%`,
-      subtitle: `${completedJobsCount} orderan`,
-      icon: CheckCircle,
-      iconColor: "text-teal-500",
-      iconBg: "bg-teal-500/10",
-      borderColor: "border-teal-500/25 hover:border-teal-500/50",
-      href: "/dashboard/history",
-    },
-    {
-      title: "Job Selesai",
-      value: `${completedJobsCount}`,
-      suffix: "Job",
-      subtitle: "Pekerjaan sukses",
-      icon: Briefcase,
-      iconColor: "text-blue-500",
-      iconBg: "bg-blue-500/10",
-      borderColor: "border-blue-500/25 hover:border-blue-500/50",
-      href: "/dashboard/history",
-    },
-  ];
-
-  const quickActionCards = [
-    { 
-      name: "Cari Job", 
-      href: "/dashboard/jobs/search", 
-      icon: Search, 
-      color: "text-blue-500", 
-      bg: "bg-blue-500/10", 
-    },
-    { 
-      name: "Job Aktif", 
-      href: "/dashboard/jobs/assigned", 
-      icon: Briefcase, 
-      color: "text-emerald-500", 
-      bg: "bg-emerald-500/10", 
-    },
-    { 
-      name: "Keuangan", 
-      href: "/dashboard/payments", 
-      icon: Wallet, 
-      color: "text-purple-500", 
-      bg: "bg-purple-500/10", 
-    },
-    { 
-      name: "Bantuan CS", 
-      href: "/help", 
-      icon: Zap, 
-      color: "text-amber-500", 
-      bg: "bg-amber-500/10", 
-    },
-  ];
+  const quickActionCards = PARTNER_QUICK_ACTIONS;
 
 
   return (

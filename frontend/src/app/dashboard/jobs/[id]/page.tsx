@@ -79,57 +79,6 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
   const { lat: userLat, lng: userLng } = useUserLocation();
 
   const [note, setNote] = useState("");
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [isCompressingPhoto, setIsCompressingPhoto] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Compress photo client-side
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Pilih file gambar yang valid");
-      return;
-    }
-
-    setIsCompressingPhoto(true);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new window.Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const MAX_DIM = 800;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_DIM) {
-            height = Math.round((height * MAX_DIM) / width);
-            width = MAX_DIM;
-          }
-        } else {
-          if (height > MAX_DIM) {
-            width = Math.round((width * MAX_DIM) / height);
-            height = MAX_DIM;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.82);
-          setPhotoPreview(compressedDataUrl);
-          toast.success("Foto progres terlampir");
-        }
-        setIsCompressingPhoto(false);
-      };
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-  };
 
   const handleAccept = async () => {
     await acceptJob.mutateAsync(id as string);
@@ -149,12 +98,10 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         id: id as string,
         data: {
           status: newStatus,
-          note: note.trim() !== "" ? note.trim() : defaultNote,
-          photoUrl: photoPreview || undefined
+          note: note.trim() !== "" ? note.trim() : defaultNote
         }
       });
       setNote("");
-      setPhotoPreview(null);
     } catch (err: any) {
       toast.error(err.message || "Gagal memperbarui status");
     }
@@ -480,7 +427,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         {role === "partner" && ["ACCEPTED", "ON_THE_WAY", "ARRIVED", "WORKING", "IN_PROGRESS"].includes(job.status) && (
           <div className="p-3.5 sm:p-4 bg-card border border-border/80 rounded-2xl shadow-xs space-y-3 w-full max-w-full overflow-hidden">
             <h3 className="font-black text-xs uppercase tracking-wider text-foreground flex items-center gap-1.5">
-              <Camera className="w-3.5 h-3.5 text-primary" /> Update Status & Progres
+              <Wrench className="w-3.5 h-3.5 text-primary" /> Update Status & Progres
             </h3>
             
             <textarea 
@@ -490,39 +437,6 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
-
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={handlePhotoSelect}
-            />
-            
-            {photoPreview ? (
-              <div className="relative rounded-xl overflow-hidden border border-emerald-500/40 aspect-video max-h-36 bg-black/40">
-                <img src={photoPreview} alt="Foto Progres" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => setPhotoPreview(null)}
-                  className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 text-white hover:bg-destructive transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isCompressingPhoto}
-                className="w-full rounded-xl h-9 text-xs font-bold border-dashed border-border/80 text-muted-foreground hover:text-foreground"
-              >
-                <Camera className="w-3.5 h-3.5 mr-1 text-primary" /> + Lampirkan Foto Progres
-              </Button>
-            )}
             
             <div className="pt-1">
               {job.status === "ACCEPTED" && (
@@ -557,14 +471,14 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
               )}
               {["WORKING", "IN_PROGRESS"].includes(job.status) && (
                 <div className="space-y-2">
-                  {photoPreview || note.trim() !== "" ? (
+                  {note.trim() !== "" ? (
                     <Button 
                       className="w-full rounded-xl h-10 text-xs font-bold bg-muted hover:bg-muted/80 text-foreground border border-border/80" 
                       onClick={() => handleUpdateProgress("WORKING")} 
                       disabled={addProgress.isPending}
                     >
-                      {addProgress.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Camera className="w-3.5 h-3.5 mr-1.5 text-primary" />}
-                      Kirim Catatan & Foto
+                      {addProgress.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <FileText className="w-3.5 h-3.5 mr-1.5 text-primary" />}
+                      Kirim Catatan Progres
                     </Button>
                   ) : null}
                   <SlideToConfirm

@@ -9,7 +9,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ job
     if (!user || user.role !== 'consumer') return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 })
 
     const payment = await prisma.payment.findFirst({
-      where: { job_id: resolvedParams.job_id }
+      where: { job_id: resolvedParams.job_id, consumer_id: user.id }
     });
 
     if (!payment) {

@@ -1,3 +1,4 @@
+import React from "react";
 import { Notification } from "@/types";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, MessageSquare, CreditCard, RefreshCw, Bell } from "lucide-react";
@@ -8,7 +9,7 @@ interface NotificationCardProps {
   onClick?: () => void;
 }
 
-export function NotificationCard({ notification, onClick }: NotificationCardProps) {
+export const NotificationCard = React.memo(function NotificationCard({ notification, onClick }: NotificationCardProps) {
   const time = new Date(notification.createdAt).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' });
 
   const getIcon = () => {
@@ -49,5 +50,5 @@ export function NotificationCard({ notification, onClick }: NotificationCardProp
   }
 
   return <div className="border-b last:border-0">{Content}</div>;
-}
+});
 

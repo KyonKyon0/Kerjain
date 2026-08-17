@@ -23,10 +23,19 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
 
     let updatedJob;
 
-    // Action Router
+    // Action Router with Strict Zero-Trust Authorization
     switch (action) {
       case 'accept':
-        if (user.role !== 'partner') return NextResponse.json({ message: 'Only partners can accept', detail: 'Only partners can accept' }, { status: 403 });
+        if (user.role !== 'partner') {
+          return NextResponse.json({ message: 'Hanya mitra yang dapat menerima pekerjaan', detail: 'Hanya mitra yang dapat menerima pekerjaan' }, { status: 403 });
+        }
+        if (job.consumer_id === user.id) {
+          return NextResponse.json({ message: 'Anda tidak dapat menerima pekerjaan yang Anda buat sendiri', detail: 'Invalid operation' }, { status: 400 });
+        }
+        if (job.status !== 'PUBLISHED' || job.partner_id !== null) {
+          return NextResponse.json({ message: 'Pekerjaan sudah diambil mitra lain atau tidak tersedia', detail: 'Job not available' }, { status: 400 });
+        }
+
         updatedJob = await prisma.job.update({
           where: { id },
           data: { partner: { connect: { id: user.id } }, status: 'ACCEPTED' }
@@ -64,7 +73,9 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
         break;
       
       case 'start':
-        if (user.role !== 'partner') return NextResponse.json({ message: 'Unauthorized', detail: 'Unauthorized' }, { status: 403 });
+        if (user.role !== 'partner' || job.partner_id !== user.id) {
+          return NextResponse.json({ message: 'Forbidden: Bukan mitra yang ditugaskan', detail: 'Unauthorized' }, { status: 403 });
+        }
         updatedJob = await prisma.job.update({
           where: { id },
           data: { status: 'WORKING' }
@@ -97,7 +108,9 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
         break;
 
       case 'finish':
-        if (user.role !== 'partner') return NextResponse.json({ message: 'Unauthorized', detail: 'Unauthorized' }, { status: 403 });
+        if (user.role !== 'partner' || job.partner_id !== user.id) {
+          return NextResponse.json({ message: 'Forbidden: Bukan mitra yang ditugaskan', detail: 'Unauthorized' }, { status: 403 });
+        }
         updatedJob = await prisma.job.update({
           where: { id },
           data: { status: 'WAITING_CONFIRMATION' }
@@ -130,7 +143,9 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
         break;
 
       case 'confirm':
-        if (user.role !== 'consumer') return NextResponse.json({ message: 'Unauthorized', detail: 'Unauthorized' }, { status: 403 });
+        if (user.role !== 'consumer' || job.consumer_id !== user.id) {
+          return NextResponse.json({ message: 'Forbidden: Hanya konsumen pemilik pekerjaan yang dapat konfirmasi', detail: 'Unauthorized' }, { status: 403 });
+        }
         updatedJob = await prisma.job.update({
           where: { id },
           data: { status: 'COMPLETED' }
@@ -175,7 +190,9 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
         break;
 
       case 'revise':
-        if (user.role !== 'consumer') return NextResponse.json({ message: 'Unauthorized', detail: 'Unauthorized' }, { status: 403 });
+        if (user.role !== 'consumer' || job.consumer_id !== user.id) {
+          return NextResponse.json({ message: 'Forbidden: Hanya konsumen pemilik pekerjaan yang dapat meminta revisi', detail: 'Unauthorized' }, { status: 403 });
+        }
         updatedJob = await prisma.job.update({
           where: { id },
           data: { status: 'WORKING' }
@@ -209,6 +226,12 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
         break;
 
       case 'cancel':
+        if (job.consumer_id !== user.id && job.partner_id !== user.id) {
+          return NextResponse.json({ message: 'Forbidden: Anda tidak memiliki akses untuk membatalkan pekerjaan ini', detail: 'Unauthorized' }, { status: 403 });
+        }
+        if (job.status === 'COMPLETED') {
+          return NextResponse.json({ message: 'Pekerjaan yang sudah selesai tidak dapat dibatalkan', detail: 'Cannot cancel completed job' }, { status: 400 });
+        }
         updatedJob = await prisma.job.update({
           where: { id },
           data: { status: 'CANCELLED' }
@@ -216,6 +239,9 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
         break;
 
       case 'status':
+        if (job.consumer_id !== user.id && job.partner_id !== user.id) {
+          return NextResponse.json({ message: 'Forbidden: Anda tidak memiliki akses ke pekerjaan ini', detail: 'Unauthorized' }, { status: 403 });
+        }
         const statusBody = await request.json();
         updatedJob = await prisma.job.update({
           where: { id },
@@ -224,7 +250,9 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
         break;
 
       case 'progress':
-        if (user.role !== 'partner') return NextResponse.json({ detail: 'Unauthorized' }, { status: 403 });
+        if (user.role !== 'partner' || job.partner_id !== user.id) {
+          return NextResponse.json({ detail: 'Forbidden: Hanya mitra yang ditugaskan yang dapat memperbarui progres' }, { status: 403 });
+        }
         const body = await request.json();
         
         // Update job status if provided in body

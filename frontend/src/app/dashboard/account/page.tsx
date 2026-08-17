@@ -41,14 +41,7 @@ import { axiosInstance } from "@/lib/axios";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-const APP_VERSION = "v2.4.0 (Build a99ca93)";
-const BUILD_INFO = {
-  version: "v2.4.0-stable",
-  commit: "a99ca93",
-  date: "17 Agustus 2026",
-  environment: "Production (Vercel & Supabase)",
-  engine: "Next.js 16.3 (Turbopack) • React 19 • Prisma 7"
-};
+
 
 export default function AccountPage() {
   const { user, role, logout, setUser } = useAuthStore();
@@ -63,14 +56,15 @@ export default function AccountPage() {
     completion_rate: 100
   });
   const [loadingStats, setLoadingStats] = useState(true);
-  const [showUpdateBanner, setShowUpdateBanner] = useState(false);
+  const [showUpdateInfo, setShowUpdateInfo] = useState(false);
+
+  const UPDATE_KEY = "kerjain_dismissed_update_v3_170826_21_14";
 
   useEffect(() => {
-    // Check if user already dismissed this specific version update
     if (typeof window !== "undefined") {
-      const dismissedVer = localStorage.getItem("kerjain_dismissed_update_version");
-      if (dismissedVer !== APP_VERSION) {
-        setShowUpdateBanner(true);
+      const isDismissed = localStorage.getItem(UPDATE_KEY);
+      if (!isDismissed) {
+        setShowUpdateInfo(true);
       }
     }
 
@@ -96,10 +90,12 @@ export default function AccountPage() {
 
   const handleDismissUpdate = () => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("kerjain_dismissed_update_version", APP_VERSION);
+      localStorage.setItem(UPDATE_KEY, "true");
     }
-    setShowUpdateBanner(false);
+    setShowUpdateInfo(false);
   };
+
+
 
   const handleLogout = async () => {
     await authService.logout();
@@ -256,77 +252,97 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* Release Notes / App Update Notification Bar (Above Quick Menu, Dismissable with X) */}
+        {/* Informasi Pembaruan Aplikasi (Section Informasi Update Akun User dengan Tombol X Dismiss) */}
         <AnimatePresence>
-          {showUpdateBanner && (
+          {showUpdateInfo && (
             <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: 'hidden' }}
-              transition={{ duration: 0.25 }}
-              className="mb-5 w-full bg-gradient-to-br from-emerald-500/15 via-primary/10 to-teal-500/5 border border-primary/30 rounded-3xl p-4 sm:p-5 shadow-sm relative overflow-hidden"
+              initial={{ opacity: 0, y: -10, height: "auto" }}
+              animate={{ opacity: 1, y: 0, height: "auto" }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: "hidden" }}
+              transition={{ duration: 0.3 }}
+              className="mb-6"
             >
-              {/* Background Ambient Glow */}
-              <div className="absolute top-0 right-0 -mr-10 -mt-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
-
-              {/* Header */}
-              <div className="flex items-start justify-between gap-3 mb-2.5 relative z-10">
+              <div className="flex items-center justify-between mb-2 px-2">
+                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  Informasi Pembaruan
+                </h3>
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-2xs font-bold text-xs shrink-0">
-                    <Sparkles className="w-4 h-4" />
+                  <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono shadow-2xs">
+                    v3.170826.21.14
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleDismissUpdate}
+                    className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+                    title="Tutup informasi pembaruan ini"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-card/90 backdrop-blur-md border border-border/80 rounded-3xl p-4 sm:p-5 shadow-sm space-y-3.5 relative overflow-hidden">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shrink-0 mt-0.5 shadow-2xs">
+                    <Zap className="w-5 h-5" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs sm:text-sm font-black text-foreground">Pembaruan Sistem & Kode Terbaru</span>
-                      <span className="bg-primary/20 text-primary px-2 py-0.2 rounded-md text-[10px] font-extrabold border border-primary/30">
-                        {BUILD_INFO.version}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-extrabold text-sm text-foreground">
+                        KerjaIn Versi v3.170826.21.14
+                      </h4>
+                      <span className="text-[10px] bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full border border-primary/20 shrink-0">
+                        Terbaru
                       </span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
-                      Penyempurnaan arsitektur landing page, performa, dan integrasi pilar bangsa:
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      Peningkatan efisiensi memori, stabilitas tata letak formulir, dan optimalisasi fitur akun.
                     </p>
                   </div>
                 </div>
 
-                {/* Close Button X */}
-                <button
-                  type="button"
-                  onClick={handleDismissUpdate}
-                  className="w-7 h-7 rounded-xl bg-card/80 hover:bg-muted border border-border/80 text-muted-foreground hover:text-foreground flex items-center justify-center transition-all shrink-0 cursor-pointer shadow-2xs"
-                  title="Tutup pemberitahuan"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+                {/* Detail Changelog Items */}
+                <div className="grid gap-2.5 pt-3 border-t border-border/60">
+                  <div className="flex items-start gap-2.5 text-xs text-foreground/90">
+                    <span className="w-5 h-5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">⚡</span>
+                    <div className="leading-snug">
+                      <strong className="font-bold text-foreground">Optimasi Performa & Efisiensi Memori:</strong>
+                      <span className="text-muted-foreground ml-1">Memoization pada daftar pekerjaan, riwayat, dan notifikasi untuk mengurangi beban render ulang.</span>
+                    </div>
+                  </div>
 
-              {/* User-friendly Release Notes List */}
-              <div className="space-y-1.5 pt-1 text-xs text-foreground/90 relative z-10">
-                <div className="flex items-start gap-2 bg-card/60 rounded-xl p-2 border border-border/40">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                  <p className="text-[11px] leading-relaxed">
-                    <strong className="text-foreground">Showcase Interaktif & Eksplorasi Layar:</strong> 11 Layar resolusi tinggi konsumen dan mitra dengan rotasi visual terintegrasi.
-                  </p>
-                </div>
+                  <div className="flex items-start gap-2.5 text-xs text-foreground/90">
+                    <span className="w-5 h-5 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">🛠️</span>
+                    <div className="leading-snug">
+                      <strong className="font-bold text-foreground">Formulir Pembuatan Pekerjaan:</strong>
+                      <span className="text-muted-foreground ml-1">Penyesuaian tata letak tombol aksi dan ringkasan agar proporsional pada berbagai ukuran layar.</span>
+                    </div>
+                  </div>
 
-                <div className="flex items-start gap-2 bg-card/60 rounded-xl p-2 border border-border/40">
-                  <ShieldCheck className="w-3.5 h-3.5 text-teal-500 shrink-0 mt-0.5" />
-                  <p className="text-[11px] leading-relaxed">
-                    <strong className="text-foreground">Pilar Asta Cita & SDGs 2030:</strong> Tampilan backdrop pilar bangsa dengan kartu fokus simetris dan transisi panggung.
-                  </p>
-                </div>
+                  <div className="flex items-start gap-2.5 text-xs text-foreground/90">
+                    <span className="w-5 h-5 rounded-lg bg-teal-500/10 text-teal-500 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">💬</span>
+                    <div className="leading-snug">
+                      <strong className="font-bold text-foreground">Obrolan & Media:</strong>
+                      <span className="text-muted-foreground ml-1">Pemuatan gambar asinkron dan lazy loading pada lampiran foto di ruang obrolan.</span>
+                    </div>
+                  </div>
 
-                <div className="flex items-start gap-2 bg-card/60 rounded-xl p-2 border border-border/40">
-                  <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-[11px] leading-relaxed">
-                    <strong className="text-foreground">Portal Hitam Eksklusif (CTA):</strong> Tipografi kinetik berurutan mewah dengan efek scroll-linked fade out.
-                  </p>
-                </div>
+                  <div className="flex items-start gap-2.5 text-xs text-foreground/90">
+                    <span className="w-5 h-5 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">📈</span>
+                    <div className="leading-snug">
+                      <strong className="font-bold text-foreground">Dompet & Grafik Keuangan:</strong>
+                      <span className="text-muted-foreground ml-1">Perbaikan kalkulasi kurva pendapatan mitra dan sinkronisasi data transaksi riil.</span>
+                    </div>
+                  </div>
 
-                <div className="flex items-start gap-2 bg-card/60 rounded-xl p-2 border border-border/40">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                  <p className="text-[11px] leading-relaxed">
-                    <strong className="text-foreground">Footer Gelap Terpadu:</strong> 4 Kolom navigasi, status sistem aktif, dan tautan open-source GitHub resmi.
-                  </p>
+                  <div className="flex items-start gap-2.5 text-xs text-foreground/90">
+                    <span className="w-5 h-5 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">👤</span>
+                    <div className="leading-snug">
+                      <strong className="font-bold text-foreground">Profil & Akun:</strong>
+                      <span className="text-muted-foreground ml-1">Peningkatan kestabilan pemotongan foto profil dan pembaruan data status pengguna.</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -392,48 +408,7 @@ export default function AccountPage() {
             </div>
           ))}
 
-          {/* Dedicated System & Code Version Specifications Card */}
-          <div>
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2">
-              Informasi Versi & Sistem
-            </h3>
-            <div className="bg-card/90 backdrop-blur-md border border-border/80 rounded-3xl p-5 shadow-sm space-y-3.5">
-              <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-xs">
-                    📦
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-foreground">Versi Aplikasi (Build)</p>
-                    <p className="text-[11px] text-muted-foreground">{BUILD_INFO.environment}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-black">
-                    {BUILD_INFO.version}
-                  </span>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-2.5 rounded-2xl bg-muted/40 border border-border/40">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold block">Commit Hash</span>
-                  <span className="font-mono font-bold text-foreground text-xs">{BUILD_INFO.commit}</span>
-                </div>
-                <div className="p-2.5 rounded-2xl bg-muted/40 border border-border/40">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold block">Tanggal Rilis</span>
-                  <span className="font-bold text-foreground text-xs">{BUILD_INFO.date}</span>
-                </div>
-              </div>
-
-              <div className="pt-1">
-                <p className="text-[10.5px] text-muted-foreground font-medium flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span>Stack: {BUILD_INFO.engine}</span>
-                </p>
-              </div>
-            </div>
-          </div>
 
           {/* Logout Button */}
           <div className="pt-2 pb-6">
@@ -446,7 +421,7 @@ export default function AccountPage() {
               Keluar dari Akun
             </Button>
             <p className="text-center text-xs text-muted-foreground mt-4 font-medium">
-              KerjaIn Platform &bull; {APP_VERSION}
+              KerjaIn Platform • v3.170826.21.14
             </p>
           </div>
         </div>

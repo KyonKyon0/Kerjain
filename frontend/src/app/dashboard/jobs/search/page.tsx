@@ -72,19 +72,19 @@ export default function SearchJobPage() {
     return list;
   }, [jobsWithDistance, searchTerm, sortBy]);
 
-  const categoryOptions: DropdownOption[] = [
-    { value: "ALL", label: "Semua Kategori" },
-    { value: "Angkat Barang", label: "Angkat Barang" },
-    { value: "Bersih-bersih", label: "Bersih-bersih" },
-    { value: "Perbaikan", label: "Perbaikan Rumah" },
-    { value: "Penjagaan", label: "Penjagaan & Khusus" },
-  ];
+const CATEGORY_OPTIONS: DropdownOption[] = [
+  { value: "ALL", label: "Semua Kategori" },
+  { value: "Angkat Barang", label: "Angkat Barang" },
+  { value: "Bersih-bersih", label: "Bersih-bersih" },
+  { value: "Perbaikan", label: "Perbaikan Rumah" },
+  { value: "Penjagaan", label: "Penjagaan & Khusus" },
+];
 
-  const sortOptions: DropdownOption[] = [
-    { value: "DEFAULT", label: "Paling Baru" },
-    { value: "NEAREST", label: "📍 Terdekat" },
-    { value: "REWARD_HIGH", label: "💰 Imbalan" },
-  ];
+const SORT_OPTIONS: DropdownOption[] = [
+  { value: "DEFAULT", label: "Paling Baru" },
+  { value: "NEAREST", label: "📍 Terdekat" },
+  { value: "REWARD_HIGH", label: "💰 Imbalan" },
+];
 
   if (role !== "partner") return null;
 
@@ -130,7 +130,7 @@ export default function SearchJobPage() {
               <SmoothDropdown
                 value={category}
                 onChange={(val) => setCategory(val)}
-                options={categoryOptions}
+                options={CATEGORY_OPTIONS}
                 placeholder="Semua Kategori"
                 icon={<Filter className="w-4 h-4 text-primary shrink-0" />}
               />
@@ -141,7 +141,7 @@ export default function SearchJobPage() {
               <SmoothDropdown
                 value={sortBy}
                 onChange={(val) => setSortBy(val)}
-                options={sortOptions}
+                options={SORT_OPTIONS}
                 placeholder="Urutan"
                 icon={<ArrowUpDown className="w-4 h-4 text-emerald-500 shrink-0" />}
               />

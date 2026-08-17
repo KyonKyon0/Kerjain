@@ -89,8 +89,8 @@ export default function ChatRoomPage({ params }: { params: Promise<{ jobId: stri
     }
   }, [messages]);
 
-  const handleSendMessage = async (content: string) => {
-    if (!content.trim()) return;
+  const handleSendMessage = async (content: string, isImage?: boolean) => {
+    if (!isImage && !content.trim()) return;
     setSending(true);
     try {
       await messageService.sendMessage(jobId as string, content);
@@ -114,7 +114,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ jobId: stri
           notificationService.sendNotification({
             userId: targetUserId,
             title: `Pesan Baru dari ${user?.name || "Pengguna"}`,
-            description: content,
+            description: isImage ? "📷 Mengirim foto" : content.substring(0, 80),
             type: "NEW_MESSAGE",
             link: `/dashboard/chat/${job.id}`,
           }).catch(() => {});
@@ -128,6 +128,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ jobId: stri
       setSending(false);
     }
   };
+
 
   const handleCall = (phoneNumber?: string | null) => {
 

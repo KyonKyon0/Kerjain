@@ -97,7 +97,7 @@ export default function ChatListPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <p className={cn("text-sm truncate mr-4", chat.unreadCount > 0 ? "font-semibold text-foreground" : "text-muted-foreground")}>
-                        {chat.lastMessage}
+                        {typeof chat.lastMessage === "string" && chat.lastMessage.startsWith("data:image") ? "📷 Foto" : chat.lastMessage}
                       </p>
                       {chat.unreadCount > 0 && (
                         <div className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">

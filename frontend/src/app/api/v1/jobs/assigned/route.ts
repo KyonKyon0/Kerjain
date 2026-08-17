@@ -13,7 +13,8 @@ export async function GET(request: Request) {
         consumer: { select: { id: true, name: true, phone: true } },
         partner: { select: { id: true, name: true, phone: true } }
       },
-      orderBy: { created_at: 'desc' }
+      orderBy: { created_at: 'desc' },
+      take: 50
     })
 
     return NextResponse.json({ success: true, data: jobs })

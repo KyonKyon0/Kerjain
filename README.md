@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/Version-v2.2026.08.16.21.30-emerald?style=for-the-badge&logo=rocket&logoColor=white)
+![Version](https://img.shields.io/badge/Version-v3.170826.21.14-emerald?style=for-the-badge&logo=rocket&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js%2016-Turbopack-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React%2019-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript%205-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
@@ -17,25 +17,19 @@
 
 ---
 
-## 🚀 Catatan Rilis & Pembaruan Versi Terbaru (`v2.2026.08.16.21.30`)
+## 🚀 Catatan Rilis & Pembaruan Versi (`v3.170826.21.14`)
 
-- ⭐ **Rating Awal 0.00 & Badge Mitra Baru**:
-  - Rating bawaan untuk pengguna/mitra yang belum memiliki ulasan kini diatur menjadi **`★ 0.00`** (bukan 5.0).
-  - Dilengkapi badge penjelas singkat **`★ 0.00 • Mitra Baru`** yang menerangkan bahwa ini adalah pengalaman pertama mitra bergabung di Kerjain.
-- 📌 **Header Navigasi Mengambang Presisi (*Sticky TopNav*)**:
-  - Memperbaiki scrolling context di sisi Mitra dan Konsumen (`overflow-x: clip`), memastikan TopNav selalu menempel di atas dan ikut turun (*floating frosted glass*) saat pengguna menggulir halaman.
-- ⚡ **Optimasi Kecepatan Respon API (*Low Latency In-Memory Cache*)**:
-  - Menambahkan *in-memory user token cache* pada fungsi autentikasi `getCurrentUser` untuk memangkas duplikasi query database Supabase pada permintaan paralel, mempercepat respon API hingga 75%.
-- 📈 **Grafik Keuangan Dinamis (*Fintech Spline Chart*)**:
-  - Pantau performa penghasilan riil (QRIS digital vs Tunai cash) langsung dari transaksi database Supabase.
-  - Kurva naik-turun responsif dengan warna dinamis (**Hijau saat naik**, **Merah saat turun**), skala sumbu-Y super sensitif, dan garis ramping seragam (`1.2px`).
-  - Dilengkapi tab rentang waktu lengkap: **7 Hari, 14 Hari, 30 Hari, 3 Bulan, 6 Bulan, dan 1 Tahun**.
-- 🔔 **Banner Notifikasi Pembaruan Aplikasi**:
-  - Banner informasi pembaruan terintegrasi di halaman Akun tepat di atas Menu Cepat Mitra dengan penyimpanan penutupan permanen (`localStorage`).
-- 🖼️ **Pemotong Foto Profil (*Image Crop Modal*)**:
-  - Fitur crop foto profil bulat dengan kontrol zoom, drag, dan fisika sentuh natural seperti galeri smartphone.
-- 📍 **Perhitungan Jarak GPS & Durasi Pintar**:
-  - Safe distance bounds (`± 850 m`, `± 2.4 km`) dan format durasi posting adaptif (`menit`, `jam`, `hari`).
+- **Optimasi Performa & Efisiensi Memori**:
+  - Penerapan memoization pada komponen daftar pekerjaan, obrolan pesan, riwayat transaksi, dan notifikasi untuk meminimalkan beban render ulang pada perangkat mobile.
+  - Pengurangan alokasi memori berulang pada komponen navigasi dan dashboard pengguna.
+- **Formulir Pembuatan Pekerjaan**:
+  - Penyesuaian tata letak tombol aksi dan kartu ringkasan pekerjaan agar tetap proporsional dan tidak terpotong pada berbagai ukuran layar ponsel.
+- **Obrolan & Media**:
+  - Implementasi pemuatan gambar asinkron dan lazy loading pada lampiran foto di ruang obrolan untuk menghemat penggunaan data dan memori.
+- **Dompet & Grafik Keuangan**:
+  - Perbaikan kalkulasi kurva pendapatan mitra dan sinkronisasi data transaksi QRIS serta tunai secara berkala.
+- **Profil & Akun**:
+  - Peningkatan kestabilan fitur pemotongan foto profil dan sinkronisasi informasi status akun.
 
 ---
 

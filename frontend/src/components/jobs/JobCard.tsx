@@ -1,10 +1,8 @@
-"use client";
-
+import React from "react";
 import { Job } from "@/types";
 import { StatusBadge } from "./StatusBadge";
 import { MapPin, Clock, Wallet, ChevronRight, ImageIcon, Tag, Navigation } from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { formatWIBTime } from "@/lib/utils";
 import { formatDistanceString } from "@/lib/distance";
 
@@ -14,7 +12,7 @@ interface JobCardProps {
   showDistance?: boolean;
 }
 
-export function JobCard({ job, onClick, showDistance }: JobCardProps) {
+export const JobCard = React.memo(function JobCard({ job, onClick, showDistance }: JobCardProps) {
   const timeStr = formatWIBTime(job.createdAt || (job as any).created_at);
   const CardWrapper = onClick ? 'div' : Link;
   const wrapperProps = onClick ? { onClick } : { href: `/dashboard/jobs/${job.id}` };
@@ -25,11 +23,8 @@ export function JobCard({ job, onClick, showDistance }: JobCardProps) {
   const hasActiveProgress = !isPublished && job.status !== "CANCELLED" && job.status !== "WAITING_PAYMENT";
 
   return (
-    <motion.div 
-      whileHover={{ y: -2, scale: 1.005 }}
-      whileTap={{ scale: 0.985 }}
-      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-      className="bg-card border border-border/80 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md hover:border-primary/40 transition-all group cursor-pointer w-full max-w-full min-w-0 flex flex-col justify-between box-border"
+    <div 
+      className="bg-card border border-border/80 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md hover:border-primary/40 active:scale-[0.985] transition-all group cursor-pointer w-full max-w-full min-w-0 flex flex-col justify-between box-border will-change-transform transform-gpu"
     >
       <CardWrapper {...wrapperProps as any} className="flex flex-col w-full max-w-full min-w-0 text-left overflow-hidden">
         
@@ -39,6 +34,8 @@ export function JobCard({ job, onClick, showDistance }: JobCardProps) {
             <img 
               src={photo} 
               alt={job.title} 
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -140,9 +137,9 @@ export function JobCard({ job, onClick, showDistance }: JobCardProps) {
 
         </div>
       </CardWrapper>
-    </motion.div>
+    </div>
   );
-}
+});
 
 function getProgressPercentage(status: string) {
   switch (status) {

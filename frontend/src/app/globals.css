@@ -139,23 +139,29 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--border);
     box-sizing: border-box;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
     overflow-x: clip;
     max-width: 100vw;
     width: 100%;
   }
   html {
-    @apply font-sans;
+    font-family: var(--font-sans);
     overflow-x: clip;
     max-width: 100vw;
     scroll-behavior: smooth;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  a, button, input, select, textarea, [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Utilities for ultra-smooth 60fps mobile UI & hiding scrollbars */
@@ -168,8 +174,44 @@
   }
 
   .gpu-smooth {
-    transform: translateZ(0);
+    transform: translate3d(0, 0, 0);
     backface-visibility: hidden;
+    will-change: transform;
+  }
+
+  /* GPU Compositing optimization for mobile & desktop */
+  .transform-gpu {
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+  }
+
+  img {
+    content-visibility: auto;
+  }
+
+  /* Below-the-fold content visibility optimization for low-end devices */
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 800px;
+  }
+
+  @keyframes marquee-left {
+    0% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
+  }
+
+  @keyframes marquee-right {
+    0% { transform: translate3d(-50%, 0, 0); }
+    100% { transform: translate3d(0, 0, 0); }
+  }
+
+  .animate-marquee-left {
+    animation: marquee-left 40s linear infinite;
+    will-change: transform;
+  }
+
+  .animate-marquee-right {
+    animation: marquee-right 40s linear infinite;
     will-change: transform;
   }
 }

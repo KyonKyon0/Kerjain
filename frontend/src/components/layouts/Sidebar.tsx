@@ -18,31 +18,31 @@ import {
 
 import Image from "next/image";
 
+const CONSUMER_SIDEBAR_MENU = [
+  { name: "Beranda", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Pekerjaan", href: "/dashboard/jobs", icon: Briefcase },
+  { name: "Buat Pekerjaan", href: "/dashboard/jobs/create", icon: PlusCircle },
+  { name: "Pesan", href: "/dashboard/chat", icon: MessageSquare },
+  { name: "Riwayat", href: "/dashboard/history", icon: History },
+  { name: "Akun", href: "/dashboard/account", icon: User },
+];
+
+const PARTNER_SIDEBAR_MENU = [
+  { name: "Beranda", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Cari Job", href: "/dashboard/jobs/search", icon: Search },
+  { name: "Pekerjaan Saya", href: "/dashboard/jobs/assigned", icon: Briefcase },
+  { name: "Pesan", href: "/dashboard/chat", icon: MessageSquare },
+  { name: "Riwayat", href: "/dashboard/history", icon: History },
+  { name: "Keuangan", href: "/dashboard/payments", icon: Wallet },
+  { name: "Akun", href: "/dashboard/account", icon: User },
+];
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { role } = useAuthStore();
 
-  const consumerMenu = [
-    { name: "Beranda", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Pekerjaan", href: "/dashboard/jobs", icon: Briefcase },
-    { name: "Buat Pekerjaan", href: "/dashboard/jobs/create", icon: PlusCircle },
-    { name: "Pesan", href: "/dashboard/chat", icon: MessageSquare },
-    { name: "Riwayat", href: "/dashboard/history", icon: History },
-    { name: "Akun", href: "/dashboard/account", icon: User },
-  ];
-
-  const partnerMenu = [
-    { name: "Beranda", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Cari Job", href: "/dashboard/jobs/search", icon: Search },
-    { name: "Pekerjaan Saya", href: "/dashboard/jobs/assigned", icon: Briefcase },
-    { name: "Pesan", href: "/dashboard/chat", icon: MessageSquare },
-    { name: "Riwayat", href: "/dashboard/history", icon: History },
-    { name: "Keuangan", href: "/dashboard/payments", icon: Wallet },
-    { name: "Akun", href: "/dashboard/account", icon: User },
-  ];
-
-  const menu = role === "partner" ? partnerMenu : consumerMenu;
+  const menu = role === "partner" ? PARTNER_SIDEBAR_MENU : CONSUMER_SIDEBAR_MENU;
 
   return (
     <aside className="hidden md:flex flex-col w-64 bg-card border-r fixed inset-y-0 z-20">

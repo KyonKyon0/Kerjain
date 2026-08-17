@@ -37,11 +37,10 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
-    const { userId, title, description, type, link } = body;
-
+    const { title, description, type, link } = body;
     const notif = await prisma.notifications.create({
       data: {
-        user_id: userId || user.id,
+        user_id: user.id,
         title: title || 'Pemberitahuan',
         description: description || '',
         type: type || 'SYSTEM',

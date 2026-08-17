@@ -58,7 +58,7 @@ export default function AccountPage() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [showUpdateInfo, setShowUpdateInfo] = useState(false);
 
-  const UPDATE_KEY = "kerjain_dismissed_update_v3_170826_21_21";
+  const UPDATE_KEY = "kerjain_dismissed_update_v3_170826_21_39";
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -269,7 +269,7 @@ export default function AccountPage() {
                 </h3>
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono shadow-2xs">
-                    v3.170826.21.21
+                    v3.170826.21.39
                   </span>
                   <button
                     type="button"
@@ -290,7 +290,7 @@ export default function AccountPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="font-extrabold text-sm text-foreground">
-                        KerjaIn Versi v3.170826.21.21
+                        KerjaIn Versi v3.170826.21.39
                       </h4>
                       <span className="text-[10px] bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full border border-primary/20 shrink-0">
                         Terbaru
@@ -421,7 +421,7 @@ export default function AccountPage() {
               Keluar dari Akun
             </Button>
             <p className="text-center text-xs text-muted-foreground mt-4 font-medium">
-              KerjaIn Platform • v3.170826.21.21
+              KerjaIn Platform • v3.170826.21.39
             </p>
           </div>
         </div>

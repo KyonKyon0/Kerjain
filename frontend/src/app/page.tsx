@@ -349,8 +349,8 @@ function ShowcaseCardItem({
   total: number;
   progress: any;
 }) {
-  // Slower, smoother glide progress (allocated range 0 to 0.44 for maximum readability)
-  const maxRange = 0.44;
+  // Slower, smoother glide progress (allocated range 0 to 0.35 for maximum readability)
+  const maxRange = 0.35;
   const step = maxRange / (total - 1);
   const centerPoint = idx * step;
   const spread = step * 1.1;
@@ -730,59 +730,59 @@ export default function LandingPage() {
   const initialOffset = -(trackMetrics.cardWidth / 2);
   const totalShift = 10 * stepSize;
 
-  // Stage 1: Phone Mockups Glide and Exit (Progress 0.0 -> 0.44, much slower & comfortable to read)
-  const showcaseX = useTransform(smoothShowcaseProgress, [0, 0.44], [initialOffset, initialOffset - totalShift]);
-  const showcaseTrackOpacity = useTransform(smoothShowcaseProgress, [0.42, 0.47], [1, 0]);
+  // Stage 1: Phone Mockups Glide and Exit (Progress 0.0 -> 0.35)
+  const showcaseX = useTransform(smoothShowcaseProgress, [0, 0.35], [initialOffset, initialOffset - totalShift]);
+  const showcaseTrackOpacity = useTransform(smoothShowcaseProgress, [0.33, 0.37], [1, 0]);
 
   // Stage 1 Header (Eksplorasi Antarmuka)
-  const header1Opacity = useTransform(smoothShowcaseProgress, [0, 0.41, 0.46], [1, 1, 0]);
-  const header1Y = useTransform(smoothShowcaseProgress, [0.41, 0.46], [0, -15]);
+  const header1Opacity = useTransform(smoothShowcaseProgress, [0, 0.32, 0.36], [1, 1, 0]);
+  const header1Y = useTransform(smoothShowcaseProgress, [0.32, 0.36], [0, -15]);
 
-  // Stage 2: Asta Cita Header (Fades in at 0.48, holds, then fades out at 0.73)
-  const astaHeaderOpacity = useTransform(smoothShowcaseProgress, [0.48, 0.52, 0.69, 0.73], [0, 1, 1, 0]);
-  const astaHeaderY = useTransform(smoothShowcaseProgress, [0.48, 0.52, 0.69, 0.73], [15, 0, 0, -15]);
+  // Stage 2: Asta Cita Header & Presiden Photo (Fades in at 0.37, holds, then fades out at 0.70)
+  const astaHeaderOpacity = useTransform(smoothShowcaseProgress, [0.37, 0.42, 0.67, 0.70], [0, 1, 1, 0]);
+  const astaHeaderY = useTransform(smoothShowcaseProgress, [0.37, 0.42, 0.67, 0.70], [15, 0, 0, -15]);
 
-  // Asta Cita (4 items): fade in sequentially from 0.53 to 0.68 (AFTER header is visible), then fade out at 0.69-0.73
-  const astaCard1Opacity = useTransform(smoothShowcaseProgress, [0.53, 0.56, 0.69, 0.73], [0, 1, 1, 0]);
-  const astaCard1Scale = useTransform(smoothShowcaseProgress, [0.53, 0.56], [0.92, 1]);
-  const astaCard1Y = useTransform(smoothShowcaseProgress, [0.53, 0.56, 0.69, 0.73], [12, 0, 0, -12]);
+  // Asta Cita (4 items): fade in sequentially with wide, calm scroll intervals from 0.42 to 0.65
+  const astaCard1Opacity = useTransform(smoothShowcaseProgress, [0.42, 0.47, 0.67, 0.70], [0, 1, 1, 0]);
+  const astaCard1Scale = useTransform(smoothShowcaseProgress, [0.42, 0.47], [0.92, 1]);
+  const astaCard1Y = useTransform(smoothShowcaseProgress, [0.42, 0.47, 0.67, 0.70], [12, 0, 0, -12]);
 
-  const astaCard2Opacity = useTransform(smoothShowcaseProgress, [0.57, 0.60, 0.69, 0.73], [0, 1, 1, 0]);
-  const astaCard2Scale = useTransform(smoothShowcaseProgress, [0.57, 0.60], [0.92, 1]);
-  const astaCard2Y = useTransform(smoothShowcaseProgress, [0.57, 0.60, 0.69, 0.73], [12, 0, 0, -12]);
+  const astaCard2Opacity = useTransform(smoothShowcaseProgress, [0.48, 0.53, 0.67, 0.70], [0, 1, 1, 0]);
+  const astaCard2Scale = useTransform(smoothShowcaseProgress, [0.48, 0.53], [0.92, 1]);
+  const astaCard2Y = useTransform(smoothShowcaseProgress, [0.48, 0.53, 0.67, 0.70], [12, 0, 0, -12]);
 
-  const astaCard3Opacity = useTransform(smoothShowcaseProgress, [0.61, 0.64, 0.69, 0.73], [0, 1, 1, 0]);
-  const astaCard3Scale = useTransform(smoothShowcaseProgress, [0.61, 0.64], [0.92, 1]);
-  const astaCard3Y = useTransform(smoothShowcaseProgress, [0.61, 0.64, 0.69, 0.73], [12, 0, 0, -12]);
+  const astaCard3Opacity = useTransform(smoothShowcaseProgress, [0.54, 0.59, 0.67, 0.70], [0, 1, 1, 0]);
+  const astaCard3Scale = useTransform(smoothShowcaseProgress, [0.54, 0.59], [0.92, 1]);
+  const astaCard3Y = useTransform(smoothShowcaseProgress, [0.54, 0.59, 0.67, 0.70], [12, 0, 0, -12]);
 
-  const astaCard4Opacity = useTransform(smoothShowcaseProgress, [0.65, 0.68, 0.69, 0.73], [0, 1, 1, 0]);
-  const astaCard4Scale = useTransform(smoothShowcaseProgress, [0.65, 0.68], [0.92, 1]);
-  const astaCard4Y = useTransform(smoothShowcaseProgress, [0.65, 0.68, 0.69, 0.73], [12, 0, 0, -12]);
+  const astaCard4Opacity = useTransform(smoothShowcaseProgress, [0.60, 0.65, 0.67, 0.70], [0, 1, 1, 0]);
+  const astaCard4Scale = useTransform(smoothShowcaseProgress, [0.60, 0.65], [0.92, 1]);
+  const astaCard4Y = useTransform(smoothShowcaseProgress, [0.60, 0.65, 0.67, 0.70], [12, 0, 0, -12]);
 
-  // Stage 3: SDGs Header (Fades in at 0.74, stays visible)
-  const sdgHeaderOpacity = useTransform(smoothShowcaseProgress, [0.74, 0.78], [0, 1]);
-  const sdgHeaderY = useTransform(smoothShowcaseProgress, [0.74, 0.78], [15, 0]);
+  // Stage 3: SDGs Header (Fades in at 0.72, stays visible)
+  const sdgHeaderOpacity = useTransform(smoothShowcaseProgress, [0.72, 0.77], [0, 1]);
+  const sdgHeaderY = useTransform(smoothShowcaseProgress, [0.72, 0.77], [15, 0]);
 
-  // SDGs (5 items): fade in sequentially from 0.79 to 0.98 (AFTER header is visible)
-  const sdgCard1Opacity = useTransform(smoothShowcaseProgress, [0.79, 0.82], [0, 1]);
-  const sdgCard1Scale = useTransform(smoothShowcaseProgress, [0.79, 0.82], [0.92, 1]);
-  const sdgCard1Y = useTransform(smoothShowcaseProgress, [0.79, 0.82], [12, 0]);
+  // SDGs (5 items): fade in sequentially from 0.76 to 0.96 (AFTER header is visible)
+  const sdgCard1Opacity = useTransform(smoothShowcaseProgress, [0.76, 0.80], [0, 1]);
+  const sdgCard1Scale = useTransform(smoothShowcaseProgress, [0.76, 0.80], [0.92, 1]);
+  const sdgCard1Y = useTransform(smoothShowcaseProgress, [0.76, 0.80], [12, 0]);
 
-  const sdgCard2Opacity = useTransform(smoothShowcaseProgress, [0.83, 0.86], [0, 1]);
-  const sdgCard2Scale = useTransform(smoothShowcaseProgress, [0.83, 0.86], [0.92, 1]);
-  const sdgCard2Y = useTransform(smoothShowcaseProgress, [0.83, 0.86], [12, 0]);
+  const sdgCard2Opacity = useTransform(smoothShowcaseProgress, [0.80, 0.84], [0, 1]);
+  const sdgCard2Scale = useTransform(smoothShowcaseProgress, [0.80, 0.84], [0.92, 1]);
+  const sdgCard2Y = useTransform(smoothShowcaseProgress, [0.80, 0.84], [12, 0]);
 
-  const sdgCard3Opacity = useTransform(smoothShowcaseProgress, [0.87, 0.90], [0, 1]);
-  const sdgCard3Scale = useTransform(smoothShowcaseProgress, [0.87, 0.90], [0.92, 1]);
-  const sdgCard3Y = useTransform(smoothShowcaseProgress, [0.87, 0.90], [12, 0]);
+  const sdgCard3Opacity = useTransform(smoothShowcaseProgress, [0.84, 0.88], [0, 1]);
+  const sdgCard3Scale = useTransform(smoothShowcaseProgress, [0.84, 0.88], [0.92, 1]);
+  const sdgCard3Y = useTransform(smoothShowcaseProgress, [0.84, 0.88], [12, 0]);
 
-  const sdgCard4Opacity = useTransform(smoothShowcaseProgress, [0.91, 0.94], [0, 1]);
-  const sdgCard4Scale = useTransform(smoothShowcaseProgress, [0.91, 0.94], [0.92, 1]);
-  const sdgCard4Y = useTransform(smoothShowcaseProgress, [0.91, 0.94], [12, 0]);
+  const sdgCard4Opacity = useTransform(smoothShowcaseProgress, [0.88, 0.92], [0, 1]);
+  const sdgCard4Scale = useTransform(smoothShowcaseProgress, [0.88, 0.92], [0.92, 1]);
+  const sdgCard4Y = useTransform(smoothShowcaseProgress, [0.88, 0.92], [12, 0]);
 
-  const sdgCard5Opacity = useTransform(smoothShowcaseProgress, [0.95, 0.98], [0, 1]);
-  const sdgCard5Scale = useTransform(smoothShowcaseProgress, [0.95, 0.98], [0.92, 1]);
-  const sdgCard5Y = useTransform(smoothShowcaseProgress, [0.95, 0.98], [12, 0]);
+  const sdgCard5Opacity = useTransform(smoothShowcaseProgress, [0.92, 0.96], [0, 1]);
+  const sdgCard5Scale = useTransform(smoothShowcaseProgress, [0.92, 0.96], [0.92, 1]);
+  const sdgCard5Y = useTransform(smoothShowcaseProgress, [0.92, 0.96], [12, 0]);
 
   const astaMotionStyles = [
     { opacity: astaCard1Opacity, scale: astaCard1Scale, y: astaCard1Y },
@@ -799,11 +799,11 @@ export default function LandingPage() {
     { opacity: sdgCard5Opacity, scale: sdgCard5Scale, y: sdgCard5Y },
   ];
 
-  // 6. Luxury CTA Section Scroll Transforms (Smoothly fades in and fades out linked to scroll progress)
+  // 6. Luxury CTA Section Scroll Transforms (Scroll-Pinned Full Viewport Experience)
   const ctaSectionRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress: ctaScrollProgress } = useScroll({
     target: ctaSectionRef,
-    offset: ["start end", "end start"],
+    offset: ["start start", "end end"],
   });
 
   const smoothCtaProgress = useSpring(ctaScrollProgress, {
@@ -813,9 +813,31 @@ export default function LandingPage() {
     restDelta: 0.008,
   });
 
-  const ctaSectionOpacity = useTransform(smoothCtaProgress, [0, 0.22, 0.78, 1], [0, 1, 1, 0.15]);
-  const ctaSectionScale = useTransform(smoothCtaProgress, [0, 0.22, 0.78, 1], [0.94, 1, 1, 0.96]);
-  const ctaSectionY = useTransform(smoothCtaProgress, [0, 0.22, 0.78, 1], [35, 0, 0, -25]);
+  const ctaSectionOpacity = useTransform(smoothCtaProgress, [0, 0.12], [0.6, 1]);
+  const ctaSectionScale = useTransform(smoothCtaProgress, [0, 0.12], [0.94, 1]);
+  const ctaSectionY = useTransform(smoothCtaProgress, [0, 0.12], [20, 0]);
+
+  // Directional scroll reveals for CTA elements (Slow, spacious & lightweight GPU-composited)
+  // 1. "Ready to" from Left
+  const ctaReadyX = useTransform(smoothCtaProgress, [0.08, 0.28], [-60, 0]);
+  const ctaReadyOpacity = useTransform(smoothCtaProgress, [0.08, 0.28], [0, 1]);
+
+  // 2. "Experience Effortless" from Top
+  const ctaExperienceY = useTransform(smoothCtaProgress, [0.22, 0.42], [-45, 0]);
+  const ctaExperienceOpacity = useTransform(smoothCtaProgress, [0.22, 0.42], [0, 1]);
+
+  // 3. "Daily Living?" from Right
+  const ctaDailyX = useTransform(smoothCtaProgress, [0.36, 0.56], [60, 0]);
+  const ctaDailyOpacity = useTransform(smoothCtaProgress, [0.36, 0.56], [0, 1]);
+
+  // 4. Subtitle paragraph from Bottom
+  const ctaSubtitleY = useTransform(smoothCtaProgress, [0.50, 0.70], [35, 0]);
+  const ctaSubtitleOpacity = useTransform(smoothCtaProgress, [0.50, 0.70], [0, 1]);
+
+  // 5. Action Buttons from Bottom
+  const ctaButtonsY = useTransform(smoothCtaProgress, [0.64, 0.84], [30, 0]);
+  const ctaButtonsOpacity = useTransform(smoothCtaProgress, [0.64, 0.84], [0, 1]);
+  const ctaButtonsScale = useTransform(smoothCtaProgress, [0.64, 0.84], [0.92, 1]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#070b14] text-white selection:bg-primary/20 overflow-x-clip relative">
@@ -1787,7 +1809,7 @@ export default function LandingPage() {
         {/* ========================================================================= */}
         {/* 4 & 5. UNIFIED SCROLL-PINNED SHOWCASE & ASTA CITA/SDGS JOURNEY            */}
         {/* ========================================================================= */}
-        <section id="showcase" ref={showcaseContainerRef} className="relative h-[800vh] border-t border-white/10 bg-[#070b14]">
+        <section id="showcase" ref={showcaseContainerRef} className="relative h-[1100vh] border-t border-white/10 bg-[#070b14]">
 
           {/* Sticky Viewport Window that holds position throughout the entire journey */}
           <div className="sticky top-16 sm:top-20 h-[calc(100vh-4rem)] flex flex-col items-center justify-start overflow-hidden px-3 sm:px-6 md:px-8 pt-6 sm:pt-10 pb-4 sm:pb-6">
@@ -2033,186 +2055,114 @@ export default function LandingPage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* 6. EXCLUSIVE LUXURY BLACK CALL TO ACTION PORTAL                           */}
+        {/* 6. EXCLUSIVE LUXURY BLACK CALL TO ACTION PORTAL (SCROLL-PINNED STAGE)     */}
         {/* ========================================================================= */}
-        <section ref={ctaSectionRef} className="py-24 sm:py-32 px-4 bg-[#020408] text-white relative overflow-hidden border-t border-white/10 content-visibility-auto">
-          {/* Subtle Ambient Obsidian Lighting (Optimized for Mobile) */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[1000px] h-[350px] bg-gradient-to-r from-emerald-500/10 via-zinc-800/10 to-teal-500/10 blur-2xl sm:blur-[140px] rounded-full pointer-events-none transform-gpu" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_70%_at_50%_0%,rgba(255,255,255,0.03),transparent)]" />
+        <section id="cta" ref={ctaSectionRef} className="relative h-[320vh] border-t border-white/10 bg-[#020408]">
 
-          <div className="container mx-auto max-w-5xl relative z-10">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.25 }}
-              style={{
-                opacity: ctaSectionOpacity,
-                scale: ctaSectionScale,
-                y: ctaSectionY,
-                willChange: "transform, opacity",
-              }}
-              className="rounded-[2.5rem] bg-gradient-to-b from-zinc-950/95 via-[#080c14]/95 to-black border border-white/10 hover:border-white/20 shadow-[0_24px_80px_rgba(0,0,0,0.85)] relative p-8 sm:p-14 md:p-18 overflow-hidden text-center space-y-8 transition-colors transform-gpu"
-            >
-              {/* Specular Top Glow Arc */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-24 bg-emerald-500/10 blur-2xl pointer-events-none rounded-full" />
+          {/* Sticky Viewport Window matching other pinned sections */}
+          <div className="sticky top-16 sm:top-20 h-[calc(100vh-4rem)] flex flex-col items-center justify-center overflow-hidden px-4 sm:px-6 md:px-8 py-6">
 
-              {/* Kinetic Typography Headline Section */}
-              <div className="space-y-4 max-w-4xl mx-auto relative z-10">
-                <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] text-white flex flex-col items-center justify-center space-y-1">
+            {/* Subtle Ambient Obsidian Lighting */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[1000px] h-[350px] bg-gradient-to-r from-emerald-500/10 via-zinc-800/10 to-teal-500/10 blur-2xl sm:blur-[140px] rounded-full pointer-events-none transform-gpu" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_70%_at_50%_0%,rgba(255,255,255,0.03),transparent)] pointer-events-none" />
 
-                  {/* Top Row: "Ready to" + "Experience Effortless" */}
-                  <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4">
-                    {/* Step 2: "Ready to" slides in from the left and gracefully shifts the text */}
-                    <motion.span
-                      variants={{
-                        hidden: {
-                          opacity: 0,
-                          x: -35,
-                          filter: "blur(6px)",
-                          transition: { duration: 0.3 }
-                        },
-                        visible: {
-                          opacity: 1,
-                          x: 0,
-                          filter: "blur(0px)",
-                          transition: { duration: 0.7, delay: 0.75, ease: [0.16, 1, 0.3, 1] }
-                        }
+            <div className="container mx-auto max-w-5xl md:max-w-6xl relative z-10 w-full flex items-center justify-center">
+              <motion.div
+                style={{
+                  opacity: ctaSectionOpacity,
+                  scale: ctaSectionScale,
+                  y: ctaSectionY,
+                  willChange: "transform, opacity",
+                }}
+                className="w-full rounded-[2.5rem] bg-gradient-to-b from-zinc-950/95 via-[#080c14]/95 to-black border border-white/10 hover:border-white/20 shadow-[0_24px_80px_rgba(0,0,0,0.85)] relative p-8 sm:p-14 md:p-18 overflow-hidden text-center space-y-8 transition-colors transform-gpu"
+              >
+                {/* Specular Top Glow Arc */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-24 bg-emerald-500/10 blur-2xl pointer-events-none rounded-full" />
+
+                {/* Kinetic Typography Headline Section with Directional Scroll Reveals */}
+                <div className="space-y-4 max-w-4xl mx-auto relative z-10">
+                  <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] text-white flex flex-col items-center justify-center space-y-1">
+
+                    {/* Top Row: "Ready to" (from Left) + "Experience Effortless" (from Top) */}
+                    <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4">
+                      {/* Element 1: "Ready to" slides in from the Left */}
+                      <motion.span
+                        style={{
+                          x: ctaReadyX,
+                          opacity: ctaReadyOpacity,
+                          willChange: "transform, opacity",
+                        }}
+                        className="inline-block text-white transform-gpu"
+                      >
+                        Ready to
+                      </motion.span>
+
+                      {/* Element 2: "Experience Effortless" enters from the Top */}
+                      <motion.span
+                        style={{
+                          y: ctaExperienceY,
+                          opacity: ctaExperienceOpacity,
+                          willChange: "transform, opacity",
+                        }}
+                        className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-100 to-emerald-300 transform-gpu"
+                      >
+                        Experience Effortless
+                      </motion.span>
+                    </div>
+
+                    {/* Element 3: "Daily Living?" slides in from the Right */}
+                    <motion.div
+                      style={{
+                        x: ctaDailyX,
+                        opacity: ctaDailyOpacity,
+                        willChange: "transform, opacity",
                       }}
-                      className="inline-block text-white"
+                      className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 transform-gpu"
                     >
-                      Ready to
-                    </motion.span>
+                      Daily Living?
+                    </motion.div>
 
-                    {/* Step 1: "Experience Effortless" appears first in the spotlight */}
-                    <motion.span
-                      variants={{
-                        hidden: {
-                          opacity: 0,
-                          scale: 0.88,
-                          y: 15,
-                          filter: "blur(8px)",
-                          transition: { duration: 0.3 }
-                        },
-                        visible: {
-                          opacity: 1,
-                          scale: 1,
-                          y: 0,
-                          filter: "blur(0px)",
-                          transition: { duration: 0.65, delay: 0.15, ease: [0.16, 1, 0.3, 1] }
-                        }
-                      }}
-                      className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-100 to-emerald-300"
-                    >
-                      Experience Effortless
-                    </motion.span>
-                  </div>
+                  </h2>
 
-                  {/* Step 3: "Daily Living?" emerges below */}
-                  <motion.div
-                    variants={{
-                      hidden: {
-                        opacity: 0,
-                        y: 25,
-                        filter: "blur(8px)",
-                        transition: { duration: 0.3 }
-                      },
-                      visible: {
-                        opacity: 1,
-                        y: 0,
-                        filter: "blur(0px)",
-                        transition: { duration: 0.7, delay: 1.4, ease: [0.16, 1, 0.3, 1] }
-                      }
+                  {/* Element 4: Subtitle slides up from the Bottom */}
+                  <motion.p
+                    style={{
+                      y: ctaSubtitleY,
+                      opacity: ctaSubtitleOpacity,
+                      willChange: "transform, opacity",
                     }}
-                    className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300"
+                    className="text-sm sm:text-base md:text-lg text-zinc-400 font-medium max-w-2xl mx-auto leading-relaxed pt-1 transform-gpu"
                   >
-                    Daily Living?
-                  </motion.div>
+                    Create your account in seconds. Discover verified local assistance or register as a trusted service partner today.
+                  </motion.p>
+                </div>
 
-                </h2>
-
-                {/* Step 4: Subtitle fades in smoothly */}
-                <motion.p
-                  variants={{
-                    hidden: {
-                      opacity: 0,
-                      y: 20,
-                      transition: { duration: 0.3 }
-                    },
-                    visible: {
-                      opacity: 1,
-                      y: 0,
-                      transition: { duration: 0.6, delay: 1.95, ease: [0.16, 1, 0.3, 1] }
-                    }
+                {/* Element 5: Exclusive Action Buttons slide up from the Bottom */}
+                <motion.div
+                  style={{
+                    y: ctaButtonsY,
+                    opacity: ctaButtonsOpacity,
+                    scale: ctaButtonsScale,
+                    willChange: "transform, opacity",
                   }}
-                  className="text-sm sm:text-base md:text-lg text-zinc-400 font-medium max-w-2xl mx-auto leading-relaxed pt-1"
+                  className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 relative z-10 transform-gpu"
                 >
-                  Create your account in seconds. Discover verified local assistance or register as a trusted service partner today.
-                </motion.p>
-              </div>
-
-              {/* Step 5: Exclusive Luxury Action Buttons fade in */}
-              <motion.div
-                variants={{
-                  hidden: {
-                    opacity: 0,
-                    y: 25,
-                    scale: 0.96,
-                    transition: { duration: 0.3 }
-                  },
-                  visible: {
-                    opacity: 1,
-                    y: 0,
-                    scale: 1,
-                    transition: { duration: 0.6, delay: 2.35, ease: [0.16, 1, 0.3, 1] }
-                  }
-                }}
-                className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 relative z-10"
-              >
-                <Link
-                  href="/register"
-                  className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl bg-white hover:bg-zinc-200 text-black px-9 py-4 text-sm sm:text-base font-black shadow-[0_0_40px_rgba(255,255,255,0.15)] hover:shadow-[0_0_50px_rgba(255,255,255,0.28)] hover:scale-105 active:scale-95 transition-all duration-300 group"
-                >
-                  Get Started as Client
-                  <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-                <Link
-                  href="/register?role=partner"
-                  className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl bg-zinc-900/80 hover:bg-zinc-800 text-white border border-white/15 hover:border-emerald-500/40 px-9 py-4 text-sm sm:text-base font-black backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg"
-                >
-                  Register as Partner
-                </Link>
+                  <Link
+                    href="/register"
+                    className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl bg-white hover:bg-zinc-200 text-black px-9 py-4 text-sm sm:text-base font-black shadow-[0_0_40px_rgba(255,255,255,0.15)] hover:shadow-[0_0_50px_rgba(255,255,255,0.28)] hover:scale-105 active:scale-95 transition-all duration-300 group"
+                  >
+                    Get Started as Client
+                    <ChevronRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                  <Link
+                    href="/register?role=partner"
+                    className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl bg-zinc-900/80 hover:bg-zinc-800 text-white border border-white/15 hover:border-emerald-500/40 px-9 py-4 text-sm sm:text-base font-black backdrop-blur-xl hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg"
+                  >
+                    Register as Partner
+                  </Link>
+                </motion.div>
               </motion.div>
-
-              {/* Step 6: Minimalist Exclusive Perks Bar settles in */}
-              <motion.div
-                variants={{
-                  hidden: {
-                    opacity: 0,
-                    y: 15,
-                    transition: { duration: 0.3 }
-                  },
-                  visible: {
-                    opacity: 1,
-                    y: 0,
-                    transition: { duration: 0.6, delay: 2.75, ease: [0.16, 1, 0.3, 1] }
-                  }
-                }}
-                className="pt-6 border-t border-white/5 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs text-zinc-400 font-semibold tracking-wide relative z-10"
-              >
-                <span className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-                  Instant Free Registration
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-                  Protected Escrow Flow
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-                  Direct Wallet Payout
-                </span>
-              </motion.div>
-            </motion.div>
+            </div>
           </div>
         </section>
 

@@ -349,25 +349,26 @@ function ShowcaseCardItem({
   total: number;
   progress: any;
 }) {
-  // Exact center progress of card idx during horizontal glide (range 0 to 0.28)
-  const step = 0.28 / (total - 1); // 0.028 per card step
+  // Slower, smoother glide progress (allocated range 0 to 0.44 for maximum readability)
+  const maxRange = 0.44;
+  const step = maxRange / (total - 1);
   const centerPoint = idx * step;
-  const spread = step;
+  const spread = step * 1.1;
   const startPoint = Math.max(0, centerPoint - spread);
-  const endPoint = Math.min(0.28, centerPoint + spread);
+  const endPoint = Math.min(maxRange, centerPoint + spread);
 
   const scale = useTransform(
     progress,
     idx === 0
       ? [0, spread, spread * 2]
       : idx === total - 1
-      ? [0.28 - spread * 2, 0.28 - spread, 0.28]
+      ? [maxRange - spread * 2, maxRange - spread, maxRange]
       : [startPoint, centerPoint, endPoint],
     idx === 0
-      ? [1.08, 0.93, 0.93]
+      ? [1.02, 0.96, 0.96]
       : idx === total - 1
-      ? [0.93, 0.93, 1.08]
-      : [0.93, 1.08, 0.93]
+      ? [0.96, 0.96, 1.02]
+      : [0.96, 1.02, 0.96]
   );
 
   const y = useTransform(
@@ -375,13 +376,13 @@ function ShowcaseCardItem({
     idx === 0
       ? [0, spread, spread * 2]
       : idx === total - 1
-      ? [0.28 - spread * 2, 0.28 - spread, 0.28]
+      ? [maxRange - spread * 2, maxRange - spread, maxRange]
       : [startPoint, centerPoint, endPoint],
     idx === 0
-      ? [-22, 8, 8]
+      ? [-6, 0, 0]
       : idx === total - 1
-      ? [8, 8, -22]
-      : [8, -22, 8]
+      ? [0, 0, -6]
+      : [0, -6, 0]
   );
 
   const activeOpacity = useTransform(
@@ -389,7 +390,7 @@ function ShowcaseCardItem({
     idx === 0
       ? [0, spread, spread * 2]
       : idx === total - 1
-      ? [0.28 - spread * 2, 0.28 - spread, 0.28]
+      ? [maxRange - spread * 2, maxRange - spread, maxRange]
       : [startPoint, centerPoint, endPoint],
     idx === 0
       ? [1, 0, 0]
@@ -405,24 +406,12 @@ function ShowcaseCardItem({
         y,
         willChange: "transform",
       }}
-      className="relative w-[285px] sm:w-[330px] md:w-[360px] rounded-3xl overflow-hidden bg-gradient-to-b from-zinc-900 via-[#10141f] to-zinc-950 border border-white/10 p-4 sm:p-5 flex flex-col justify-between space-y-3 shrink-0 select-none transform-gpu shadow-xl"
+      className="relative w-[285px] sm:w-[330px] md:w-[360px] rounded-3xl overflow-hidden bg-[#0c101a] border border-white/10 p-4 sm:p-5 flex flex-col justify-between space-y-3 shrink-0 select-none transform-gpu shadow-lg"
     >
-      {/* 100% GPU-Composited Active Emerald Glow Layer (0 repaint overhead) */}
+      {/* Crisp, lightweight active border highlight without heavy blur shaders */}
       <motion.div
         style={{ opacity: activeOpacity }}
-        className="absolute -inset-1 rounded-[26px] bg-emerald-500/30 blur-xl pointer-events-none -z-10"
-      />
-
-      {/* 100% GPU-Composited Active Emerald Border Layer */}
-      <motion.div
-        style={{ opacity: activeOpacity }}
-        className="absolute inset-0 rounded-3xl border-2 border-emerald-400/90 pointer-events-none z-20 shadow-[inset_0_0_20px_rgba(52,211,153,0.25)]"
-      />
-
-      {/* Top emerald ambient light beam on active card */}
-      <motion.div
-        style={{ opacity: activeOpacity }}
-        className="absolute -top-12 inset-x-0 h-24 bg-emerald-500/25 blur-2xl pointer-events-none rounded-full z-10"
+        className="absolute inset-0 rounded-3xl border-2 border-white/30 pointer-events-none z-20"
       />
 
       <div className="flex items-center justify-between z-10">
@@ -439,7 +428,7 @@ function ShowcaseCardItem({
         <img
           src={screen.src}
           alt={screen.title}
-          className="w-full h-full object-contain pointer-events-none drop-shadow-xl"
+          className="w-full h-full object-contain pointer-events-none drop-shadow-md"
           loading="lazy"
           decoding="async"
         />
@@ -741,59 +730,59 @@ export default function LandingPage() {
   const initialOffset = -(trackMetrics.cardWidth / 2);
   const totalShift = 10 * stepSize;
 
-  // Stage 1: Phone Mockups Glide and Exit (Progress 0.0 -> 0.28, exact 100.0% pixel-center)
-  const showcaseX = useTransform(smoothShowcaseProgress, [0, 0.28], [initialOffset, initialOffset - totalShift]);
-  const showcaseTrackOpacity = useTransform(smoothShowcaseProgress, [0.24, 0.31], [1, 0]);
+  // Stage 1: Phone Mockups Glide and Exit (Progress 0.0 -> 0.44, much slower & comfortable to read)
+  const showcaseX = useTransform(smoothShowcaseProgress, [0, 0.44], [initialOffset, initialOffset - totalShift]);
+  const showcaseTrackOpacity = useTransform(smoothShowcaseProgress, [0.42, 0.47], [1, 0]);
 
   // Stage 1 Header (Eksplorasi Antarmuka)
-  const header1Opacity = useTransform(smoothShowcaseProgress, [0, 0.25, 0.30], [1, 1, 0]);
-  const header1Y = useTransform(smoothShowcaseProgress, [0.25, 0.30], [0, -15]);
+  const header1Opacity = useTransform(smoothShowcaseProgress, [0, 0.41, 0.46], [1, 1, 0]);
+  const header1Y = useTransform(smoothShowcaseProgress, [0.41, 0.46], [0, -15]);
 
-  // Stage 2: Asta Cita Header (Fades in first at 0.32, holds, then fades out at 0.62)
-  const astaHeaderOpacity = useTransform(smoothShowcaseProgress, [0.32, 0.36, 0.58, 0.62], [0, 1, 1, 0]);
-  const astaHeaderY = useTransform(smoothShowcaseProgress, [0.32, 0.36, 0.58, 0.62], [15, 0, 0, -15]);
+  // Stage 2: Asta Cita Header (Fades in at 0.48, holds, then fades out at 0.73)
+  const astaHeaderOpacity = useTransform(smoothShowcaseProgress, [0.48, 0.52, 0.69, 0.73], [0, 1, 1, 0]);
+  const astaHeaderY = useTransform(smoothShowcaseProgress, [0.48, 0.52, 0.69, 0.73], [15, 0, 0, -15]);
 
-  // Asta Cita (4 items): fade in sequentially from 0.38 to 0.56 (AFTER header is visible), then fade out at 0.58-0.62
-  const astaCard1Opacity = useTransform(smoothShowcaseProgress, [0.38, 0.42, 0.58, 0.62], [0, 1, 1, 0]);
-  const astaCard1Scale = useTransform(smoothShowcaseProgress, [0.38, 0.42], [0.88, 1]);
-  const astaCard1Y = useTransform(smoothShowcaseProgress, [0.38, 0.42, 0.58, 0.62], [15, 0, 0, -15]);
+  // Asta Cita (4 items): fade in sequentially from 0.53 to 0.68 (AFTER header is visible), then fade out at 0.69-0.73
+  const astaCard1Opacity = useTransform(smoothShowcaseProgress, [0.53, 0.56, 0.69, 0.73], [0, 1, 1, 0]);
+  const astaCard1Scale = useTransform(smoothShowcaseProgress, [0.53, 0.56], [0.92, 1]);
+  const astaCard1Y = useTransform(smoothShowcaseProgress, [0.53, 0.56, 0.69, 0.73], [12, 0, 0, -12]);
 
-  const astaCard2Opacity = useTransform(smoothShowcaseProgress, [0.43, 0.47, 0.58, 0.62], [0, 1, 1, 0]);
-  const astaCard2Scale = useTransform(smoothShowcaseProgress, [0.43, 0.47], [0.88, 1]);
-  const astaCard2Y = useTransform(smoothShowcaseProgress, [0.43, 0.47, 0.58, 0.62], [15, 0, 0, -15]);
+  const astaCard2Opacity = useTransform(smoothShowcaseProgress, [0.57, 0.60, 0.69, 0.73], [0, 1, 1, 0]);
+  const astaCard2Scale = useTransform(smoothShowcaseProgress, [0.57, 0.60], [0.92, 1]);
+  const astaCard2Y = useTransform(smoothShowcaseProgress, [0.57, 0.60, 0.69, 0.73], [12, 0, 0, -12]);
 
-  const astaCard3Opacity = useTransform(smoothShowcaseProgress, [0.48, 0.52, 0.58, 0.62], [0, 1, 1, 0]);
-  const astaCard3Scale = useTransform(smoothShowcaseProgress, [0.48, 0.52], [0.88, 1]);
-  const astaCard3Y = useTransform(smoothShowcaseProgress, [0.48, 0.52, 0.58, 0.62], [15, 0, 0, -15]);
+  const astaCard3Opacity = useTransform(smoothShowcaseProgress, [0.61, 0.64, 0.69, 0.73], [0, 1, 1, 0]);
+  const astaCard3Scale = useTransform(smoothShowcaseProgress, [0.61, 0.64], [0.92, 1]);
+  const astaCard3Y = useTransform(smoothShowcaseProgress, [0.61, 0.64, 0.69, 0.73], [12, 0, 0, -12]);
 
-  const astaCard4Opacity = useTransform(smoothShowcaseProgress, [0.53, 0.57, 0.58, 0.62], [0, 1, 1, 0]);
-  const astaCard4Scale = useTransform(smoothShowcaseProgress, [0.53, 0.57], [0.88, 1]);
-  const astaCard4Y = useTransform(smoothShowcaseProgress, [0.53, 0.57, 0.58, 0.62], [15, 0, 0, -15]);
+  const astaCard4Opacity = useTransform(smoothShowcaseProgress, [0.65, 0.68, 0.69, 0.73], [0, 1, 1, 0]);
+  const astaCard4Scale = useTransform(smoothShowcaseProgress, [0.65, 0.68], [0.92, 1]);
+  const astaCard4Y = useTransform(smoothShowcaseProgress, [0.65, 0.68, 0.69, 0.73], [12, 0, 0, -12]);
 
-  // Stage 3: SDGs Header (Fades in first at 0.63, stays visible)
-  const sdgHeaderOpacity = useTransform(smoothShowcaseProgress, [0.63, 0.68], [0, 1]);
-  const sdgHeaderY = useTransform(smoothShowcaseProgress, [0.63, 0.68], [15, 0]);
+  // Stage 3: SDGs Header (Fades in at 0.74, stays visible)
+  const sdgHeaderOpacity = useTransform(smoothShowcaseProgress, [0.74, 0.78], [0, 1]);
+  const sdgHeaderY = useTransform(smoothShowcaseProgress, [0.74, 0.78], [15, 0]);
 
-  // SDGs (5 items): fade in sequentially from 0.70 to 0.94 (AFTER header is visible)
-  const sdgCard1Opacity = useTransform(smoothShowcaseProgress, [0.70, 0.74], [0, 1]);
-  const sdgCard1Scale = useTransform(smoothShowcaseProgress, [0.70, 0.74], [0.88, 1]);
-  const sdgCard1Y = useTransform(smoothShowcaseProgress, [0.70, 0.74], [15, 0]);
+  // SDGs (5 items): fade in sequentially from 0.79 to 0.98 (AFTER header is visible)
+  const sdgCard1Opacity = useTransform(smoothShowcaseProgress, [0.79, 0.82], [0, 1]);
+  const sdgCard1Scale = useTransform(smoothShowcaseProgress, [0.79, 0.82], [0.92, 1]);
+  const sdgCard1Y = useTransform(smoothShowcaseProgress, [0.79, 0.82], [12, 0]);
 
-  const sdgCard2Opacity = useTransform(smoothShowcaseProgress, [0.75, 0.79], [0, 1]);
-  const sdgCard2Scale = useTransform(smoothShowcaseProgress, [0.75, 0.79], [0.88, 1]);
-  const sdgCard2Y = useTransform(smoothShowcaseProgress, [0.75, 0.79], [15, 0]);
+  const sdgCard2Opacity = useTransform(smoothShowcaseProgress, [0.83, 0.86], [0, 1]);
+  const sdgCard2Scale = useTransform(smoothShowcaseProgress, [0.83, 0.86], [0.92, 1]);
+  const sdgCard2Y = useTransform(smoothShowcaseProgress, [0.83, 0.86], [12, 0]);
 
-  const sdgCard3Opacity = useTransform(smoothShowcaseProgress, [0.80, 0.84], [0, 1]);
-  const sdgCard3Scale = useTransform(smoothShowcaseProgress, [0.80, 0.84], [0.88, 1]);
-  const sdgCard3Y = useTransform(smoothShowcaseProgress, [0.80, 0.84], [15, 0]);
+  const sdgCard3Opacity = useTransform(smoothShowcaseProgress, [0.87, 0.90], [0, 1]);
+  const sdgCard3Scale = useTransform(smoothShowcaseProgress, [0.87, 0.90], [0.92, 1]);
+  const sdgCard3Y = useTransform(smoothShowcaseProgress, [0.87, 0.90], [12, 0]);
 
-  const sdgCard4Opacity = useTransform(smoothShowcaseProgress, [0.85, 0.89], [0, 1]);
-  const sdgCard4Scale = useTransform(smoothShowcaseProgress, [0.85, 0.89], [0.88, 1]);
-  const sdgCard4Y = useTransform(smoothShowcaseProgress, [0.85, 0.89], [15, 0]);
+  const sdgCard4Opacity = useTransform(smoothShowcaseProgress, [0.91, 0.94], [0, 1]);
+  const sdgCard4Scale = useTransform(smoothShowcaseProgress, [0.91, 0.94], [0.92, 1]);
+  const sdgCard4Y = useTransform(smoothShowcaseProgress, [0.91, 0.94], [12, 0]);
 
-  const sdgCard5Opacity = useTransform(smoothShowcaseProgress, [0.90, 0.94], [0, 1]);
-  const sdgCard5Scale = useTransform(smoothShowcaseProgress, [0.90, 0.94], [0.88, 1]);
-  const sdgCard5Y = useTransform(smoothShowcaseProgress, [0.90, 0.94], [15, 0]);
+  const sdgCard5Opacity = useTransform(smoothShowcaseProgress, [0.95, 0.98], [0, 1]);
+  const sdgCard5Scale = useTransform(smoothShowcaseProgress, [0.95, 0.98], [0.92, 1]);
+  const sdgCard5Y = useTransform(smoothShowcaseProgress, [0.95, 0.98], [12, 0]);
 
   const astaMotionStyles = [
     { opacity: astaCard1Opacity, scale: astaCard1Scale, y: astaCard1Y },
@@ -1798,7 +1787,7 @@ export default function LandingPage() {
         {/* ========================================================================= */}
         {/* 4 & 5. UNIFIED SCROLL-PINNED SHOWCASE & ASTA CITA/SDGS JOURNEY            */}
         {/* ========================================================================= */}
-        <section id="showcase" ref={showcaseContainerRef} className="relative h-[650vh] border-t border-white/10 bg-[#070b14]">
+        <section id="showcase" ref={showcaseContainerRef} className="relative h-[800vh] border-t border-white/10 bg-[#070b14]">
 
           {/* Sticky Viewport Window that holds position throughout the entire journey */}
           <div className="sticky top-16 sm:top-20 h-[calc(100vh-4rem)] flex flex-col items-center justify-start overflow-hidden px-3 sm:px-6 md:px-8 pt-6 sm:pt-10 pb-4 sm:pb-6">

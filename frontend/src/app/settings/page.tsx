@@ -16,7 +16,7 @@ export default function SettingsPage() {
     <DashboardLayout>
       <PageContainer>
         <SectionHeader title="Pengaturan" description="Atur preferensi dan akun aplikasi Anda." />
-        
+
         <div className="grid gap-6 mt-6 max-w-2xl">
           <Card>
             <CardHeader>
@@ -48,8 +48,8 @@ export default function SettingsPage() {
                 </p>
               </div>
               <div className="pt-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="rounded-xl"
                   onClick={() => window.location.href = "/profile"}
                 >
@@ -68,8 +68,8 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 className="w-full sm:w-auto flex items-center gap-2"
                 onClick={logout}
               >
@@ -80,7 +80,7 @@ export default function SettingsPage() {
           </Card>
 
           <p className="text-center text-xs text-muted-foreground pt-2 font-medium">
-            KerjaIn Platform • v3.170826.21.39
+            KerjaIn Platform • v3.170826.22.40
           </p>
         </div>
       </PageContainer>

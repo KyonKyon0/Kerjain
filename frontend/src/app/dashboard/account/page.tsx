@@ -8,15 +8,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { 
-  User, 
-  CreditCard, 
-  Wallet, 
-  Settings, 
-  Bell, 
-  Shield, 
-  HelpCircle, 
-  LogOut, 
+import {
+  User,
+  CreditCard,
+  Wallet,
+  Settings,
+  Bell,
+  Shield,
+  HelpCircle,
+  LogOut,
   ChevronRight,
   Star,
   CheckCircle2,
@@ -58,7 +58,7 @@ export default function AccountPage() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [showUpdateInfo, setShowUpdateInfo] = useState(false);
 
-  const UPDATE_KEY = "kerjain_dismissed_update_v3_170826_21_39";
+  const UPDATE_KEY = "kerjain_dismissed_update_v3_170826_22_40";
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -134,17 +134,17 @@ export default function AccountPage() {
   return (
     <DashboardLayout>
       <PageContainer className="max-w-2xl px-4 pb-24 overflow-x-hidden w-full max-w-full">
-        
+
         {/* Profile Header Card */}
         <div className="bg-card/90 backdrop-blur-md border rounded-3xl p-6 mb-5 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-emerald-500/20 via-primary/15 to-teal-500/10 rounded-t-3xl" />
-          
+
           <div className="relative pt-6 flex flex-col items-center text-center">
             {/* Avatar with Kerjain Logo Badge */}
             <div className="relative mb-3">
               <Avatar className="w-24 h-24 border-4 border-background shadow-lg">
-                <AvatarImage 
-                  src={user?.avatar_url || user?.avatarUrl || `https://api.dicebear.com/7.x/notionists/svg?seed=${user?.name || "User"}`} 
+                <AvatarImage
+                  src={user?.avatar_url || user?.avatarUrl || `https://api.dicebear.com/7.x/notionists/svg?seed=${user?.name || "User"}`}
                   className="object-cover"
                 />
                 <AvatarFallback className="text-2xl font-extrabold bg-primary text-primary-foreground">
@@ -269,7 +269,7 @@ export default function AccountPage() {
                 </h3>
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono shadow-2xs">
-                    v3.170826.21.39
+                    v3.170826.22.40
                   </span>
                   <button
                     type="button"
@@ -290,7 +290,7 @@ export default function AccountPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="font-extrabold text-sm text-foreground">
-                        KerjaIn Versi v3.170826.21.39
+                        KerjaIn Versi v3.170826.22.40
                       </h4>
                       <span className="text-[10px] bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full border border-primary/20 shrink-0">
                         Terbaru
@@ -388,8 +388,8 @@ export default function AccountPage() {
               </h3>
               <div className="bg-card/90 backdrop-blur-md border rounded-3xl overflow-hidden shadow-sm divide-y divide-border/60">
                 {group.items.map((item, itemIdx) => (
-                  <Link 
-                    key={itemIdx} 
+                  <Link
+                    key={itemIdx}
                     href={item.href}
                     className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors group"
                   >
@@ -412,8 +412,8 @@ export default function AccountPage() {
 
           {/* Logout Button */}
           <div className="pt-2 pb-6">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full rounded-2xl h-14 text-base font-bold text-destructive border-destructive/30 bg-destructive/5 hover:bg-destructive/10 hover:text-destructive shadow-sm cursor-pointer"
               onClick={handleLogout}
             >
@@ -421,7 +421,7 @@ export default function AccountPage() {
               Keluar dari Akun
             </Button>
             <p className="text-center text-xs text-muted-foreground mt-4 font-medium">
-              KerjaIn Platform • v3.170826.21.39
+              KerjaIn Platform • v3.170826.22.40
             </p>
           </div>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -349,69 +349,66 @@ function ShowcaseCardItem({
   total: number;
   progress: any;
 }) {
-  // Slower, smoother glide progress (allocated range 0 to 0.35 for maximum readability)
-  const maxRange = 0.35;
-  const step = maxRange / (total - 1);
-  const centerPoint = idx * step;
-  const spread = step * 1.1;
-  const startPoint = Math.max(0, centerPoint - spread);
-  const endPoint = Math.min(maxRange, centerPoint + spread);
+  const stage1End = 0.35;
+  const isMitra = screen.role.toUpperCase().includes("MITRA");
 
-  const scale = useTransform(
-    progress,
-    idx === 0
-      ? [0, spread, spread * 2]
-      : idx === total - 1
-      ? [maxRange - spread * 2, maxRange - spread, maxRange]
-      : [startPoint, centerPoint, endPoint],
-    idx === 0
-      ? [1.02, 0.96, 0.96]
-      : idx === total - 1
-      ? [0.96, 0.96, 1.02]
-      : [0.96, 1.02, 0.96]
-  );
+  // Organic, smooth parabolic lift (-18px) when approaching and floating in center
+  const y = useTransform(progress, (p: number) => {
+    const rawVal = Math.max(0, Math.min(total - 1, (p / stage1End) * (total - 1)));
+    const dist = Math.abs(rawVal - idx);
+    if (dist >= 0.85) return 0;
+    const factor = 1 - dist / 0.85;
+    const smoothFactor = 0.5 * (1 - Math.cos(Math.PI * factor));
+    return -18 * smoothFactor;
+  });
 
-  const y = useTransform(
-    progress,
-    idx === 0
-      ? [0, spread, spread * 2]
-      : idx === total - 1
-      ? [maxRange - spread * 2, maxRange - spread, maxRange]
-      : [startPoint, centerPoint, endPoint],
-    idx === 0
-      ? [-6, 0, 0]
-      : idx === total - 1
-      ? [0, 0, -6]
-      : [0, -6, 0]
-  );
+  // Smooth expansion (1.04) when centered
+  const scale = useTransform(progress, (p: number) => {
+    const rawVal = Math.max(0, Math.min(total - 1, (p / stage1End) * (total - 1)));
+    const dist = Math.abs(rawVal - idx);
+    if (dist >= 0.85) return 0.95;
+    const factor = 1 - dist / 0.85;
+    const smoothFactor = 0.5 * (1 - Math.cos(Math.PI * factor));
+    return 0.95 + 0.09 * smoothFactor;
+  });
 
-  const activeOpacity = useTransform(
-    progress,
-    idx === 0
-      ? [0, spread, spread * 2]
-      : idx === total - 1
-      ? [maxRange - spread * 2, maxRange - spread, maxRange]
-      : [startPoint, centerPoint, endPoint],
-    idx === 0
-      ? [1, 0, 0]
-      : idx === total - 1
-      ? [0, 0, 1]
-      : [0, 1, 0]
-  );
+  // Focus opacity: 1.0 when centered, subtle 0.75 when inactive
+  const cardOpacity = useTransform(progress, (p: number) => {
+    const rawVal = Math.max(0, Math.min(total - 1, (p / stage1End) * (total - 1)));
+    const dist = Math.abs(rawVal - idx);
+    if (dist >= 0.9) return 0.75;
+    const factor = 1 - dist / 0.9;
+    return 0.75 + 0.25 * factor;
+  });
+
+  // Generous, dynamic breathing highlight (wide 0.70 window for calm, luxurious fade)
+  const activeOpacity = useTransform(progress, (p: number) => {
+    const rawVal = Math.max(0, Math.min(total - 1, (p / stage1End) * (total - 1)));
+    const dist = Math.abs(rawVal - idx);
+    if (dist >= 0.70) return 0;
+    const factor = 1 - dist / 0.70;
+    return 0.5 * (1 - Math.cos(Math.PI * factor));
+  });
 
   return (
     <motion.div
       style={{
-        scale,
         y,
-        willChange: "transform",
+        scale,
+        opacity: cardOpacity,
+        willChange: "transform, opacity",
       }}
-      className="relative w-[285px] sm:w-[330px] md:w-[360px] rounded-3xl overflow-hidden bg-[#0c101a] border border-white/10 p-4 sm:p-5 flex flex-col justify-between space-y-3 shrink-0 select-none transform-gpu shadow-lg"
+      className="relative w-[285px] sm:w-[330px] md:w-[360px] rounded-3xl overflow-hidden bg-[#0c101a] border border-white/10 p-4 sm:p-5 flex flex-col justify-between space-y-3 shrink-0 select-none transform-gpu"
     >
-      {/* Crisp, lightweight active border highlight without heavy blur shaders */}
+      {/* Dynamic Ambient Glow & Role-Matching Luminous Border */}
       <motion.div
         style={{ opacity: activeOpacity }}
-        className="absolute inset-0 rounded-3xl border-2 border-white/30 pointer-events-none z-20"
+        className={cn(
+          "absolute inset-0 rounded-3xl border-2 pointer-events-none z-20 transition-colors",
+          isMitra
+            ? "border-emerald-400/70 shadow-[0_0_25px_rgba(16,185,129,0.2)] bg-gradient-to-t from-emerald-500/10 via-transparent to-emerald-500/5"
+            : "border-blue-400/70 shadow-[0_0_25px_rgba(59,130,246,0.2)] bg-gradient-to-t from-blue-500/10 via-transparent to-blue-500/5"
+        )}
       />
 
       <div className="flex items-center justify-between z-10">
@@ -428,13 +425,13 @@ function ShowcaseCardItem({
         <img
           src={screen.src}
           alt={screen.title}
-          className="w-full h-full object-contain pointer-events-none drop-shadow-md"
-          loading="lazy"
-          decoding="async"
+          className="w-full h-full object-contain pointer-events-none"
+          loading="eager"
+          decoding="sync"
         />
       </div>
 
-      {/* Full Non-Truncated Legible Typography */}
+      {/* Full Non-Truncated Legible Typography - Kept with original vibrant colors */}
       <div className="space-y-1 text-left min-h-[56px] flex flex-col justify-center z-10">
         <h4 className="text-sm sm:text-base font-bold text-white leading-snug break-words">
           {screen.title}
@@ -693,12 +690,8 @@ export default function LandingPage() {
     offset: ["start start", "end end"],
   });
 
-  const smoothShowcaseProgress = useSpring(showcaseScrollProgress, {
-    stiffness: 140,
-    damping: 24,
-    mass: 0.1,
-    restDelta: 0.008,
-  });
+  // Direct mapping without useSpring physics for zero-jank 60fps on all devices
+  const smoothShowcaseProgress = showcaseScrollProgress;
 
   const [trackMetrics, setTrackMetrics] = useState({ cardWidth: 360, gap: 32 });
 
@@ -728,61 +721,89 @@ export default function LandingPage() {
 
   const stepSize = trackMetrics.cardWidth + trackMetrics.gap;
   const initialOffset = -(trackMetrics.cardWidth / 2);
-  const totalShift = 10 * stepSize;
 
-  // Stage 1: Phone Mockups Glide and Exit (Progress 0.0 -> 0.35)
-  const showcaseX = useTransform(smoothShowcaseProgress, [0, 0.35], [initialOffset, initialOffset - totalShift]);
-  const showcaseTrackOpacity = useTransform(smoothShowcaseProgress, [0.33, 0.37], [1, 0]);
+  // Dynamic display switches to ensure 100% mutual exclusivity (NEVER overlap/stick!)
+  const header1Display = useTransform(smoothShowcaseProgress, (v) => v <= 0.38 ? "flex" : "none");
+  const header2Display = useTransform(smoothShowcaseProgress, (v) => (v > 0.38 && v <= 0.69) ? "flex" : "none");
+  const header3Display = useTransform(smoothShowcaseProgress, (v) => v > 0.69 ? "flex" : "none");
 
-  // Stage 1 Header (Eksplorasi Antarmuka)
-  const header1Opacity = useTransform(smoothShowcaseProgress, [0, 0.32, 0.36], [1, 1, 0]);
-  const header1Y = useTransform(smoothShowcaseProgress, [0.32, 0.36], [0, -15]);
+  const stage1Display = useTransform(smoothShowcaseProgress, (v) => v <= 0.38 ? "block" : "none");
+  const stage2Display = useTransform(smoothShowcaseProgress, (v) => (v > 0.38 && v <= 0.69) ? "flex" : "none");
+  const stage3Display = useTransform(smoothShowcaseProgress, (v) => v > 0.69 ? "flex" : "none");
 
-  // Stage 2: Asta Cita Header & Presiden Photo (Fades in at 0.37, holds, then fades out at 0.70)
-  const astaHeaderOpacity = useTransform(smoothShowcaseProgress, [0.37, 0.42, 0.67, 0.70], [0, 1, 1, 0]);
-  const astaHeaderY = useTransform(smoothShowcaseProgress, [0.37, 0.42, 0.67, 0.70], [15, 0, 0, -15]);
+  // Continuous Harmonic Magnetic Glide:
+  // Smoothly decelerates to a gentle, slow-motion floating drift (never abruptly stops/freezes!), then fluidly accelerates out to the next card
+  const showcaseX = useTransform(smoothShowcaseProgress, (p: number) => {
+    const total = allShowcaseScreens.length; // 11
+    const stage1End = 0.35;
+    if (p <= 0) return initialOffset;
+    if (p >= stage1End) return initialOffset - (total - 1) * stepSize;
 
-  // Asta Cita (4 items): fade in sequentially with wide, calm scroll intervals from 0.42 to 0.65
-  const astaCard1Opacity = useTransform(smoothShowcaseProgress, [0.42, 0.47, 0.67, 0.70], [0, 1, 1, 0]);
-  const astaCard1Scale = useTransform(smoothShowcaseProgress, [0.42, 0.47], [0.92, 1]);
-  const astaCard1Y = useTransform(smoothShowcaseProgress, [0.42, 0.47, 0.67, 0.70], [12, 0, 0, -12]);
+    // Continuous normalized progress from 0 to 10
+    const rawVal = (p / stage1End) * (total - 1);
+    const idx = Math.min(total - 2, Math.floor(rawVal));
+    const frac = rawVal - idx;
 
-  const astaCard2Opacity = useTransform(smoothShowcaseProgress, [0.48, 0.53, 0.67, 0.70], [0, 1, 1, 0]);
-  const astaCard2Scale = useTransform(smoothShowcaseProgress, [0.48, 0.53], [0.92, 1]);
-  const astaCard2Y = useTransform(smoothShowcaseProgress, [0.48, 0.53, 0.67, 0.70], [12, 0, 0, -12]);
+    // Continuous Sinusoidal Harmonic Easing:
+    // When a card is centered (frac near 0), speed gently drops to a calm ~18% slow-motion float.
+    // It NEVER hits a frozen dead-stop (0 speed), so it feels completely natural, responsive, and organic!
+    const alpha = 0.82; // 82% deceleration depth
+    const easedFrac = frac - (alpha / (2 * Math.PI)) * Math.sin(2 * Math.PI * frac);
 
-  const astaCard3Opacity = useTransform(smoothShowcaseProgress, [0.54, 0.59, 0.67, 0.70], [0, 1, 1, 0]);
-  const astaCard3Scale = useTransform(smoothShowcaseProgress, [0.54, 0.59], [0.92, 1]);
-  const astaCard3Y = useTransform(smoothShowcaseProgress, [0.54, 0.59, 0.67, 0.70], [12, 0, 0, -12]);
+    const currentStepPos = idx + easedFrac;
+    return initialOffset - currentStepPos * stepSize;
+  });
+  const showcaseTrackOpacity = useTransform(smoothShowcaseProgress, [0.34, 0.38], [1, 0]);
 
-  const astaCard4Opacity = useTransform(smoothShowcaseProgress, [0.60, 0.65, 0.67, 0.70], [0, 1, 1, 0]);
-  const astaCard4Scale = useTransform(smoothShowcaseProgress, [0.60, 0.65], [0.92, 1]);
-  const astaCard4Y = useTransform(smoothShowcaseProgress, [0.60, 0.65, 0.67, 0.70], [12, 0, 0, -12]);
+  // Stage 1 Header (Eksplorasi Antarmuka) - Fades out completely before 0.38
+  const header1Opacity = useTransform(smoothShowcaseProgress, [0, 0.34, 0.38], [1, 1, 0]);
+  const header1Y = useTransform(smoothShowcaseProgress, [0.34, 0.38], [0, -15]);
 
-  // Stage 3: SDGs Header (Fades in at 0.72, stays visible)
-  const sdgHeaderOpacity = useTransform(smoothShowcaseProgress, [0.72, 0.77], [0, 1]);
-  const sdgHeaderY = useTransform(smoothShowcaseProgress, [0.72, 0.77], [15, 0]);
+  // Stage 2: Asta Cita Header & Presiden Photo (Fades in ONLY after 0.40, holds, then fades out at 0.67)
+  const astaHeaderOpacity = useTransform(smoothShowcaseProgress, [0.40, 0.44, 0.64, 0.68], [0, 1, 1, 0]);
+  const astaHeaderY = useTransform(smoothShowcaseProgress, [0.40, 0.44, 0.64, 0.68], [15, 0, 0, -15]);
 
-  // SDGs (5 items): fade in sequentially from 0.76 to 0.96 (AFTER header is visible)
-  const sdgCard1Opacity = useTransform(smoothShowcaseProgress, [0.76, 0.80], [0, 1]);
-  const sdgCard1Scale = useTransform(smoothShowcaseProgress, [0.76, 0.80], [0.92, 1]);
-  const sdgCard1Y = useTransform(smoothShowcaseProgress, [0.76, 0.80], [12, 0]);
+  // Asta Cita (4 items): fade in sequentially from 0.45 to 0.63
+  const astaCard1Opacity = useTransform(smoothShowcaseProgress, [0.45, 0.49, 0.64, 0.68], [0, 1, 1, 0]);
+  const astaCard1Scale = useTransform(smoothShowcaseProgress, [0.45, 0.49], [0.94, 1]);
+  const astaCard1Y = useTransform(smoothShowcaseProgress, [0.45, 0.49, 0.64, 0.68], [10, 0, 0, -10]);
 
-  const sdgCard2Opacity = useTransform(smoothShowcaseProgress, [0.80, 0.84], [0, 1]);
-  const sdgCard2Scale = useTransform(smoothShowcaseProgress, [0.80, 0.84], [0.92, 1]);
-  const sdgCard2Y = useTransform(smoothShowcaseProgress, [0.80, 0.84], [12, 0]);
+  const astaCard2Opacity = useTransform(smoothShowcaseProgress, [0.50, 0.54, 0.64, 0.68], [0, 1, 1, 0]);
+  const astaCard2Scale = useTransform(smoothShowcaseProgress, [0.50, 0.54], [0.94, 1]);
+  const astaCard2Y = useTransform(smoothShowcaseProgress, [0.50, 0.54, 0.64, 0.68], [10, 0, 0, -10]);
 
-  const sdgCard3Opacity = useTransform(smoothShowcaseProgress, [0.84, 0.88], [0, 1]);
-  const sdgCard3Scale = useTransform(smoothShowcaseProgress, [0.84, 0.88], [0.92, 1]);
-  const sdgCard3Y = useTransform(smoothShowcaseProgress, [0.84, 0.88], [12, 0]);
+  const astaCard3Opacity = useTransform(smoothShowcaseProgress, [0.55, 0.59, 0.64, 0.68], [0, 1, 1, 0]);
+  const astaCard3Scale = useTransform(smoothShowcaseProgress, [0.55, 0.59], [0.94, 1]);
+  const astaCard3Y = useTransform(smoothShowcaseProgress, [0.55, 0.59, 0.64, 0.68], [10, 0, 0, -10]);
 
-  const sdgCard4Opacity = useTransform(smoothShowcaseProgress, [0.88, 0.92], [0, 1]);
-  const sdgCard4Scale = useTransform(smoothShowcaseProgress, [0.88, 0.92], [0.92, 1]);
-  const sdgCard4Y = useTransform(smoothShowcaseProgress, [0.88, 0.92], [12, 0]);
+  const astaCard4Opacity = useTransform(smoothShowcaseProgress, [0.60, 0.64, 0.64, 0.68], [0, 1, 1, 0]);
+  const astaCard4Scale = useTransform(smoothShowcaseProgress, [0.60, 0.64], [0.94, 1]);
+  const astaCard4Y = useTransform(smoothShowcaseProgress, [0.60, 0.64, 0.64, 0.68], [10, 0, 0, -10]);
 
-  const sdgCard5Opacity = useTransform(smoothShowcaseProgress, [0.92, 0.96], [0, 1]);
-  const sdgCard5Scale = useTransform(smoothShowcaseProgress, [0.92, 0.96], [0.92, 1]);
-  const sdgCard5Y = useTransform(smoothShowcaseProgress, [0.92, 0.96], [12, 0]);
+  // Stage 3: SDGs Header (Fades in ONLY after 0.70, stays visible)
+  const sdgHeaderOpacity = useTransform(smoothShowcaseProgress, [0.70, 0.74], [0, 1]);
+  const sdgHeaderY = useTransform(smoothShowcaseProgress, [0.70, 0.74], [15, 0]);
+
+  // SDGs (5 items): fade in sequentially from 0.75 to 0.95 (AFTER header is visible)
+  const sdgCard1Opacity = useTransform(smoothShowcaseProgress, [0.75, 0.79], [0, 1]);
+  const sdgCard1Scale = useTransform(smoothShowcaseProgress, [0.75, 0.79], [0.94, 1]);
+  const sdgCard1Y = useTransform(smoothShowcaseProgress, [0.75, 0.79], [10, 0]);
+
+  const sdgCard2Opacity = useTransform(smoothShowcaseProgress, [0.79, 0.83], [0, 1]);
+  const sdgCard2Scale = useTransform(smoothShowcaseProgress, [0.79, 0.83], [0.94, 1]);
+  const sdgCard2Y = useTransform(smoothShowcaseProgress, [0.79, 0.83], [10, 0]);
+
+  const sdgCard3Opacity = useTransform(smoothShowcaseProgress, [0.83, 0.87], [0, 1]);
+  const sdgCard3Scale = useTransform(smoothShowcaseProgress, [0.83, 0.87], [0.94, 1]);
+  const sdgCard3Y = useTransform(smoothShowcaseProgress, [0.83, 0.87], [10, 0]);
+
+  const sdgCard4Opacity = useTransform(smoothShowcaseProgress, [0.87, 0.91], [0, 1]);
+  const sdgCard4Scale = useTransform(smoothShowcaseProgress, [0.87, 0.91], [0.94, 1]);
+  const sdgCard4Y = useTransform(smoothShowcaseProgress, [0.87, 0.91], [10, 0]);
+
+  const sdgCard5Opacity = useTransform(smoothShowcaseProgress, [0.91, 0.95], [0, 1]);
+  const sdgCard5Scale = useTransform(smoothShowcaseProgress, [0.91, 0.95], [0.94, 1]);
+  const sdgCard5Y = useTransform(smoothShowcaseProgress, [0.91, 0.95], [10, 0]);
 
   const astaMotionStyles = [
     { opacity: astaCard1Opacity, scale: astaCard1Scale, y: astaCard1Y },
@@ -985,7 +1006,7 @@ export default function LandingPage() {
         <section
           ref={keunggulanRef}
           id="fitur"
-          className="relative h-[260vh] sm:h-[290vh] w-full bg-[#070b14] border-t border-white/10 content-visibility-auto"
+          className="relative h-[400vh] sm:h-[440vh] w-full bg-[#070b14] border-t border-white/10 content-visibility-auto"
         >
           {/* Sticky Viewport Window */}
           <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-between overflow-hidden px-2 sm:px-6 md:px-8 z-20 py-3 sm:py-5">
@@ -1809,28 +1830,22 @@ export default function LandingPage() {
         {/* ========================================================================= */}
         {/* 4 & 5. UNIFIED SCROLL-PINNED SHOWCASE & ASTA CITA/SDGS JOURNEY            */}
         {/* ========================================================================= */}
-        <section id="showcase" ref={showcaseContainerRef} className="relative h-[1100vh] border-t border-white/10 bg-[#070b14]">
+        <section id="showcase" ref={showcaseContainerRef} className="relative h-[1800vh] border-t border-white/10 bg-[#070b14]">
 
           {/* Sticky Viewport Window that holds position throughout the entire journey */}
           <div className="sticky top-16 sm:top-20 h-[calc(100vh-4rem)] flex flex-col items-center justify-start overflow-hidden px-3 sm:px-6 md:px-8 pt-6 sm:pt-10 pb-4 sm:pb-6">
 
             {/* FULL SCREEN BACKDROP BOX BEHIND STAGE 2 (ASTA CITA) */}
             <motion.div
-              style={{ opacity: astaHeaderOpacity }}
-              className="absolute inset-2 sm:inset-4 md:inset-6 rounded-[2rem] sm:rounded-[2.5rem] bg-[#090f1a] border border-emerald-500/20 shadow-2xl pointer-events-none overflow-hidden z-10"
-            >
-              {/* Full-Screen Ambient Emerald Glow */}
-              <div className="absolute -top-20 inset-x-0 mx-auto w-3/4 h-80 bg-emerald-500/15 blur-2xl sm:blur-3xl rounded-full pointer-events-none" />
-            </motion.div>
+              style={{ opacity: astaHeaderOpacity, display: header2Display }}
+              className="absolute inset-2 sm:inset-4 md:inset-6 rounded-[2rem] sm:rounded-[2.5rem] bg-[#090f1a] border border-emerald-500/20 pointer-events-none overflow-hidden z-10"
+            />
 
             {/* FULL SCREEN BACKDROP BOX BEHIND STAGE 3 (SDGS) */}
             <motion.div
-              style={{ opacity: sdgHeaderOpacity }}
-              className="absolute inset-2 sm:inset-4 md:inset-6 rounded-[2rem] sm:rounded-[2.5rem] bg-[#120a14] border border-rose-500/20 shadow-2xl pointer-events-none overflow-hidden z-10"
-            >
-              {/* Full-Screen Ambient Rose Glow */}
-              <div className="absolute -top-20 inset-x-0 mx-auto w-3/4 h-80 bg-rose-500/15 blur-2xl sm:blur-3xl rounded-full pointer-events-none" />
-            </motion.div>
+              style={{ opacity: sdgHeaderOpacity, display: header3Display }}
+              className="absolute inset-2 sm:inset-4 md:inset-6 rounded-[2rem] sm:rounded-[2.5rem] bg-[#120a14] border border-rose-500/20 pointer-events-none overflow-hidden z-10"
+            />
 
             {/* ========================================================================= */}
             {/* FIXED-HEIGHT HEADER ZONE: Positions all 3 headers at the exact same spot   */}
@@ -1839,7 +1854,7 @@ export default function LandingPage() {
 
               {/* Header 1: Eksplorasi Antarmuka */}
               <motion.div
-                style={{ opacity: header1Opacity, y: header1Y }}
+                style={{ opacity: header1Opacity, y: header1Y, display: header1Display }}
                 className="absolute inset-0 flex flex-col items-center justify-center space-y-1.5 pointer-events-none"
               >
                 <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
@@ -1852,15 +1867,15 @@ export default function LandingPage() {
 
               {/* Header 2: Prioritas Nasional Asta Cita (Clean Open Header with Large Logo) */}
               <motion.div
-                style={{ opacity: astaHeaderOpacity, y: astaHeaderY }}
+                style={{ opacity: astaHeaderOpacity, y: astaHeaderY, display: header2Display }}
                 className="absolute inset-0 flex flex-col items-center justify-center space-y-1.5 pointer-events-none"
               >
                 <img
                   src="/demo sdg_asta cita/asta cita logo.png"
                   alt="Asta Cita Logo"
                   className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-2xl mb-1.5"
-                  loading="lazy"
-                  decoding="async"
+                  loading="eager"
+                  decoding="sync"
                 />
                 <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
                   Prioritas Nasional <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">Asta Cita Kepresidenan RI</span>
@@ -1872,15 +1887,15 @@ export default function LandingPage() {
 
               {/* Header 3: Sustainable Development Goals (Clean Open Header with Large Logo) */}
               <motion.div
-                style={{ opacity: sdgHeaderOpacity, y: sdgHeaderY }}
+                style={{ opacity: sdgHeaderOpacity, y: sdgHeaderY, display: header3Display }}
                 className="absolute inset-0 flex flex-col items-center justify-center space-y-1.5 pointer-events-none"
               >
                 <img
                   src="/demo sdg_asta cita/sdg logo.png"
                   alt="SDGs Logo"
                   className="h-12 sm:h-16 md:h-20 w-auto object-contain drop-shadow-2xl mb-1.5"
-                  loading="lazy"
-                  decoding="async"
+                  loading="eager"
+                  decoding="sync"
                 />
                 <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
                   Sustainable Development Goals <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-pink-400 to-amber-300">(SDGs)</span>
@@ -1895,7 +1910,10 @@ export default function LandingPage() {
             <div className="relative w-full max-w-6xl flex-1 flex items-center justify-center min-h-[340px] sm:min-h-[400px] z-20">
 
               {/* STAGE 1: Phone Mockups Track (Universal 100% Dead Center for PC & Mobile) */}
-              <div className="absolute left-1/2 -mt-3 sm:-mt-5 md:-mt-7 pointer-events-none">
+              <motion.div
+                style={{ display: stage1Display }}
+                className="absolute left-1/2 -mt-3 sm:-mt-5 md:-mt-7 pointer-events-none"
+              >
                 <motion.div
                   style={{
                     x: showcaseX,
@@ -1914,10 +1932,13 @@ export default function LandingPage() {
                     />
                   ))}
                 </motion.div>
-              </div>
+              </motion.div>
 
               {/* STAGE 2: Asta Cita (Presiden Photo on Top + 4 Symmetrical Cards as ONE UNIT) */}
-              <div className="absolute inset-0 flex flex-col items-center justify-start pointer-events-none px-2 sm:px-4 md:px-6 pt-0 pb-3 sm:pb-5">
+              <motion.div
+                style={{ display: stage2Display }}
+                className="absolute inset-0 flex flex-col items-center justify-start pointer-events-none px-2 sm:px-4 md:px-6 pt-0 pb-3 sm:pb-5"
+              >
                 <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-start space-y-1 sm:space-y-1.5">
                   {/* Photo enlarged 25% positioned close to header text */}
                   <motion.div
@@ -1933,8 +1954,8 @@ export default function LandingPage() {
                       src="/demo sdg_asta cita/presiden_wakil presiden.png"
                       alt="Presiden & Wakil Presiden RI"
                       className="w-full max-w-[480px] sm:max-w-[620px] md:max-w-[740px] h-auto max-h-[190px] sm:max-h-[240px] md:max-h-[285px] object-contain pointer-events-none"
-                      loading="lazy"
-                      decoding="async"
+                      loading="eager"
+                      decoding="sync"
                     />
                   </motion.div>
 
@@ -1949,7 +1970,7 @@ export default function LandingPage() {
                           y: astaMotionStyles[idx].y,
                           willChange: "transform, opacity",
                         }}
-                        className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#0c121e] border border-white/10 shadow-xl flex flex-col justify-between space-y-2 transition-all transform-gpu"
+                        className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#0c121e] border border-white/10 flex flex-col justify-between space-y-2 transform-gpu"
                       >
                         <div className="flex items-center justify-between">
                           <span className={cn("px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider border", item.badgeColor)}>
@@ -1978,10 +1999,13 @@ export default function LandingPage() {
                     ))}
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               {/* STAGE 3: SDGs (5 Cards - Single Odd Card on TOP [1 + 2 + 2], 5 in 1 Row on Desktop) */}
-              <div className="absolute inset-0 flex flex-col items-center justify-start pointer-events-none px-2 sm:px-4 md:px-6 pt-0 pb-3 sm:pb-5">
+              <motion.div
+                style={{ display: stage3Display }}
+                className="absolute inset-0 flex flex-col items-center justify-start pointer-events-none px-2 sm:px-4 md:px-6 pt-0 pb-3 sm:pb-5"
+              >
                 <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-start space-y-1 sm:space-y-1.5">
                   {/* Photo auto-hidden on extra small screens so 100% of cards are preserved */}
                   <motion.div
@@ -1997,8 +2021,8 @@ export default function LandingPage() {
                       src="/demo sdg_asta cita/UNSDG Image.png"
                       alt="United Nations Sustainable Development Goals"
                       className="w-full max-w-[480px] sm:max-w-[620px] md:max-w-[740px] h-auto max-h-[190px] sm:max-h-[240px] md:max-h-[285px] object-contain rounded-xl pointer-events-none"
-                      loading="lazy"
-                      decoding="async"
+                      loading="eager"
+                      decoding="sync"
                     />
                   </motion.div>
 
@@ -2014,7 +2038,7 @@ export default function LandingPage() {
                           willChange: "transform, opacity",
                         }}
                         className={cn(
-                          "p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#0c121e] border border-white/10 shadow-xl flex flex-col justify-between space-y-1.5 sm:space-y-2 transition-all transform-gpu",
+                          "p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#0c121e] border border-white/10 flex flex-col justify-between space-y-1.5 sm:space-y-2 transform-gpu",
                           idx === 0
                             ? "w-full max-w-[280px] sm:max-w-[340px] md:max-w-none md:flex-1 mx-auto"
                             : "w-[calc(50%-5px)] sm:w-[calc(50%-6px)] md:w-auto md:flex-1"
@@ -2047,7 +2071,7 @@ export default function LandingPage() {
                     ))}
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
             </div>
 
@@ -2057,7 +2081,7 @@ export default function LandingPage() {
         {/* ========================================================================= */}
         {/* 6. EXCLUSIVE LUXURY BLACK CALL TO ACTION PORTAL (SCROLL-PINNED STAGE)     */}
         {/* ========================================================================= */}
-        <section id="cta" ref={ctaSectionRef} className="relative h-[320vh] border-t border-white/10 bg-[#020408]">
+        <section id="cta" ref={ctaSectionRef} className="relative h-[450vh] border-t border-white/10 bg-[#020408]">
 
           {/* Sticky Viewport Window matching other pinned sections */}
           <div className="sticky top-16 sm:top-20 h-[calc(100vh-4rem)] flex flex-col items-center justify-center overflow-hidden px-4 sm:px-6 md:px-8 py-6">

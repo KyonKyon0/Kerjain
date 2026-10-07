@@ -234,9 +234,7 @@ export function Footer() {
         {/* Divider & Bottom Master Bar */}
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
           <div className="flex items-center gap-1.5 text-center md:text-left flex-wrap justify-center">
-            <span>&copy; {new Date().getFullYear()} <strong className="text-white font-extrabold">KerjaIn</strong> Platform. Seluruh hak cipta dilindungi. Dibuat dengan</span>
-            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 inline" />
-            <span>untuk kemajuan ekonomi kerakyatan Indonesia.</span>
+            <span>&copy; {new Date().getFullYear()} <strong className="text-white font-extrabold">KerjaIn</strong> Platform. Seluruh hak cipta dilindungi. Dibuat dengan cinta untuk kemajuan ekonomi kerakyatan Indonesia.</span>
           </div>
 
           {/* Social & Legal Badges */}

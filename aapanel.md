@@ -33,16 +33,29 @@ Server ini menampung beberapa aplikasi aktif. **HANYA sentuh port 3002 dan direk
 
 ---
 
-## 3. Arsitektur Database: Supabase Cloud (BUKAN LOKAL!)
+## 3. Arsitektur Database: PostgreSQL 16 Self-Hosted (Lokal di Server aaPanel)
 
-> [!IMPORTANT]
-> **Tidak ada PostgreSQL lokal yang berjalan di server ini.**
-> Database Kerjain sepenuhnya di-host di **Supabase Cloud Managed PostgreSQL**:
-> - **Host:** `aws-0-ap-northeast-1.pooler.supabase.com` (AWS Tokyo)
-> - **Port 6543 (Runtime):** Supabase Transaction Pooler (PgBouncer) via `DATABASE_URL`
-> - **Port 5432 (Migration):** Direct Session via `DIRECT_URL`
-> 
-> **JANGAN PERNAH** mencoba menjalankan `systemctl start postgresql`, `apt-get install postgresql`, atau mencari container Postgres lokal di server!
+> [!NOTE]
+> Database Kerjain **100% self-hosted di server aaPanel (Ubuntu 24.04)**, tidak lagi menggunakan Supabase:
+> - **Layanan Systemd:** `postgresql.service` (Status: Active, Enabled)
+> - **Host & Port:** `127.0.0.1:5432` (Internal LAN / Localhost)
+> - **Nama Database:** `kerjain_db`
+> - **User Database:** `kerjain_user`
+> - **Password Database:** `kerjain123*`
+> - **Ekstensi Aktif:** `uuid-ossp`, `pgcrypto`
+> - **URL Koneksi:** `postgresql://kerjain_user:kerjain123*@127.0.0.1:5432/kerjain_db`
+>
+> ### Perintah Cepat Maintenance Database:
+> ```bash
+> # Cek status service PostgreSQL
+> sudo systemctl status postgresql --no-pager
+>
+> # Akses CLI PostgreSQL kerjain_db
+> PGPASSWORD='kerjain123*' psql -h 127.0.0.1 -U kerjain_user -d kerjain_db
+>
+> # Backup database ke file SQL
+> PGPASSWORD='kerjain123*' pg_dump -h 127.0.0.1 -U kerjain_user -d kerjain_db > /www/backup/database/kerjain_db_$(date +%F).sql
+> ```
 
 ---
 

@@ -8,18 +8,20 @@ const prismaClientSingleton = () => {
     ? process.env.DIRECT_URL
     : (process.env.DATABASE_URL || process.env.DIRECT_URL)
 
+  const isLocal = !connectionString || connectionString.includes('127.0.0.1') || connectionString.includes('localhost')
+
   const pool = new Pool({
     connectionString,
-    ssl: { rejectUnauthorized: false },
-    // Strict connection pooling to prevent Supabase PgBouncer pool exhaustion (max 15 limit)
-    max: 2,
-    idleTimeoutMillis: 1000,
+    ssl: isLocal ? false : { rejectUnauthorized: false },
+    // Generous pool for local self-hosted PostgreSQL, defensive for remote
+    max: isLocal ? 10 : 2,
+    idleTimeoutMillis: isLocal ? 10000 : 1000,
     connectionTimeoutMillis: 5000,
     allowExitOnIdle: true,
   })
 
   pool.on('error', (err) => {
-    console.error('Unexpected Supabase PG Pool error:', err.message)
+    console.error('Unexpected PG Pool error:', err.message)
   })
   
   const adapter = new PrismaPg(pool)

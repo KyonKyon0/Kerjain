@@ -29,7 +29,12 @@ import { useRouter } from "next/navigation";
 import { DynamicLoader } from "@/components/ui/DynamicLoader";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { ImageCropModal } from "@/components/profile/ImageCropModal";
+import dynamic from "next/dynamic";
+
+const ImageCropModal = dynamic(
+  () => import("@/components/profile/ImageCropModal").then((m) => m.ImageCropModal),
+  { ssr: false }
+);
 
 export default function ProfilePage() {
   const { user, role, setUser } = useAuthStore();

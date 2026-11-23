@@ -349,7 +349,7 @@ function ShowcaseCardItem({
   total: number;
   progress: any;
 }) {
-  const stage1End = 0.35;
+  const stage1End = 0.38;
   const isMitra = screen.role.toUpperCase().includes("MITRA");
 
   // Organic, smooth parabolic lift (-18px) when approaching and floating in center
@@ -372,14 +372,8 @@ function ShowcaseCardItem({
     return 0.95 + 0.09 * smoothFactor;
   });
 
-  // Focus opacity: 1.0 when centered, subtle 0.75 when inactive
-  const cardOpacity = useTransform(progress, (p: number) => {
-    const rawVal = Math.max(0, Math.min(total - 1, (p / stage1End) * (total - 1)));
-    const dist = Math.abs(rawVal - idx);
-    if (dist >= 0.9) return 0.75;
-    const factor = 1 - dist / 0.9;
-    return 0.75 + 0.25 * factor;
-  });
+  // All cards remain 100% fully bright at all times (zero dimming across all 11 screens)
+  const cardOpacity = useTransform(progress, () => 1);
 
   // Generous, dynamic breathing highlight (wide 0.70 window for calm, luxurious fade)
   const activeOpacity = useTransform(progress, (p: number) => {
@@ -723,19 +717,19 @@ export default function LandingPage() {
   const initialOffset = -(trackMetrics.cardWidth / 2);
 
   // Dynamic display switches to ensure 100% mutual exclusivity (NEVER overlap/stick!)
-  const header1Display = useTransform(smoothShowcaseProgress, (v) => v <= 0.38 ? "flex" : "none");
-  const header2Display = useTransform(smoothShowcaseProgress, (v) => (v > 0.38 && v <= 0.69) ? "flex" : "none");
-  const header3Display = useTransform(smoothShowcaseProgress, (v) => v > 0.69 ? "flex" : "none");
+  // Dynamic display switches to ensure 100% mutual exclusivity with ZERO blackout gap:
+  const header1Display = useTransform(smoothShowcaseProgress, (v) => v <= 0.40 ? "flex" : "none");
+  const header2Display = useTransform(smoothShowcaseProgress, (v) => (v > 0.40 && v <= 0.58) ? "flex" : "none");
+  const header3Display = useTransform(smoothShowcaseProgress, (v) => v > 0.58 ? "flex" : "none");
 
-  const stage1Display = useTransform(smoothShowcaseProgress, (v) => v <= 0.38 ? "block" : "none");
-  const stage2Display = useTransform(smoothShowcaseProgress, (v) => (v > 0.38 && v <= 0.69) ? "flex" : "none");
-  const stage3Display = useTransform(smoothShowcaseProgress, (v) => v > 0.69 ? "flex" : "none");
+  const stage1Display = useTransform(smoothShowcaseProgress, (v) => v <= 0.40 ? "block" : "none");
+  const stage2Display = useTransform(smoothShowcaseProgress, (v) => (v > 0.40 && v <= 0.58) ? "flex" : "none");
+  const stage3Display = useTransform(smoothShowcaseProgress, (v) => v > 0.58 ? "flex" : "none");
 
-  // Continuous Harmonic Magnetic Glide:
-  // Smoothly decelerates to a gentle, slow-motion floating drift (never abruptly stops/freezes!), then fluidly accelerates out to the next card
+  // Continuous Harmonic Magnetic Glide across 0.00 to 0.38 range (All 11 Screens browse smoothly):
   const showcaseX = useTransform(smoothShowcaseProgress, (p: number) => {
     const total = allShowcaseScreens.length; // 11
-    const stage1End = 0.35;
+    const stage1End = 0.38;
     if (p <= 0) return initialOffset;
     if (p >= stage1End) return initialOffset - (total - 1) * stepSize;
 
@@ -745,65 +739,74 @@ export default function LandingPage() {
     const frac = rawVal - idx;
 
     // Continuous Sinusoidal Harmonic Easing:
-    // When a card is centered (frac near 0), speed gently drops to a calm ~18% slow-motion float.
-    // It NEVER hits a frozen dead-stop (0 speed), so it feels completely natural, responsive, and organic!
-    const alpha = 0.82; // 82% deceleration depth
+    const alpha = 0.82;
     const easedFrac = frac - (alpha / (2 * Math.PI)) * Math.sin(2 * Math.PI * frac);
 
     const currentStepPos = idx + easedFrac;
     return initialOffset - currentStepPos * stepSize;
   });
-  const showcaseTrackOpacity = useTransform(smoothShowcaseProgress, [0.34, 0.38], [1, 0]);
 
-  // Stage 1 Header (Eksplorasi Antarmuka) - Fades out completely before 0.38
-  const header1Opacity = useTransform(smoothShowcaseProgress, [0, 0.34, 0.38], [1, 1, 0]);
-  const header1Y = useTransform(smoothShowcaseProgress, [0.34, 0.38], [0, -15]);
+  // Stage 1 Track Opacity: 100% solid until 0.38, smooth crossfade at 0.38 - 0.40
+  const showcaseTrackOpacity = useTransform(smoothShowcaseProgress, [0, 0.38, 0.40], [1, 1, 0]);
 
-  // Stage 2: Asta Cita Header & Presiden Photo (Fades in ONLY after 0.40, holds, then fades out at 0.67)
-  const astaHeaderOpacity = useTransform(smoothShowcaseProgress, [0.40, 0.44, 0.64, 0.68], [0, 1, 1, 0]);
-  const astaHeaderY = useTransform(smoothShowcaseProgress, [0.40, 0.44, 0.64, 0.68], [15, 0, 0, -15]);
+  // Stage 1 Header (Eksplorasi Antarmuka) - Fades out at 0.38 - 0.40
+  const header1Opacity = useTransform(smoothShowcaseProgress, [0, 0.38, 0.40], [1, 1, 0]);
+  const header1Y = useTransform(smoothShowcaseProgress, [0.38, 0.40], [0, -15]);
 
-  // Asta Cita (4 items): fade in sequentially from 0.45 to 0.63
-  const astaCard1Opacity = useTransform(smoothShowcaseProgress, [0.45, 0.49, 0.64, 0.68], [0, 1, 1, 0]);
-  const astaCard1Scale = useTransform(smoothShowcaseProgress, [0.45, 0.49], [0.94, 1]);
-  const astaCard1Y = useTransform(smoothShowcaseProgress, [0.45, 0.49, 0.64, 0.68], [10, 0, 0, -10]);
+  // Stage 2: Asta Cita Header & Logo (Direct crossfade in at 0.40 - 0.43, holds through 0.55, crossfades out at 0.55 - 0.58)
+  const astaHeaderOpacity = useTransform(smoothShowcaseProgress, [0.40, 0.43, 0.55, 0.58], [0, 1, 1, 0]);
+  const astaHeaderY = useTransform(smoothShowcaseProgress, [0.40, 0.43, 0.55, 0.58], [15, 0, 0, -15]);
 
-  const astaCard2Opacity = useTransform(smoothShowcaseProgress, [0.50, 0.54, 0.64, 0.68], [0, 1, 1, 0]);
-  const astaCard2Scale = useTransform(smoothShowcaseProgress, [0.50, 0.54], [0.94, 1]);
-  const astaCard2Y = useTransform(smoothShowcaseProgress, [0.50, 0.54, 0.64, 0.68], [10, 0, 0, -10]);
+  const astaPhotoOpacity = useTransform(smoothShowcaseProgress, [0.40, 0.43, 0.55, 0.58], [0, 1, 1, 0]);
+  const astaPhotoScale = useTransform(smoothShowcaseProgress, [0.40, 0.43], [0.94, 1]);
+  const astaPhotoY = useTransform(smoothShowcaseProgress, [0.40, 0.43, 0.55, 0.58], [12, 0, 0, -12]);
 
-  const astaCard3Opacity = useTransform(smoothShowcaseProgress, [0.55, 0.59, 0.64, 0.68], [0, 1, 1, 0]);
-  const astaCard3Scale = useTransform(smoothShowcaseProgress, [0.55, 0.59], [0.94, 1]);
-  const astaCard3Y = useTransform(smoothShowcaseProgress, [0.55, 0.59, 0.64, 0.68], [10, 0, 0, -10]);
+  // Asta Cita (4 items): MUNCUL SATU PER SATU DARI 0.43 SAMPAI 0.51 -> SEMUA TETAP TERANG BERSAMA DARI 0.51 SAMPAI 0.55!
+  const astaCard1Opacity = useTransform(smoothShowcaseProgress, [0.43, 0.45, 0.55, 0.58], [0, 1, 1, 0]);
+  const astaCard1Scale = useTransform(smoothShowcaseProgress, [0.43, 0.45], [0.94, 1]);
+  const astaCard1Y = useTransform(smoothShowcaseProgress, [0.43, 0.45, 0.55, 0.58], [10, 0, 0, -10]);
 
-  const astaCard4Opacity = useTransform(smoothShowcaseProgress, [0.60, 0.64, 0.64, 0.68], [0, 1, 1, 0]);
-  const astaCard4Scale = useTransform(smoothShowcaseProgress, [0.60, 0.64], [0.94, 1]);
-  const astaCard4Y = useTransform(smoothShowcaseProgress, [0.60, 0.64, 0.64, 0.68], [10, 0, 0, -10]);
+  const astaCard2Opacity = useTransform(smoothShowcaseProgress, [0.45, 0.47, 0.55, 0.58], [0, 1, 1, 0]);
+  const astaCard2Scale = useTransform(smoothShowcaseProgress, [0.45, 0.47], [0.94, 1]);
+  const astaCard2Y = useTransform(smoothShowcaseProgress, [0.45, 0.47, 0.55, 0.58], [10, 0, 0, -10]);
 
-  // Stage 3: SDGs Header (Fades in ONLY after 0.70, stays visible)
-  const sdgHeaderOpacity = useTransform(smoothShowcaseProgress, [0.70, 0.74], [0, 1]);
-  const sdgHeaderY = useTransform(smoothShowcaseProgress, [0.70, 0.74], [15, 0]);
+  const astaCard3Opacity = useTransform(smoothShowcaseProgress, [0.47, 0.49, 0.55, 0.58], [0, 1, 1, 0]);
+  const astaCard3Scale = useTransform(smoothShowcaseProgress, [0.47, 0.49], [0.94, 1]);
+  const astaCard3Y = useTransform(smoothShowcaseProgress, [0.47, 0.49, 0.55, 0.58], [10, 0, 0, -10]);
 
-  // SDGs (5 items): fade in sequentially from 0.75 to 0.95 (AFTER header is visible)
-  const sdgCard1Opacity = useTransform(smoothShowcaseProgress, [0.75, 0.79], [0, 1]);
-  const sdgCard1Scale = useTransform(smoothShowcaseProgress, [0.75, 0.79], [0.94, 1]);
-  const sdgCard1Y = useTransform(smoothShowcaseProgress, [0.75, 0.79], [10, 0]);
+  const astaCard4Opacity = useTransform(smoothShowcaseProgress, [0.49, 0.51, 0.55, 0.58], [0, 1, 1, 0]);
+  const astaCard4Scale = useTransform(smoothShowcaseProgress, [0.49, 0.51], [0.94, 1]);
+  const astaCard4Y = useTransform(smoothShowcaseProgress, [0.49, 0.51, 0.55, 0.58], [10, 0, 0, -10]);
 
-  const sdgCard2Opacity = useTransform(smoothShowcaseProgress, [0.79, 0.83], [0, 1]);
-  const sdgCard2Scale = useTransform(smoothShowcaseProgress, [0.79, 0.83], [0.94, 1]);
-  const sdgCard2Y = useTransform(smoothShowcaseProgress, [0.79, 0.83], [10, 0]);
+  // Stage 3: SDGs Header & Logo (Direct crossfade in at 0.58 - 0.62, stays 100% fully bright throughout entire stage)
+  const sdgHeaderOpacity = useTransform(smoothShowcaseProgress, [0.58, 0.62], [0, 1]);
+  const sdgHeaderY = useTransform(smoothShowcaseProgress, [0.58, 0.62], [12, 0]);
 
-  const sdgCard3Opacity = useTransform(smoothShowcaseProgress, [0.83, 0.87], [0, 1]);
-  const sdgCard3Scale = useTransform(smoothShowcaseProgress, [0.83, 0.87], [0.94, 1]);
-  const sdgCard3Y = useTransform(smoothShowcaseProgress, [0.83, 0.87], [10, 0]);
+  // Stage 3: UNSDG Banner Image (Direct crossfade in at 0.58 - 0.62, stays 100% fully bright throughout entire stage)
+  const sdgImageOpacity = useTransform(smoothShowcaseProgress, [0.58, 0.62], [0, 1]);
+  const sdgImageScale = useTransform(smoothShowcaseProgress, [0.58, 0.62], [0.94, 1]);
+  const sdgImageY = useTransform(smoothShowcaseProgress, [0.58, 0.62], [10, 0]);
 
-  const sdgCard4Opacity = useTransform(smoothShowcaseProgress, [0.87, 0.91], [0, 1]);
-  const sdgCard4Scale = useTransform(smoothShowcaseProgress, [0.87, 0.91], [0.94, 1]);
-  const sdgCard4Y = useTransform(smoothShowcaseProgress, [0.87, 0.91], [10, 0]);
+  // SDGs (5 items): MUNCUL SATU PER SATU DARI 0.60 SAMPAI 0.70 -> SETELAH MUNCUL TETAP TERANG 100% SAMPAI AKHIR (1.00)!
+  const sdgCard1Opacity = useTransform(smoothShowcaseProgress, [0.60, 0.62], [0, 1]);
+  const sdgCard1Scale = useTransform(smoothShowcaseProgress, [0.60, 0.62], [0.94, 1]);
+  const sdgCard1Y = useTransform(smoothShowcaseProgress, [0.60, 0.62], [10, 0]);
 
-  const sdgCard5Opacity = useTransform(smoothShowcaseProgress, [0.91, 0.95], [0, 1]);
-  const sdgCard5Scale = useTransform(smoothShowcaseProgress, [0.91, 0.95], [0.94, 1]);
-  const sdgCard5Y = useTransform(smoothShowcaseProgress, [0.91, 0.95], [10, 0]);
+  const sdgCard2Opacity = useTransform(smoothShowcaseProgress, [0.62, 0.64], [0, 1]);
+  const sdgCard2Scale = useTransform(smoothShowcaseProgress, [0.62, 0.64], [0.94, 1]);
+  const sdgCard2Y = useTransform(smoothShowcaseProgress, [0.62, 0.64], [10, 0]);
+
+  const sdgCard3Opacity = useTransform(smoothShowcaseProgress, [0.64, 0.66], [0, 1]);
+  const sdgCard3Scale = useTransform(smoothShowcaseProgress, [0.64, 0.66], [0.94, 1]);
+  const sdgCard3Y = useTransform(smoothShowcaseProgress, [0.64, 0.66], [10, 0]);
+
+  const sdgCard4Opacity = useTransform(smoothShowcaseProgress, [0.66, 0.68], [0, 1]);
+  const sdgCard4Scale = useTransform(smoothShowcaseProgress, [0.66, 0.68], [0.94, 1]);
+  const sdgCard4Y = useTransform(smoothShowcaseProgress, [0.66, 0.68], [10, 0]);
+
+  const sdgCard5Opacity = useTransform(smoothShowcaseProgress, [0.68, 0.70], [0, 1]);
+  const sdgCard5Scale = useTransform(smoothShowcaseProgress, [0.68, 0.70], [0.94, 1]);
+  const sdgCard5Y = useTransform(smoothShowcaseProgress, [0.68, 0.70], [10, 0]);
 
   const astaMotionStyles = [
     { opacity: astaCard1Opacity, scale: astaCard1Scale, y: astaCard1Y },
@@ -1830,7 +1833,7 @@ export default function LandingPage() {
         {/* ========================================================================= */}
         {/* 4 & 5. UNIFIED SCROLL-PINNED SHOWCASE & ASTA CITA/SDGS JOURNEY            */}
         {/* ========================================================================= */}
-        <section id="showcase" ref={showcaseContainerRef} className="relative h-[1800vh] border-t border-white/10 bg-[#070b14]">
+        <section id="showcase" ref={showcaseContainerRef} className="relative h-[2400vh] border-t border-white/10 bg-[#070b14]">
 
           {/* Sticky Viewport Window that holds position throughout the entire journey */}
           <div className="sticky top-16 sm:top-20 h-[calc(100vh-4rem)] flex flex-col items-center justify-start overflow-hidden px-3 sm:px-6 md:px-8 pt-6 sm:pt-10 pb-4 sm:pb-6">
@@ -1844,7 +1847,7 @@ export default function LandingPage() {
             {/* FULL SCREEN BACKDROP BOX BEHIND STAGE 3 (SDGS) */}
             <motion.div
               style={{ opacity: sdgHeaderOpacity, display: header3Display }}
-              className="absolute inset-2 sm:inset-4 md:inset-6 rounded-[2rem] sm:rounded-[2.5rem] bg-[#120a14] border border-rose-500/20 pointer-events-none overflow-hidden z-10"
+              className="absolute inset-2 sm:inset-4 md:inset-6 rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-b from-[#0f172a]/90 via-[#111827]/90 to-[#0a0f1d]/95 border border-cyan-500/20 pointer-events-none overflow-hidden z-10"
             />
 
             {/* ========================================================================= */}
@@ -1943,9 +1946,9 @@ export default function LandingPage() {
                   {/* Photo enlarged 25% positioned close to header text */}
                   <motion.div
                     style={{
-                      opacity: astaHeaderOpacity,
-                      scale: astaMotionStyles[0].scale,
-                      y: astaMotionStyles[0].y,
+                      opacity: astaPhotoOpacity,
+                      scale: astaPhotoScale,
+                      y: astaPhotoY,
                       willChange: "transform, opacity",
                     }}
                     className="w-full hidden min-[360px]:flex [@media(max-height:580px)]:hidden items-center justify-center mt-1 sm:mt-1.5 md:mt-2 mb-0 shrink-0"
@@ -1970,7 +1973,7 @@ export default function LandingPage() {
                           y: astaMotionStyles[idx].y,
                           willChange: "transform, opacity",
                         }}
-                        className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#0c121e] border border-white/10 flex flex-col justify-between space-y-2 transform-gpu"
+                        className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-gradient-to-b from-[#141d30] to-[#0b101c] border border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.6)] flex flex-col justify-between space-y-2 transform-gpu"
                       >
                         <div className="flex items-center justify-between">
                           <span className={cn("px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider border", item.badgeColor)}>
@@ -1985,13 +1988,13 @@ export default function LandingPage() {
                           <h4 className="text-xs sm:text-sm font-black text-white leading-snug">
                             {item.title}
                           </h4>
-                          <p className="text-[9.5px] sm:text-[10.5px] text-gray-400 font-medium leading-relaxed line-clamp-2">
+                          <p className="text-[9.5px] sm:text-[10.5px] text-gray-200 font-medium leading-relaxed line-clamp-2">
                             {item.description}
                           </p>
                         </div>
 
                         <div className="pt-0.5">
-                          <span className="text-[7.5px] sm:text-[8px] font-bold uppercase px-2 py-0.5 rounded-md bg-white/5 text-gray-300 border border-white/5">
+                          <span className="text-[7.5px] sm:text-[8px] font-bold uppercase px-2 py-0.5 rounded-md bg-white/10 text-white border border-white/15">
                             {item.tag}
                           </span>
                         </div>
@@ -2010,9 +2013,9 @@ export default function LandingPage() {
                   {/* Photo auto-hidden on extra small screens so 100% of cards are preserved */}
                   <motion.div
                     style={{
-                      opacity: sdgHeaderOpacity,
-                      scale: sdgMotionStyles[0].scale,
-                      y: sdgMotionStyles[0].y,
+                      opacity: sdgImageOpacity,
+                      scale: sdgImageScale,
+                      y: sdgImageY,
                       willChange: "transform, opacity",
                     }}
                     className="w-full hidden min-[360px]:flex [@media(max-height:580px)]:hidden items-center justify-center -mt-6 sm:-mt-9 md:-mt-11 mb-0 shrink-0"
@@ -2020,7 +2023,7 @@ export default function LandingPage() {
                     <img
                       src="/demo sdg_asta cita/UNSDG Image.png"
                       alt="United Nations Sustainable Development Goals"
-                      className="w-full max-w-[480px] sm:max-w-[620px] md:max-w-[740px] h-auto max-h-[190px] sm:max-h-[240px] md:max-h-[285px] object-contain rounded-xl pointer-events-none"
+                      className="w-full max-w-[480px] sm:max-w-[620px] md:max-w-[740px] h-auto max-h-[190px] sm:max-h-[240px] md:max-h-[285px] object-contain rounded-xl pointer-events-none drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]"
                       loading="eager"
                       decoding="sync"
                     />
@@ -2038,7 +2041,7 @@ export default function LandingPage() {
                           willChange: "transform, opacity",
                         }}
                         className={cn(
-                          "p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#0c121e] border border-white/10 flex flex-col justify-between space-y-1.5 sm:space-y-2 transform-gpu",
+                          "p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-b from-[#1e293b]/95 via-[#131d31]/95 to-[#0f172a]/95 border border-white/25 hover:border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col justify-between space-y-1.5 sm:space-y-2 transform-gpu",
                           idx === 0
                             ? "w-full max-w-[280px] sm:max-w-[340px] md:max-w-none md:flex-1 mx-auto"
                             : "w-[calc(50%-5px)] sm:w-[calc(50%-6px)] md:w-auto md:flex-1"
@@ -2057,13 +2060,13 @@ export default function LandingPage() {
                           <h4 className="text-[11px] sm:text-xs font-black text-white leading-snug">
                             {sdg.title}
                           </h4>
-                          <p className="text-[9px] sm:text-[10px] text-gray-400 font-medium leading-relaxed line-clamp-2">
+                          <p className="text-[9px] sm:text-[10px] text-zinc-100 font-medium leading-relaxed line-clamp-2">
                             {sdg.description}
                           </p>
                         </div>
 
                         <div className="pt-0.5">
-                          <span className="text-[7.5px] sm:text-[8px] font-bold uppercase px-2 py-0.5 rounded-md bg-white/5 text-gray-300 border border-white/5">
+                          <span className="text-[7.5px] sm:text-[8px] font-bold uppercase px-2 py-0.5 rounded-md bg-white/10 text-white border border-white/15">
                             {sdg.tag}
                           </span>
                         </div>

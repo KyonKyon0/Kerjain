@@ -1,28 +1,49 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendOtpEmail } from '@/lib/resend';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import crypto from 'crypto';
 
-// Ensure password_resets table exists
+const SECRET_KEY = process.env.SECRET_KEY || 'default-secret-key';
+
+export function hashOtp(otp: string): string {
+  return crypto.createHash('sha256').update(`${otp}:${SECRET_KEY}`).digest('hex');
+}
+
+// Ensure password_resets table exists - executed at most once per cold start
+let tableEnsuredPromise: Promise<void> | null = null;
 async function ensureTable() {
-  try {
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "password_resets" (
-        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "email" VARCHAR(255) NOT NULL,
-        "otp" VARCHAR(10) NOT NULL,
-        "expires_at" TIMESTAMPTZ(6) NOT NULL,
-        "used" BOOLEAN NOT NULL DEFAULT false,
-        "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT NOW()
-      );
-      CREATE INDEX IF NOT EXISTS "idx_password_resets_email" ON "password_resets" ("email");
-    `);
-  } catch (err) {
-    console.error("Error creating password_resets table:", err);
+  if (!tableEnsuredPromise) {
+    tableEnsuredPromise = (async () => {
+      try {
+        await prisma.$executeRawUnsafe(`
+          CREATE TABLE IF NOT EXISTS "password_resets" (
+            "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            "email" VARCHAR(255) NOT NULL,
+            "otp" VARCHAR(64) NOT NULL,
+            "expires_at" TIMESTAMPTZ(6) NOT NULL,
+            "used" BOOLEAN NOT NULL DEFAULT false,
+            "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT NOW()
+          );
+          CREATE INDEX IF NOT EXISTS "idx_password_resets_email" ON "password_resets" ("email");
+        `);
+      } catch (err) {
+        console.error("Error creating password_resets table:", err);
+        tableEnsuredPromise = null;
+      }
+    })();
   }
+  return tableEnsuredPromise;
 }
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const rate = checkRateLimit(`forgot-pass:${ip}`, 5, 60 * 1000);
+    if (!rate.allowed) {
+      return NextResponse.json({ success: false, detail: 'Terlalu banyak permintaan OTP. Tunggu 1 menit.' }, { status: 429 });
+    }
+
     await ensureTable();
     const body = await request.json();
     let { email } = body;
@@ -59,11 +80,12 @@ export async function POST(request: Request) {
       WHERE "email" = $1 AND "used" = false
     `, email);
 
-    // Insert new OTP record
+    // Insert new OTP record (hashed for security)
+    const hashedOtp = hashOtp(otp);
     await prisma.$executeRawUnsafe(`
       INSERT INTO "password_resets" ("email", "otp", "expires_at", "used", "created_at")
       VALUES ($1, $2, $3, false, NOW())
-    `, email, otp, expiresAt.toISOString());
+    `, email, hashedOtp, expiresAt.toISOString());
 
     // Send email via Resend
     try {

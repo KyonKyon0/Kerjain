@@ -18,7 +18,12 @@ import { MapViewer } from "@/components/maps";
 import { StatusBadge } from "@/components/jobs/StatusBadge";
 import { AcceptDialog } from "@/components/jobs/AcceptDialog";
 import { CompletionDialog } from "@/components/jobs/CompletionDialog";
-import { CompletionCelebrationModal } from "@/components/jobs/CompletionCelebrationModal";
+import dynamic from "next/dynamic";
+
+const CompletionCelebrationModal = dynamic(
+  () => import("@/components/jobs/CompletionCelebrationModal").then((m) => m.CompletionCelebrationModal),
+  { ssr: false }
+);
 import { JobProgressGallery } from "@/components/jobs/JobProgressGallery";
 import { SlideToConfirm } from "@/components/ui/SlideToConfirm";
 import { Button } from "@/components/ui/button";

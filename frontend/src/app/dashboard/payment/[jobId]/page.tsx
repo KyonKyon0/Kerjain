@@ -35,7 +35,6 @@ import { paymentService } from "@/services/payment.service";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { toPng, toBlob } from "html-to-image";
 
 const PAYMENT_TIMEOUT_SECONDS = 10 * 60; // 10 minutes
 
@@ -167,11 +166,13 @@ export default function PaymentPage({ params }: { params: Promise<{ jobId: strin
     let interval: NodeJS.Timeout;
     if (qrisData && payment?.status !== "SUCCESS" && !isExpired) {
       interval = setInterval(async () => {
+        if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
         try {
           setActiveStepIndex(3); // Step 3: Checking gateway network
           const res = await paymentService.checkStatus(jobId as string);
           
           if (res.status === 'SUCCESS') {
+            clearInterval(interval);
             setActiveStepIndex(4); // Step 4: Switching Escrow
             setTimeout(() => {
               setActiveStepIndex(5); // Step 5: Completed
@@ -259,6 +260,7 @@ export default function PaymentPage({ params }: { params: Promise<{ jobId: strin
     toast.info("Menyimpan gambar bukti transaksi...");
     
     try {
+      const { toPng } = await import("html-to-image");
       const dataUrl = await toPng(receiptCardRef.current, {
         cacheBust: true,
         pixelRatio: 2.5,
@@ -285,6 +287,7 @@ export default function PaymentPage({ params }: { params: Promise<{ jobId: strin
     
     if (receiptCardRef.current) {
       try {
+        const { toBlob } = await import("html-to-image");
         const blob = await toBlob(receiptCardRef.current, {
           cacheBust: true,
           pixelRatio: 2.5,

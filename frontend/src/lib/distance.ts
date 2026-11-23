@@ -1,3 +1,6 @@
+const TO_RAD = Math.PI / 180;
+const EARTH_RADIUS_METERS = 6371000;
+
 /**
  * Calculates the great-circle distance between two points (in meters) using Haversine formula
  */
@@ -8,17 +11,18 @@ export function calculateHaversineDistance(
   lon2: number
 ): number {
   if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
-  const R = 6371000; // Radius of Earth in meters
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const dLatHalf = (lat2 - lat1) * TO_RAD * 0.5;
+  const dLonHalf = (lon2 - lon1) * TO_RAD * 0.5;
+  const sinDLat = Math.sin(dLatHalf);
+  const sinDLon = Math.sin(dLonHalf);
   const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    sinDLat * sinDLat +
+    Math.cos(lat1 * TO_RAD) *
+      Math.cos(lat2 * TO_RAD) *
+      sinDLon *
+      sinDLon;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(R * c); // Distance in meters
+  return Math.round(EARTH_RADIUS_METERS * c); // Distance in meters
 }
 
 /**

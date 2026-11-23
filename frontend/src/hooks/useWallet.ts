@@ -48,6 +48,7 @@ export const useWallet = () => {
     },
     staleTime: 20000,
     refetchInterval: 30000,
+    refetchIntervalInBackground: false,
   });
 };
 

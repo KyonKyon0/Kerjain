@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const rate = checkRateLimit(`register:${ip}`, 10, 60 * 1000);
+    if (!rate.allowed) {
+      return NextResponse.json({ success: false, detail: 'Terlalu banyak permintaan registrasi. Silakan tunggu 1 menit.' }, { status: 429 });
+    }
     const body = await request.json();
     let { name, email, password, role, phone, address, gender } = body;
     

@@ -42,7 +42,7 @@ const PARTNER_MOBILE_MENU: MenuItem[] = [
 
 export function MobileNav() {
   const pathname = usePathname();
-  const { role } = useAuthStore();
+  const role = useAuthStore((s) => s.role);
 
   const menu = role === "partner" ? PARTNER_MOBILE_MENU : CONSUMER_MOBILE_MENU;
 

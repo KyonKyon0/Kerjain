@@ -20,7 +20,7 @@ export default function SearchJobPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("ALL");
   const [sortBy, setSortBy] = useState("DEFAULT"); // DEFAULT, NEAREST, REWARD_HIGH
-  const { role } = useAuthStore();
+  const role = useAuthStore((s) => s.role);
   const router = useRouter();
 
   const { lat: userLat, lng: userLng, loading: locLoading, requestLocation } = useUserLocation();
@@ -33,44 +33,53 @@ export default function SearchJobPage() {
 
   const { data: jobs = [], isLoading: loading } = useSearchJobs(category === "ALL" ? "" : category);
 
-  // Attach live calculated distance to each job
-  const jobsWithDistance = useMemo(() => {
-    return jobs.map((job: any) => {
-      let distance = job.distance;
-      if (userLat && userLng && job.lat && job.lng) {
-        distance = calculateHaversineDistance(userLat, userLng, job.lat, job.lng);
+  // Single-pass distance decoration, search filtering, and sorting
+  const filteredJobs = useMemo(() => {
+    if (!jobs || jobs.length === 0) return [];
+
+    const term = searchTerm.trim().toLowerCase();
+    const hasTerm = term.length > 0;
+    const hasLocation = Boolean(userLat && userLng);
+
+    const decorated: any[] = [];
+
+    for (let i = 0; i < jobs.length; i++) {
+      const job = jobs[i];
+
+      // Filter by search term if provided
+      if (hasTerm) {
+        const titleMatch = job.title && job.title.toLowerCase().includes(term);
+        const descMatch = job.description && job.description.toLowerCase().includes(term);
+        const addrMatch = job.address && job.address.toLowerCase().includes(term);
+        if (!titleMatch && !descMatch && !addrMatch) {
+          continue;
+        }
       }
-      return {
+
+      // Compute distance once
+      let distance = job.distance;
+      if (hasLocation && job.lat && job.lng) {
+        distance = calculateHaversineDistance(userLat!, userLng!, job.lat, job.lng);
+      }
+
+      decorated.push({
         ...job,
         distance,
-      };
-    });
-  }, [jobs, userLat, userLng]);
-
-  // Filter and sort jobs
-  const filteredJobs = useMemo(() => {
-    let list = jobsWithDistance.filter((job: any) => 
-      job.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      job.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.address?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+      });
+    }
 
     if (sortBy === "NEAREST") {
-      list = [...list].sort((a, b) => {
-        const distA = a.distance ?? 99999999;
-        const distB = b.distance ?? 99999999;
-        return distA - distB;
-      });
+      decorated.sort((a, b) => (a.distance ?? 99999999) - (b.distance ?? 99999999));
     } else if (sortBy === "REWARD_HIGH") {
-      list = [...list].sort((a, b) => {
+      decorated.sort((a, b) => {
         const rewardA = Number(a.rewardAmount ?? a.reward_amount ?? 0);
         const rewardB = Number(b.rewardAmount ?? b.reward_amount ?? 0);
         return rewardB - rewardA;
       });
     }
 
-    return list;
-  }, [jobsWithDistance, searchTerm, sortBy]);
+    return decorated;
+  }, [jobs, userLat, userLng, searchTerm, sortBy]);
 
 const CATEGORY_OPTIONS: DropdownOption[] = [
   { value: "ALL", label: "Semua Kategori" },

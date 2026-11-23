@@ -16,8 +16,20 @@ import { Wallet, ArrowDownCircle, ArrowUpCircle, AlertCircle, Clock, CheckCircle
 import { cn, formatWIBDate, formatWIBDateTime } from "@/lib/utils";
 import { axiosInstance } from "@/lib/axios";
 import { DynamicLoader } from "@/components/ui/DynamicLoader";
-import { FinancialEarningsChart } from "@/components/dashboard/wallet/FinancialEarningsChart";
+import dynamic from "next/dynamic";
 import Link from "next/link";
+
+const FinancialEarningsChart = dynamic(
+  () => import("@/components/dashboard/wallet/FinancialEarningsChart").then((m) => m.FinancialEarningsChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-48 rounded-2xl bg-card border border-border/80 flex items-center justify-center text-xs text-muted-foreground animate-pulse">
+        Memuat Grafik Keuangan...
+      </div>
+    ),
+  }
+);
 
 export default function PaymentsPage() {
   const { role, user } = useAuthStore();

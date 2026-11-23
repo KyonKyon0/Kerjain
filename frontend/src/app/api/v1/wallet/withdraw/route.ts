@@ -16,20 +16,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ detail: 'Data tidak lengkap atau tidak valid' }, { status: 400 })
     }
 
-    // Check balance
-    const wallet = await prisma.wallet.findUnique({
-      where: { user_id: user.id }
-    })
-
-    if (!wallet || wallet.balance < amount) {
-      return NextResponse.json({ detail: 'Saldo tidak mencukupi' }, { status: 400 })
-    }
-
-    // Deduct balance and create withdrawal record
+    // Deduct balance atomically and create withdrawal record
     const result = await prisma.$transaction(async (tx: any) => {
-      const updatedWallet = await tx.wallet.update({
-        where: { user_id: user.id },
+      const updateRes = await tx.wallet.updateMany({
+        where: { user_id: user.id, balance: { gte: amount } },
         data: { balance: { decrement: amount } }
+      })
+
+      if (updateRes.count === 0) {
+        throw new Error('Saldo tidak mencukupi')
+      }
+
+      const updatedWallet = await tx.wallet.findUnique({
+        where: { user_id: user.id }
       })
 
       const withdrawal = await tx.withdrawal.create({

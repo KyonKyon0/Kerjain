@@ -1,13 +1,40 @@
 import { verifyToken } from './auth'
 import prisma from './prisma'
 
-// Fast in-memory user cache with 15-second TTL to eliminate parallel DB query bottlenecks on serverless
+export interface CurrentUserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  phone: string | null;
+  address: string | null;
+  avatar_url: string | null;
+  gender: string | null;
+}
+
+// Fast in-memory user cache with 15-second TTL and hard max capacity to eliminate parallel DB query bottlenecks on serverless
 interface CachedUser {
-  user: any;
+  user: CurrentUserProfile;
   expiresAt: number;
 }
 
+const MAX_CACHE_SIZE = 500;
 const userCache = new Map<string, CachedUser>();
+
+/**
+ * Invalidate cached user immediately when profile/role/password changes
+ */
+export function invalidateUserCache(userId?: string) {
+  if (!userId) {
+    userCache.clear();
+    return;
+  }
+  for (const [token, item] of userCache.entries()) {
+    if (item.user && item.user.id === userId) {
+      userCache.delete(token);
+    }
+  }
+}
 
 export async function getCurrentUser(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -47,18 +74,22 @@ export async function getCurrentUser(request: Request) {
   })
 
   if (user) {
+    // Evict expired or oldest entries if hard capacity reached
+    if (userCache.size >= MAX_CACHE_SIZE) {
+      let evicted = 0;
+      for (const [k, v] of userCache.entries()) {
+        if (v.expiresAt <= now || evicted < 50) {
+          userCache.delete(k);
+          evicted++;
+        }
+      }
+    }
+
     // Store in cache for 15s to accelerate parallel dashboard queries
     userCache.set(token, {
       user,
       expiresAt: now + 15000
     });
-
-    // Cleanup expired cache entries
-    if (userCache.size > 300) {
-      for (const [k, v] of userCache.entries()) {
-        if (v.expiresAt <= now) userCache.delete(k);
-      }
-    }
   }
 
   return user || null

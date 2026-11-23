@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, ChangeEvent } from "react";
 import { SendHorizontal, ImagePlus, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import imageCompression from "browser-image-compression";
 
 interface ChatInputProps {
   onSendMessage: (content: string, isImage?: boolean) => void;
@@ -38,6 +37,7 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
     if (!file.type.startsWith("image/")) return;
     setIsCompressing(true);
     try {
+      const imageCompression = (await import("browser-image-compression")).default;
       const compressed = await imageCompression(file, {
         maxSizeMB: 0.3,
         maxWidthOrHeight: 800,

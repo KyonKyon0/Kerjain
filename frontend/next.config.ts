@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  compress: true,
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -13,8 +16,18 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      'framer-motion',
+      '@base-ui/react',
+      'sonner',
+    ],
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+  },
   serverExternalPackages: [],
-  // @ts-ignore - To fix Next.js 16+ dev origin blocking
   allowedDevOrigins: ['192.168.1.10', '192.168.0.106', 'localhost', '127.0.0.1'],
   async headers() {
     return [

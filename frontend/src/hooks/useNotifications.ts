@@ -10,6 +10,7 @@ export const useNotifications = () => {
     },
     staleTime: 15000,
     refetchInterval: 25000,
+    refetchIntervalInBackground: false,
   });
 
 };

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/current-user';
+import { validateBase64Image } from '@/lib/payload-validator';
 
 export async function GET(request: Request) {
   try {
@@ -67,6 +68,13 @@ export async function POST(request: Request) {
     const paymentMethod = body.paymentMethod || 'CASH';
     const status = paymentMethod === 'QRIS' ? 'WAITING_PAYMENT' : 'PUBLISHED';
     const photo = body.photoUrl || body.photo_url || null;
+
+    if (photo) {
+      const valid = validateBase64Image(photo);
+      if (!valid.valid) {
+        return NextResponse.json({ detail: valid.error }, { status: 400 });
+      }
+    }
 
     let job: any;
 

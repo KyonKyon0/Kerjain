@@ -11,6 +11,7 @@ export const useChatList = () => {
     },
     staleTime: 15000,
     refetchInterval: 25000,
+    refetchIntervalInBackground: false,
   });
 };
 
@@ -24,6 +25,7 @@ export const useMessages = (jobId: string) => {
     },
     enabled: !!jobId,
     refetchInterval: 3000, // Polling for MVP realtime simulation
+    refetchIntervalInBackground: false,
   });
 };
 

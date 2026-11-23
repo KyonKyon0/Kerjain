@@ -7,8 +7,21 @@ import { step3LocationSchema, Step3FormData } from "@/features/jobs/schemas";
 import { useCreateJobStore } from "@/store/create-job.store";
 import { Button } from "@/components/ui/button";
 import { MapPin, Edit2, ArrowLeft, ArrowRight } from "lucide-react";
-import { LocationPicker, LocationData, MapViewer, InteractiveMap } from "@/components/maps";
+import dynamic from "next/dynamic";
+import { LocationPicker, LocationData, MapViewer } from "@/components/maps";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+
+const InteractiveMap = dynamic(
+  () => import("@/components/maps").then((m) => m.InteractiveMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full min-h-[320px] flex items-center justify-center bg-card text-xs text-muted-foreground animate-pulse">
+        Memuat Peta Interaktif...
+      </div>
+    ),
+  }
+);
 
 export function Step3Location() {
   const { draft, updateDraft, nextStep, prevStep } = useCreateJobStore();

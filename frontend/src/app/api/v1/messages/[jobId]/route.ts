@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/current-user';
+import { validateBase64Image } from '@/lib/payload-validator';
 
 // App Router route segment config — increase body size for image uploads
 export const maxDuration = 30;
@@ -60,6 +61,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ job
 
     // Detect if content is an image (base64 data URL)
     const isImage = typeof body.content === 'string' && body.content.startsWith('data:image');
+    if (isImage) {
+      const valid = validateBase64Image(body.content);
+      if (!valid.valid) {
+        return NextResponse.json({ message: valid.error }, { status: 400 });
+      }
+    }
 
     const message = await prisma.message.create({
       data: {

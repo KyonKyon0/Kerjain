@@ -12,6 +12,7 @@ export const useMyJobs = () => {
     },
     staleTime: 15000,
     refetchInterval: 20000,
+    refetchIntervalInBackground: false,
   });
 };
 
@@ -24,6 +25,7 @@ export const usePartnerJobs = () => {
     },
     staleTime: 15000,
     refetchInterval: 20000,
+    refetchIntervalInBackground: false,
   });
 };
 
@@ -36,6 +38,7 @@ export const useConsumerJobs = () => {
     },
     staleTime: 15000,
     refetchInterval: 20000,
+    refetchIntervalInBackground: false,
   });
 };
 
@@ -48,6 +51,7 @@ export const useSearchJobs = (query: string = "") => {
     },
     staleTime: 15000,
     refetchInterval: 25000,
+    refetchIntervalInBackground: false,
   });
 };
 
@@ -62,6 +66,7 @@ export const useJobDetail = (id: string) => {
     enabled: !!id && id !== "[object Object]" && id !== "%5Bobject%20Object%5D" && decodeURIComponent(id) !== "[object Object]",
     staleTime: 3000,
     refetchInterval: 8000,
+    refetchIntervalInBackground: false,
   });
 };
 
@@ -75,6 +80,7 @@ export const useJobTimeline = (id: string) => {
     enabled: !!id && id !== "[object Object]" && id !== "%5Bobject%20Object%5D" && decodeURIComponent(id) !== "[object Object]",
     staleTime: 3000,
     refetchInterval: 8000,
+    refetchIntervalInBackground: false,
   });
 };
 
@@ -249,6 +255,7 @@ export const useGetMessages = (id: string) => {
     enabled: !!id && id !== "[object Object]" && id !== "%5Bobject%20Object%5D" && decodeURIComponent(id) !== "[object Object]",
     staleTime: 1500,
     refetchInterval: 4000,
+    refetchIntervalInBackground: false,
   });
 };
 

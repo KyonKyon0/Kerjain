@@ -13,6 +13,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
             gcTime: 5 * 60 * 1000, // 5 min garbage collection
             refetchOnWindowFocus: false, // Prevent frame stutter when switching windows/tabs
             refetchOnReconnect: true,
+            refetchIntervalInBackground: false, // Stop polling when tab is hidden to protect Supabase pooler
             retry: 1,
           },
         },

@@ -27,8 +27,8 @@ export async function GET(request: Request) {
       });
     }
 
-    // Parallelize all 4 database queries concurrently via Promise.all
-    const [walletResult, completedJobs, payments, withdrawals] = await Promise.all([
+    // Parallelize database queries concurrently via Promise.all (3 queries: wallet upsert, completedJobs, withdrawals)
+    const [walletResult, completedJobs, withdrawals] = await Promise.all([
       prisma.wallet.upsert({
         where: { user_id: user.id },
         update: {},
@@ -43,18 +43,6 @@ export async function GET(request: Request) {
           payments: { select: { id: true, method: true, status: true } }
         },
         orderBy: { updated_at: 'desc' }
-      }),
-      prisma.payment.findMany({
-        where: {
-          partner_id: user.id,
-          method: 'QRIS',
-          status: 'SUCCESS',
-          job: { status: 'COMPLETED' }
-        },
-        include: {
-          job: { select: { title: true, updated_at: true } }
-        },
-        orderBy: { created_at: 'desc' }
       }),
       prisma.withdrawal.findMany({
         where: { user_id: user.id },
@@ -254,10 +242,14 @@ export async function POST(request: Request) {
         throw new Error(`Anda baru bisa melakukan penarikan setelah 3 hari dari pendapatan pertama (sisa ${Math.ceil(3 - diffDays)} hari).`);
       }
 
-      await tx.wallet.update({
-        where: { user_id: user.id },
+      const updateRes = await tx.wallet.updateMany({
+        where: { user_id: user.id, balance: { gte: amount } },
         data: { balance: { decrement: amount } }
       });
+
+      if (updateRes.count === 0) {
+        throw new Error('Saldo tidak mencukupi');
+      }
 
       const withdrawal = await tx.withdrawal.create({
         data: {

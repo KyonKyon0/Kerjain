@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/current-user';
+import { validateBase64Image } from '@/lib/payload-validator';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string, action: string }> }) {
   return handleAction(request, params);
@@ -32,14 +33,26 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
         if (job.consumer_id === user.id) {
           return NextResponse.json({ message: 'Anda tidak dapat menerima pekerjaan yang Anda buat sendiri', detail: 'Invalid operation' }, { status: 400 });
         }
-        if (job.status !== 'PUBLISHED' || job.partner_id !== null) {
+
+        // Atomic conditional update to eliminate double-accept race conditions
+        const acceptUpdate = await prisma.job.updateMany({
+          where: {
+            id,
+            status: 'PUBLISHED',
+            partner_id: null,
+            consumer_id: { not: user.id }
+          },
+          data: {
+            partner_id: user.id,
+            status: 'ACCEPTED'
+          }
+        });
+
+        if (acceptUpdate.count === 0) {
           return NextResponse.json({ message: 'Pekerjaan sudah diambil mitra lain atau tidak tersedia', detail: 'Job not available' }, { status: 400 });
         }
 
-        updatedJob = await prisma.job.update({
-          where: { id },
-          data: { partner: { connect: { id: user.id } }, status: 'ACCEPTED' }
-        });
+        updatedJob = await prisma.job.findUnique({ where: { id } });
         await prisma.payment.updateMany({
           where: { job_id: id },
           data: { partner_id: user.id }
@@ -146,10 +159,40 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
         if (user.role !== 'consumer' || job.consumer_id !== user.id) {
           return NextResponse.json({ message: 'Forbidden: Hanya konsumen pemilik pekerjaan yang dapat konfirmasi', detail: 'Unauthorized' }, { status: 403 });
         }
-        updatedJob = await prisma.job.update({
-          where: { id },
-          data: { status: 'COMPLETED' }
+
+        // Atomic transaction: guard against double-credit on SlideToConfirm
+        const confirmResult = await prisma.$transaction(async (tx) => {
+          const updateRes = await tx.job.updateMany({
+            where: {
+              id,
+              consumer_id: user.id,
+              status: { not: 'COMPLETED' }
+            },
+            data: { status: 'COMPLETED' }
+          });
+
+          if (updateRes.count === 0) {
+            return { alreadyCompleted: true };
+          }
+
+          // Release funds if QRIS and SUCCESS (only on first confirmation)
+          const confirmPayment = await tx.payment.findFirst({ where: { job_id: id } });
+          if (confirmPayment && confirmPayment.method === 'QRIS' && confirmPayment.status === 'SUCCESS' && job.partner_id) {
+            await tx.wallet.upsert({
+              where: { user_id: job.partner_id },
+              update: { balance: { increment: Number(confirmPayment.amount) } },
+              create: { user_id: job.partner_id, balance: Number(confirmPayment.amount) }
+            });
+          }
+
+          return { alreadyCompleted: false };
         });
+
+        if (confirmResult.alreadyCompleted) {
+          return NextResponse.json({ message: 'Pekerjaan sudah dikonfirmasi selesai sebelumnya', detail: 'Already completed' }, { status: 400 });
+        }
+
+        updatedJob = await prisma.job.findUnique({ where: { id } });
 
         try {
           await prisma.jobProgress.create({
@@ -161,16 +204,6 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
             }
           });
         } catch {}
-        
-        // Release funds if QRIS and SUCCESS
-        const confirmPayment = await prisma.payment.findFirst({ where: { job_id: id } });
-        if (confirmPayment && confirmPayment.method === 'QRIS' && confirmPayment.status === 'SUCCESS' && updatedJob.partner_id) {
-           await prisma.wallet.upsert({
-             where: { user_id: updatedJob.partner_id },
-             update: { balance: { increment: Number(confirmPayment.amount) } },
-             create: { user_id: updatedJob.partner_id, balance: Number(confirmPayment.amount) }
-           });
-        }
 
         // Notify Partner
         if (job.partner_id) {
@@ -254,17 +287,15 @@ async function handleAction(request: Request, params: Promise<{ id: string, acti
           return NextResponse.json({ detail: 'Forbidden: Hanya mitra yang ditugaskan yang dapat memperbarui progres' }, { status: 403 });
         }
         const body = await request.json();
-        
-        // Update job status if provided in body
-        if (body.status && body.status !== job.status) {
-          await prisma.job.update({
-            where: { id },
-            data: { status: body.status }
-          });
-        }
-
-        let progress: any;
         const progressPhoto = body.photoUrl || body.photo_url || null;
+        let progress: any;
+
+        if (progressPhoto) {
+          const valid = validateBase64Image(progressPhoto);
+          if (!valid.valid) {
+            return NextResponse.json({ detail: valid.error }, { status: 400 });
+          }
+        }
         try {
           progress = await prisma.jobProgress.create({
             data: {

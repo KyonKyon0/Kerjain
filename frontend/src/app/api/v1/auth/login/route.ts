@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { verifyPassword, signToken } from '@/lib/auth'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const rate = checkRateLimit(`login:${ip}`, 20, 60 * 1000);
+    if (!rate.allowed) {
+      return NextResponse.json({ success: false, detail: 'Terlalu banyak percobaan masuk. Silakan tunggu 1 menit.' }, { status: 429 });
+    }
     // Form data parsing (OAuth2 password request form style from FastAPI)
     // FastAPI normally expects form-data for login: `username` and `password`
     // We will support both form-data and json for safety.

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/current-user';
+import { getCurrentUser, invalidateUserCache } from '@/lib/current-user';
+import { validateBase64Image } from '@/lib/payload-validator';
 
 export async function GET(request: Request) {
   try {
@@ -132,6 +133,13 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { name, phone, address, avatar_url, gender } = body;
 
+    if (avatar_url && typeof avatar_url === 'string' && avatar_url.startsWith('data:')) {
+      const imgCheck = validateBase64Image(avatar_url);
+      if (!imgCheck.valid) {
+        return NextResponse.json({ detail: imgCheck.error }, { status: 400 });
+      }
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -154,6 +162,8 @@ export async function PUT(request: Request) {
         updated_at: true
       }
     });
+
+    invalidateUserCache(user.id);
 
     return NextResponse.json({
       success: true,

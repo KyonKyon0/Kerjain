@@ -157,16 +157,40 @@ subprocess.run([
 
 ---
 
-## 7. Direktori & File Penting Kerjain di Server
+## 7. Registrasi GUI aaPanel (Website -> Node.js Project)
+
+Proyek **Kerjain** telah terdaftar secara resmi di dalam GUI Panel aaPanel (`Website` -> `Node.js Project`), setara dengan proyek `oscartambunan_portofolio_web` dan `saringopini`:
+
+| Atribut di Tabel GUI | Nilai Terdaftar | Keterangan |
+| :--- | :--- | :--- |
+| **Name** | `kerjain_simgun_my_id` | Identitas proyek di aaPanel |
+| **Status** | `Running` (Hijau) | Terpantau live dari PID Next.js |
+| **PID** | Otomatis sinkron dari `.pid` | Multi-process Node parent & child (`next-server`) |
+| **CPU / RAM** | Live Telemetry | Terhitung real-time oleh `psutil` di aaPanel |
+| **Document Root** | `/www/wwwroot/kerjain.simgun.my.id/frontend` | Path monorepo workspace Next.js |
+| **Node Version** | `v26.7.0` | Node.js runtime resmi aaPanel |
+| **Note / Domain** | `kerjain.simgun.my.id` | Domain mapping utama |
+
+### File Konfigurasi Integrasi aaPanel:
+1. **SQLite Panel Database:** `/www/server/panel/data/default.db` (Tabel `sites` ID: `16`, tabel `domain` ID: `18`).
+2. **Nginx Reverse Proxy:** `/www/server/panel/vhost/nginx/node_kerjain_simgun_my_id.conf` (Proxy ke `http://127.0.0.1:3002` + cache static Next.js `/_next/static/` 1 tahun).
+3. **Rewrite Config:** `/www/server/panel/vhost/rewrite/node_kerjain_simgun_my_id.conf`.
+4. **PID File:** `/www/server/nodejs/vhost/pids/kerjain_simgun_my_id.pid`.
+5. **Start Script:** `/www/server/nodejs/vhost/scripts/kerjain_simgun_my_id.sh`.
+
+---
+
+## 8. Direktori & File Penting Kerjain di Server
 
 ```
 /www/
 ├── wwwroot/
 │   └── kerjain.simgun.my.id/                 <-- Root Monorepo
 │       ├── frontend/                         <-- Workspace Next.js
-│       │   ├── .env.local                    <-- Kredensial Supabase, Pakasir, Resend
+│       │   ├── .env.local                    <-- Kredensial PostgreSQL Lokal, Pakasir, Resend
 │       │   ├── .next/                        <-- Artifact Hasil Build
-│       │   └── prisma/schema.prisma
+│       │   ├── prisma/schema.prisma          <-- Prisma 7 Schema
+│       │   └── prisma.config.ts              <-- Prisma 7 Config (Datasource URL)
 │       └── node_modules/                     <-- Hoisted packages
 │
 ├── server/
@@ -176,6 +200,8 @@ subprocess.run([
 │   │   └── vhost/
 │   │       ├── pids/kerjain_simgun_my_id.pid <-- File PID aktif port 3002
 │   │       └── scripts/kerjain_simgun_my_id.sh <-- Skrip start resmi
+│   ├── panel/
+│   │   └── vhost/nginx/node_kerjain_simgun_my_id.conf <-- Nginx VHost reverse proxy
 │   └── wwwlogs/
 │       └── nodejs/kerjain_simgun_my_id.log   <-- Log output runtime
 │
@@ -184,7 +210,7 @@ subprocess.run([
 
 ---
 
-## 8. Panduan Troubleshooting Cepat
+## 9. Panduan Troubleshooting Cepat
 
 1. **Port 3002 tidak merespons (502 Bad Gateway):**
    ```bash
@@ -195,5 +221,6 @@ subprocess.run([
 2. **Domain `kerjain.simgun.my.id` return 1033 / DNS Error:**
    - Cek apakah CNAME di dashboard Cloudflare sudah dibuat sesuai Bagian 4B.
    - Pastikan tunnel server berjalan: `systemctl status cloudflared`.
-3. **Database Prisma connection limit exceeded (`max: 2`):**
-   - Pastikan di `.env.local`, `DATABASE_URL` menggunakan port `6543` dengan flag `?pgbouncer=true`.
+3. **Database PostgreSQL Maintenance / Koneksi:**
+   - Cek status PostgreSQL: `sudo systemctl status postgresql --no-pager`.
+   - Pastikan `DATABASE_URL="postgresql://kerjain_user:kerjain123*@127.0.0.1:5432/kerjain_db"` di `.env.local`.

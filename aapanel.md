@@ -33,28 +33,34 @@ Server ini menampung beberapa aplikasi aktif. **HANYA sentuh port 3002 dan direk
 
 ---
 
-## 3. Arsitektur Database: PostgreSQL 16 Self-Hosted (Lokal di Server aaPanel)
+## 3. Arsitektur Database: aaPanel PostgreSQL 18 Official Manager
 
 > [!NOTE]
-> Database Kerjain **100% self-hosted di server aaPanel (Ubuntu 24.04)**, tidak lagi menggunakan Supabase:
-> - **Layanan Systemd:** `postgresql.service` (Status: Active, Enabled)
+> Database Kerjain dikelola **100% secara native oleh aaPanel PostgreSQL 18 Manager (`/www/server/pgsql/`)**:
+> - **Layanan Service:** `/etc/init.d/pgsql` (Status: Active / Running)
+> - **Tab GUI Panel:** aaPanel -> **Database** -> **PgSql** (Status tombol: **`Pgsql 18 ▶`** Hijau)
+> - **Daftar Database GUI:** `kerjain_db` terdaftar resmi (dapat di-backup/restore langsung dari UI aaPanel)
 > - **Host & Port:** `127.0.0.1:5432` (Internal LAN / Localhost)
 > - **Nama Database:** `kerjain_db`
 > - **User Database:** `kerjain_user`
 > - **Password Database:** `kerjain123*`
-> - **Ekstensi Aktif:** `uuid-ossp`, `pgcrypto`
+> - **Password Superuser `postgres`:** `kerjain123*` (Tersimpan di `/www/server/panel/data/postgresAS.json`)
+> - **Ekstensi Aktif:** `uuid-ossp`
 > - **URL Koneksi:** `postgresql://kerjain_user:kerjain123*@127.0.0.1:5432/kerjain_db`
 >
 > ### Perintah Cepat Maintenance Database:
 > ```bash
-> # Cek status service PostgreSQL
-> sudo systemctl status postgresql --no-pager
+> # Cek status service PostgreSQL aaPanel
+> sudo /etc/init.d/pgsql status
+>
+> # Start / Restart service PostgreSQL aaPanel
+> sudo /etc/init.d/pgsql restart
 >
 > # Akses CLI PostgreSQL kerjain_db
-> PGPASSWORD='kerjain123*' psql -h 127.0.0.1 -U kerjain_user -d kerjain_db
+> PGPASSWORD='kerjain123*' /www/server/pgsql/bin/psql -h 127.0.0.1 -p 5432 -U kerjain_user -d kerjain_db
 >
 > # Backup database ke file SQL
-> PGPASSWORD='kerjain123*' pg_dump -h 127.0.0.1 -U kerjain_user -d kerjain_db > /www/backup/database/kerjain_db_$(date +%F).sql
+> PGPASSWORD='kerjain123*' /www/server/pgsql/bin/pg_dump -h 127.0.0.1 -p 5432 -U kerjain_user -d kerjain_db > /www/backup/pgsql_bak/kerjain_db_$(date +%F).sql
 > ```
 
 ---

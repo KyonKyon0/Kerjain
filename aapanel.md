@@ -1,6 +1,6 @@
-# Panduan Akses & SOP Deployment aaPanel Server (oscartambunan.my.id)
+# Panduan Akses, SOP Deployment & Arsitektur Server aaPanel (kerjain.simgun.my.id)
 
-Dokumen ini adalah **referensi teknis resmi** untuk pengguna dan **AI Agent Antigravity** di masa mendatang agar dapat mengakses, mengelola, dan men-deploy pembaruan ke server aaPanel secara otomatis, aman, dan tanpa *downtime*, tanpa mengganggu website lain di server yang sama.
+Dokumen ini adalah **referensi teknis resmi** untuk pengguna dan **AI Agent Antigravity** agar dapat mengakses, mengelola, dan men-deploy pembaruan aplikasi **Kerjain** ke server aaPanel secara instan, aman, dan tanpa *downtime*, tanpa mencoba mendiagnosis ulang hal-hal yang sudah dipetakan.
 
 ---
 
@@ -10,196 +10,177 @@ Dokumen ini adalah **referensi teknis resmi** untuk pengguna dan **AI Agent Anti
 | :--- | :--- | :--- |
 | **Host / IP LAN** | `192.168.1.111` | Server Linux VM (Ubuntu / Proxmox VE) |
 | **SSH User** | `aapanel` | User default SSH |
-| **SSH Password** | `0$Car070311` | Digunakan untuk SSH & SCP |
-| **Sudo Password** | `0$Car070311` | User `aapanel` memiliki akses `sudo` penuh |
+| **SSH / Sudo Password** | `0$Car070311` | Karakter `$` jangan sampai ter-evaluasi sebagai variabel bash! |
 | **User Web Engine** | `www:www` | Semua file web & service Node.js dijalankan oleh user `www` |
-| **Port Internal Node** | `3000` | Port default Next.js App Router |
-| **Domain Publik** | `oscartambunan.my.id` | Alias: `www.oscartambunan.my.id` |
+| **Port Internal Kerjain** | **`3002`** | Port dedicated Next.js App Router untuk Kerjain |
+| **Domain Publik** | **`kerjain.simgun.my.id`** | Dikelola via Cloudflare Tunnel |
 
 ---
 
-## 2. Pemetaan Direktori & Arsitektur Sistem di aaPanel
+## 2. Pemetaan Port & Isolasi Multi-Tenant (JANGAN DILANGGAR)
+
+Server ini menampung beberapa aplikasi aktif. **HANYA sentuh port 3002 dan direktori Kerjain!**
+
+| Port | Domain / Aplikasi | Engine / Runner | Status & Larangan |
+| :---: | :--- | :--- | :--- |
+| **3000** | `oscartambunan.my.id` | aaPanel Node Daemon (`www`) | **JANGAN DISENTUH** |
+| **3001** | `mertha.oscartambunan.dev` | Node Daemon | **JANGAN DISENTUH** |
+| **3002** | **`kerjain.simgun.my.id`** | **Next.js Daemon (`www`)** | **PROYEK INI (KERJAIN)** |
+| **3003** | `saringopini.simgun.my.id` | PM2 Service (`www`) | **JANGAN DISENTUH (Dilarang `pm2 kill`)** |
+
+> [!CAUTION]
+> **DILARANG KERAS** menjalankan `killall node`, `pm2 kill`, atau `fuser -k` selain pada port `3002/tcp`.
+
+---
+
+## 3. Arsitektur Database: Supabase Cloud (BUKAN LOKAL!)
+
+> [!IMPORTANT]
+> **Tidak ada PostgreSQL lokal yang berjalan di server ini.**
+> Database Kerjain sepenuhnya di-host di **Supabase Cloud Managed PostgreSQL**:
+> - **Host:** `aws-0-ap-northeast-1.pooler.supabase.com` (AWS Tokyo)
+> - **Port 6543 (Runtime):** Supabase Transaction Pooler (PgBouncer) via `DATABASE_URL`
+> - **Port 5432 (Migration):** Direct Session via `DIRECT_URL`
+> 
+> **JANGAN PERNAH** mencoba menjalankan `systemctl start postgresql`, `apt-get install postgresql`, atau mencari container Postgres lokal di server!
+
+---
+
+## 4. Konfigurasi Cloudflare Tunnel & Syarat Manual DNS
+
+Routing dari domain publik `kerjain.simgun.my.id` ke server lokal ditangani oleh **Cloudflare Tunnel (`cloudflared`)**.
+
+### A. Konfigurasi di Sisi Server (Sudah Aktif)
+File `/etc/cloudflared/config.yml` sudah memiliki rule ingress:
+```yaml
+  - hostname: kerjain.simgun.my.id
+    service: http://127.0.0.1:3002
+    originRequest:
+      connectTimeout: 10s
+      keepAliveTimeout: 90s
+      keepAliveConnections: 50
+```
+Layanan server: `systemctl status cloudflared` (Active: running).
+
+### B. Konfigurasi Manual di Cloudflare Dashboard (Wajib 1x Saja)
+Cloudflare Tunnel tidak bisa otomatis menambahkan record DNS ke domain pengguna jika token bersifat lokal. Pengguna **harus menambahkan record DNS secara manual di Dashboard Cloudflare**:
+1. Buka [Cloudflare Dashboard](https://dash.cloudflare.com/) -> Pilih domain **`simgun.my.id`**.
+2. Masuk ke tab **DNS** -> **Records** -> Klik **Add record**:
+   - **Type:** `CNAME`
+   - **Name:** `kerjain`
+   - **Target:** `e2007e54-b5bd-4887-8e5f-e5fb15d49c5c.cfargotunnel.com`
+   - **Proxy status:** **Proxied** (Awan Oranye)
+   - **TTL:** Auto
+3. Klik **Save**. Domain langsung aktif dan terenkripsi SSL.
+
+---
+
+## 5. Solusi Teknis SSH Non-Interactive (Anti TTY Hang)
+
+Untuk menghindari program `ssh.exe` macet saat menunggu password di shell AI Agent Windows:
+1. Buat skrip pembantu `askpass.bat`:
+   ```bat
+   @echo 0$Car070311
+   ```
+2. Set variabel lingkungan sebelum memanggil `ssh` atau `scp`:
+   - `set SSH_ASKPASS=path\to\askpass.bat`
+   - `set SSH_ASKPASS_REQUIRE=force`
+3. Untuk perintah `sudo`, gunakan `sudo -S -p '' <perintah>` dengan input stdin `0$Car070311\n` via Python `subprocess.run()`.
+
+---
+
+## 6. SOP Cepat Deployment / Update Kode (Fast Runbook)
+
+Jika ada pembaruan kode di repositori lokal dan ingin di-deploy ke server, cukup ikuti langkah ringkas ini:
+
+### Langkah 1: Push Perubahan ke GitHub
+```powershell
+git add .
+git commit -m "feat/fix: deskripsi pembaruan"
+git push origin main
+```
+
+### Langkah 2: Tarik & Build di Server aaPanel
+Jalankan skrip eksekusi remote via Python runner:
+```python
+import subprocess, os
+
+# Setup askpass
+env = os.environ.copy()
+env["SSH_ASKPASS"] = os.path.abspath("askpass.bat")
+env["SSH_ASKPASS_REQUIRE"] = "force"
+
+# Perintah update & build
+remote_sh = """#!/bin/bash
+set -e
+export PATH=/www/server/nodejs/v26.7.0/bin:$PATH
+cd /www/wwwroot/kerjain.simgun.my.id
+
+echo "=== GIT PULL ==="
+git pull origin main
+
+echo "=== BUILD FRONTEND ==="
+cd frontend
+npx prisma generate
+npm run build
+
+echo "=== RESTART PORT 3002 ==="
+fuser -k 3002/tcp 2>/dev/null || true
+sleep 1
+sudo -u www bash /www/server/nodejs/vhost/scripts/kerjain_simgun_my_id.sh
+sleep 3
+
+echo "=== HEALTH CHECK ==="
+curl -s -o /dev/null -w "HTTP %{http_code}\n" http://127.0.0.1:3002/
+"""
+
+# SCP dan Jalankan
+subprocess.run(['scp', '-o', 'StrictHostKeyChecking=no', 'deploy.sh', 'aapanel@192.168.1.111:/tmp/deploy.sh'], env=env, check=True)
+subprocess.run([
+    'ssh', '-o', 'StrictHostKeyChecking=no', 'aapanel@192.168.1.111',
+    'sudo -S -p "" bash /tmp/deploy.sh'
+], input="0$Car070311\n", text=True, env=env, check=True)
+```
+
+---
+
+## 7. Direktori & File Penting Kerjain di Server
 
 ```
 /www/
 ├── wwwroot/
-│   ├── oscartambunan_portofolio_web/  <-- DIREKTORI UTAMA WEBSITE INI
-│   │   ├── .next/                     <-- Hasil build Next.js (SSG/SSR)
-│   │   ├── src/                       <-- Source code React/Next.js
-│   │   ├── public/                    <-- Media statis (foto, video, pdf)
-│   │   ├── .env.local                 <-- API Key Resend & env server
-│   │   └── package.json
-│   ├── SaringOpini/                   <-- JANGAN DISENTUH (Web lain)
-│   ├── pesonatari.site/               <-- JANGAN DISENTUH (Web lain)
-│   ├── realfoodku.store/              <-- JANGAN DISENTUH (Web lain)
-│   └── mertha.oscartambunan.dev/      <-- JANGAN DISENTUH (Web lain)
+│   └── kerjain.simgun.my.id/                 <-- Root Monorepo
+│       ├── frontend/                         <-- Workspace Next.js
+│       │   ├── .env.local                    <-- Kredensial Supabase, Pakasir, Resend
+│       │   ├── .next/                        <-- Artifact Hasil Build
+│       │   └── prisma/schema.prisma
+│       └── node_modules/                     <-- Hoisted packages
 │
 ├── server/
 │   ├── nodejs/
-│   │   ├── v26.7.0/bin/node           <-- Node.js binary resmi server (v26)
-│   │   ├── v26.7.0/bin/npm            <-- NPM binary resmi server
+│   │   ├── v26.7.0/bin/node                  <-- Binary Node.js v26
+│   │   ├── v26.7.0/bin/npm                   <-- Binary NPM
 │   │   └── vhost/
-│   │       ├── pids/oscartambunan_portofolio_web.pid  <-- File PID aktif
-│   │       └── scripts/oscartambunan_portofolio_web.sh <-- Skrip start resmi aaPanel
-│   └── panel/vhost/nginx/
-│       ├── node_oscartambunan_portofolio_web.conf     <-- Konfigurasi Reverse Proxy Nginx
-│       └── node_oscartambunan_portofolio_web.conf.bak <-- Backup konfigurasi
+│   │       ├── pids/kerjain_simgun_my_id.pid <-- File PID aktif port 3002
+│   │       └── scripts/kerjain_simgun_my_id.sh <-- Skrip start resmi
+│   └── wwwlogs/
+│       └── nodejs/kerjain_simgun_my_id.log   <-- Log output runtime
+│
+└── etc/cloudflared/config.yml                <-- Konfigurasi ingress tunnel port 3002
 ```
 
 ---
 
-## 3. Masalah Utama SSH pada AI Agent & Solusi Teknisnya
+## 8. Panduan Troubleshooting Cepat
 
-### Tantangan:
-1. **Interactive TTY Hang:** Program OpenSSH di Windows (`ssh.exe` dan `scp.exe`) secara default menolak menerima password melalui *pipe* (`echo pass | ssh ...`) jika dijalankan di *non-interactive shell* (seperti terminal AI Agent). Akibatnya, proses akan macet (*hang indefinitely*) menunggu input terminal interaktif.
-2. **Bash Variable Expansion ($):** Password `0$Car070311` memiliki karakter dollar (`$Car070311`). Jika dipassing langsung di string bash tanpa proteksi, bash akan menganggapnya sebagai variabel lingkungan yang kosong sehingga password yang terkirim keliru (`0`).
-
-### Solusi Antigravity:
-1. **Gunakan `SSH_ASKPASS` Bawaan OpenSSH:**
-   Buat file batch kecil sementara (misal `askpass.bat`) yang mencetak password, lalu set environment variable:
-   * `set SSH_ASKPASS=path\to\askpass.bat`
-   * `set SSH_ASKPASS_REQUIRE=force`
-   Dengan cara ini, baik `ssh.exe` maupun `scp.exe` di Windows akan mengambil password secara otomatis tanpa membuka prompt TTY.
-2. **Piping Stdin pada Python untuk `sudo`:**
-   Jalankan perintah sudo via Python `subprocess.run(..., input="0$Car070311\n")` dengan opsi `sudo -S -p '' <perintah>`. Ini menjamin karakter `$` tidak dievaluasi oleh shell lokal maupun remote.
-
----
-
-## 4. Skrip Eksekusi Otomatis (Helper Script)
-
-Untuk sesi Antigravity baru, buat skrip runner python berikut di folder scratch atau direktori kerja:
-
-### A. Skrip `askpass.bat`
-```bat
-@echo 0$Car070311
-```
-
-### B. Skrip `remote_exec.py` (Eksekutor Perintah Remote)
-```python
-import subprocess
-import sys
-import os
-
-ASKPASS_BAT = os.path.abspath("askpass.bat")
-SUDO_PASS = "0$Car070311"
-
-def run_ssh(remote_cmd, use_sudo=False):
-    env = os.environ.copy()
-    env["SSH_ASKPASS"] = ASKPASS_BAT
-    env["SSH_ASKPASS_REQUIRE"] = "force"
-    
-    if use_sudo:
-        final_cmd = f"sudo -S -p '' {remote_cmd}"
-        input_data = SUDO_PASS + "\n"
-    else:
-        final_cmd = remote_cmd
-        input_data = None
-        
-    cmd = [
-        "ssh",
-        "-o", "StrictHostKeyChecking=no",
-        "-o", "ConnectTimeout=10",
-        "aapanel@192.168.1.111",
-        final_cmd
-    ]
-    res = subprocess.run(cmd, env=env, input=input_data, capture_output=True, text=True)
-    return res.returncode, res.stdout, res.stderr
-
-if __name__ == "__main__":
-    use_sudo = "--sudo" in sys.argv
-    args = [a for a in sys.argv[1:] if a != "--sudo"]
-    remote_cmd = " ".join(args) if args else "whoami"
-    code, stdout, stderr = run_ssh(remote_cmd, use_sudo=use_sudo)
-    if stdout:
-        print("[STDOUT]\n" + stdout)
-    if stderr:
-        print("[STDERR]\n" + stderr)
-    sys.exit(code)
-```
-
----
-
-## 5. SOP Deployment Standar (Step-by-Step Runbook)
-
-Setiap kali ada pembaruan kode di lokal dan ingin di-deploy ke aaPanel, ikuti urutan standar berikut:
-
-### Langkah 1: Validasi Build di Komputer Lokal
-Pastikan tidak ada error tipe atau build di lokal:
-```powershell
-cmd /c "npx tsc --noEmit && npm run lint && npm run build"
-```
-
-### Langkah 2: Buat Patch Perubahan (UTF-8)
-Gunakan python untuk membuat file patch agar format encoding UTF-8 valid:
-```powershell
-python -c "import subprocess; out = subprocess.check_output(['git', 'diff']); open('fresh.patch', 'wb').write(out)"
-```
-
-### Langkah 3: Transfer Patch via SCP
-Kirim patch ke folder `/tmp` di server:
-```powershell
-python -c "
-import subprocess, os
-env = os.environ.copy()
-env['SSH_ASKPASS'] = os.path.abspath('askpass.bat')
-env['SSH_ASKPASS_REQUIRE'] = 'force'
-subprocess.run(['scp', '-o', 'StrictHostKeyChecking=no', 'fresh.patch', 'aapanel@192.168.1.111:/tmp/fresh.patch'], env=env, check=True)
-print('SCP SUCCESS')
-"
-```
-
-### Langkah 4: Terapkan Patch & Build Ulang di Server
-Jalankan kompilasi menggunakan Node.js v26 resmi server:
-```powershell
-python remote_exec.py --sudo "bash -c 'cd /www/wwwroot/oscartambunan_portofolio_web && git checkout -- . && git apply /tmp/fresh.patch && chown -R www:www /www/wwwroot/oscartambunan_portofolio_web && sudo -u www /www/server/nodejs/v26.7.0/bin/npm run build'"
-```
-
-### Langkah 5: Restart Service Port 3000 via Skrip Resmi aaPanel
-Restart proses Next.js tanpa mematikan website lain:
-```powershell
-python remote_exec.py --sudo "bash -c '
-OLD_PID=\$(cat /www/server/nodejs/vhost/pids/oscartambunan_portofolio_web.pid 2>/dev/null || true)
-if [ -n \"\$OLD_PID\" ]; then
-    kill -9 \"\$OLD_PID\" 2>/dev/null || true
-fi
-fuser -k 3000/tcp 2>/dev/null || true
-sleep 2
-
-sudo -u www bash /www/server/nodejs/vhost/scripts/oscartambunan_portofolio_web.sh
-sleep 3
-ss -tulpn | grep 3000
-'"
-```
-
-### Langkah 6: Verifikasi Status & Kesehatan Server
-Pastikan website target berjalan dan web lain tidak tersentuh:
-```powershell
-python remote_exec.py --sudo "bash -c '
-echo \"=== PORT 3000 TEST ===\"
-curl -s -o /dev/null -w \"HTTP %{http_code}\n\" http://127.0.0.1:3000/
-
-echo \"=== NGINX HTTPS TEST ===\"
-curl -s -k -o /dev/null -w \"HTTP %{http_code}\n\" -H \"Host: oscartambunan.my.id\" https://127.0.0.1/
-
-echo \"=== CEK STATUS WEB LAIN ===\"
-sudo -u www pm2 list
-
-rm -f /tmp/fresh.patch
-'"
-```
-
----
-
-## 6. Aturan Keselamatan Mutlak (Pantangan)
-
-1. **DILARANG MENGHAPUS SEMBARANGAN:** Jangan pernah menjalankan `rm -rf` di `/www/wwwroot/` selain di dalam folder proyek sendiri.
-2. **JANGAN MATIKAN PROSES WEB LAIN:** Website seperti `saringopini` berjalan via PM2 di bawah user `www` (port selain 3000). Jangan pernah menjalankan `pm2 kill` atau `killall node`. Hanya bunuh PID spesifik port 3000 (`fuser -k 3000/tcp` atau PID dari file `oscartambunan_portofolio_web.pid`).
-3. **SELALU PERTAHANKAN OWNERSHIP `www:www`:** Setiap ada penambahan file atau clone di `/www/wwwroot/oscartambunan_portofolio_web`, pastikan hak akses dikembalikan ke user `www:www` (`chown -R www:www ...`) agar aaPanel Node Manager tidak mengalami error *Permission Denied*.
-
----
-
-## 7. Template Prompt untuk Sesi Antigravity Baru
-
-Jika di kemudian hari Anda membuka sesi percakapan baru di Antigravity dan ingin melakukan update/deployment, cukup ketik instruksi sederhana ini:
-
-> *"Tolong baca file AAPANEL.md. Saya ingin melakukan update terbaru ke server aaPanel oscartambunan.my.id. Ikuti SOP deployment yang ada di AAPANEL.md secara presisi dan pastikan web lain tidak terganggu."*
+1. **Port 3002 tidak merespons (502 Bad Gateway):**
+   ```bash
+   sudo fuser -k 3002/tcp
+   sudo -u www bash /www/server/nodejs/vhost/scripts/kerjain_simgun_my_id.sh
+   tail -n 30 /www/wwwlogs/nodejs/kerjain_simgun_my_id.log
+   ```
+2. **Domain `kerjain.simgun.my.id` return 1033 / DNS Error:**
+   - Cek apakah CNAME di dashboard Cloudflare sudah dibuat sesuai Bagian 4B.
+   - Pastikan tunnel server berjalan: `systemctl status cloudflared`.
+3. **Database Prisma connection limit exceeded (`max: 2`):**
+   - Pastikan di `.env.local`, `DATABASE_URL` menggunakan port `6543` dengan flag `?pgbouncer=true`.
